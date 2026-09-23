@@ -608,7 +608,7 @@ export default function App() {
       <footer className="border-t border-slate-200 bg-white py-6 mt-8 text-center text-xs text-slate-500 print:hidden">
         <div className="max-w-7xl mx-auto px-4 space-y-1">
           <p className="font-semibold text-slate-700">
-            ระบบติดตามงาน (Work Tracking System) ปีงบประมาณ 2570
+            ระบบติดตามงาน (Task Tracking System) ปีงบประมาณ 2570
           </p>
           <p className="text-slate-500 text-[11px]">
             คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร (Faculty of Logistics and Digital Supply Chain, Naresuan University)
