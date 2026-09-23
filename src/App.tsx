@@ -531,16 +531,16 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* [NEW] ปุ่มรีเฟรชข้อมูลล่าสุด - แสดงเฉพาะตอนเชื่อมต่อ Sheet แล้ว */}
+        {/* [NEW] ปุ่มรีเฟรชข้อมูลล่าสุด - แสดงเฉพาะตอนเชื่อมต่อ Sheet แล้ว โทนสีฟ้า แบบนูน */}
         {syncState.spreadsheetId && (
           <div className="mb-4 flex justify-end">
             <button
               onClick={handleRefreshFromSheet}
               disabled={syncState.isSyncing}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 hover:from-sky-500 hover:to-sky-700 border-t border-t-sky-200 border-x border-sky-500 border-b-[3.5px] border-b-sky-850 shadow-md shadow-sky-600/25 ring-1 ring-inset ring-white/30 rounded-xl transition-all active:translate-y-0.5 active:border-b-2 disabled:opacity-50 cursor-pointer select-none"
             >
-              <RefreshCw className={`h-4 w-4 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
-              {syncState.isSyncing ? 'กำลังรีเฟรช...' : 'รีเฟรชข้อมูลล่าสุด'}
+              <RefreshCw className={`h-3.5 w-3.5 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
+              <span>รีเฟรชข้อมูลล่าสุดจาก Google Sheet</span>
             </button>
           </div>
         )}

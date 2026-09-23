@@ -32,7 +32,7 @@ interface DepartmentPerformanceChartProps {
   averageCompletionRate: number;
 }
 
-// โทนสีสุภาพ อ่อนเบา และเป็นทางการสำหรับแต่ละกลุ่มงาน
+// โทนสีสุภาพ อ่อนเบา และเป็นทางการสำหรับแต่ละงาน
 const DEPT_STYLE_MAP: Record<
   string,
   {
@@ -48,17 +48,17 @@ const DEPT_STYLE_MAP: Record<
     hex: '#64748b', // สีเทาสุภาพแบบนูน (งานธุรการ)
     bg: 'bg-slate-500',
     border: 'border-slate-300 border-b-[2.5px] border-b-slate-400',
-    text: 'text-slate-900',
-    lightBg: 'bg-gradient-to-r from-slate-200/95 via-slate-100 to-slate-200/90 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/80',
-    badgeBg: 'bg-slate-100 text-slate-800',
+    text: 'text-slate-700',
+    lightBg: 'bg-gradient-to-r from-slate-150 via-slate-100 to-slate-200/90 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/80',
+    badgeBg: 'bg-slate-100 text-slate-700',
   },
   general: {
     hex: '#64748b', // สีเทาสุภาพแบบนูน (งานธุรการ)
     bg: 'bg-slate-500',
     border: 'border-slate-300 border-b-[2.5px] border-b-slate-400',
-    text: 'text-slate-900',
-    lightBg: 'bg-gradient-to-r from-slate-200/95 via-slate-100 to-slate-200/90 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/80',
-    badgeBg: 'bg-slate-100 text-slate-800',
+    text: 'text-slate-700',
+    lightBg: 'bg-gradient-to-r from-slate-150 via-slate-100 to-slate-200/90 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/80',
+    badgeBg: 'bg-slate-100 text-slate-700',
   },
   academic: {
     hex: '#10b981', // สีเขียว (งานบริการการศึกษา)
@@ -133,7 +133,7 @@ export const DepartmentPerformanceChart: React.FC<DepartmentPerformanceChartProp
     return [...deptStats].sort((a, b) => b.completionRate - a.completionRate)[0];
   }, [deptStats]);
 
-  // ข้อมูลสำหรับ Pie Chart แบบ 4 กลุ่มงาน (สัดส่วนภาระงาน)
+  // ข้อมูลสำหรับ Pie Chart แบบ 4 งาน (สัดส่วนภาระงาน)
   const departmentPieData = useMemo(() => {
     return deptStats.map((dept, index) => {
       const style = DEPT_STYLE_MAP[dept.id] || DEFAULT_STYLE;
@@ -171,7 +171,7 @@ export const DepartmentPerformanceChart: React.FC<DepartmentPerformanceChartProp
       {
         name: 'ยังไม่ดำเนินการ',
         value: totalNotStarted,
-        color: '#f59e0b',
+        color: '#38bdf8',
         share: totalAllTasks > 0 ? Math.round((totalNotStarted / totalAllTasks) * 100) : 0,
       },
     ];
@@ -192,7 +192,7 @@ export const DepartmentPerformanceChart: React.FC<DepartmentPerformanceChartProp
           </div>
           <div>
             <p className="text-xs sm:text-sm font-semibold text-slate-700">
-              แผนภูมิวงกลมแสดงสัดส่วนภาระงานและอัตราความสำเร็จของแต่ละกลุ่มงาน
+              แผนภูมิวงกลมแสดงสัดส่วนภาระงานและอัตราความสำเร็จของแต่ละงาน
             </p>
           </div>
         </div>
@@ -509,20 +509,20 @@ export const DepartmentPerformanceChart: React.FC<DepartmentPerformanceChartProp
                 onMouseLeave={() => setHoveredIndex(null)}
                 className={`p-4 rounded-xl border transition-all cursor-pointer ${
                   hoveredIndex === 2
-                    ? 'border-amber-400 bg-amber-50/70 shadow-sm'
-                    : 'border-amber-200/70 bg-amber-50/40'
+                    ? 'border-sky-400 bg-sky-50/80 shadow-sm'
+                    : 'border-sky-200/70 bg-sky-50/40'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-amber-800 font-bold text-sm">
-                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <div className="flex items-center gap-2 text-sky-800 font-bold text-sm">
+                    <AlertCircle className="h-4 w-4 text-sky-500" />
                     <span>ยังไม่ดำเนินการ</span>
                   </div>
-                  <span className="text-xs font-bold text-amber-700 bg-white px-2 py-0.5 rounded-full border border-amber-200">
+                  <span className="text-xs font-bold text-sky-700 bg-white px-2 py-0.5 rounded-full border border-sky-200">
                     {totalAllTasks > 0 ? Math.round((totalNotStarted / totalAllTasks) * 100) : 0}%
                   </span>
                 </div>
-                <div className="flex items-baseline justify-between text-xs text-amber-800">
+                <div className="flex items-baseline justify-between text-xs text-sky-800">
                   <span>งานที่มีกำหนดการในรอบถัดไปหรือรอเริ่มกิจกรรม</span>
                   <span className="text-base font-extrabold">{totalNotStarted} งาน</span>
                 </div>

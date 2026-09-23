@@ -21,25 +21,25 @@ interface DashboardViewProps {
   onOpenNewTaskModal: () => void;
 }
 
-// แถบสีอ่อน ๆ คลุมเฉพาะตัวอักษรสำหรับแต่ละกลุ่มงาน โทนสีกรอบนูนมีมิติ (Embossed 3D)
+// แถบสีอ่อน ๆ คลุมเฉพาะตัวอักษรสำหรับแต่ละงาน โทนสีกรอบนูนมีมิติ (Embossed 3D)
 const getDeptStripStyle = (id: string) => {
   switch (id) {
     case 'admin':
     case 'general':
       // งานธุรการ สีเทา
-      return 'bg-gradient-to-r from-slate-200/95 via-slate-100 to-slate-200/90 text-slate-900 border border-slate-300 border-b-[2.5px] border-b-slate-400 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/80';
+      return 'bg-gradient-to-r from-slate-150 via-slate-100 to-slate-200/90 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-350 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/80';
     case 'academic':
     case 'education':
       // งานบริการการศึกษา สีเขียว
-      return 'bg-gradient-to-r from-emerald-100/95 via-emerald-50 to-teal-100/90 text-emerald-950 border border-emerald-200 border-b-[2.5px] border-b-emerald-300 shadow-sm shadow-emerald-900/10 ring-1 ring-inset ring-white/80';
+      return 'bg-gradient-to-r from-emerald-100/95 via-emerald-50 to-teal-100/90 text-emerald-900 border border-emerald-200 border-b-[2.5px] border-b-emerald-300 shadow-sm shadow-emerald-900/10 ring-1 ring-inset ring-white/80';
     case 'research':
       // งานวิจัยและพัฒนาคุณภาพการศึกษา แถบสีน้ำเงิน
-      return 'bg-gradient-to-r from-blue-100/95 via-blue-50 to-sky-100/90 text-blue-950 border border-blue-200 border-b-[2.5px] border-b-blue-300 shadow-sm shadow-blue-900/10 ring-1 ring-inset ring-white/80';
+      return 'bg-gradient-to-r from-blue-100/95 via-blue-50 to-sky-100/90 text-blue-900 border border-blue-200 border-b-[2.5px] border-b-blue-300 shadow-sm shadow-blue-900/10 ring-1 ring-inset ring-white/80';
     case 'finance':
       // งานการเงินและพัสดุ แถบสีฟ้า
-      return 'bg-gradient-to-r from-sky-100/95 via-sky-50 to-cyan-100/90 text-sky-950 border border-sky-200 border-b-[2.5px] border-b-sky-300 shadow-sm shadow-sky-900/10 ring-1 ring-inset ring-white/80';
+      return 'bg-gradient-to-r from-sky-100/95 via-sky-50 to-cyan-100/90 text-sky-900 border border-sky-200 border-b-[2.5px] border-b-sky-300 shadow-sm shadow-sky-900/10 ring-1 ring-inset ring-white/80';
     default:
-      return 'bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 text-slate-900 border border-slate-200 border-b-[2.5px] border-b-slate-300 shadow-sm ring-1 ring-inset ring-white/80';
+      return 'bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-300 shadow-sm ring-1 ring-inset ring-white/80';
   }
 };
 
@@ -172,16 +172,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
-              <BarChart3 className="h-5 w-5" />
+            <div className="h-8 w-8 rounded-xl bg-slate-150 text-slate-800 flex items-center justify-center shrink-0 border border-slate-300 shadow-xs">
+              <BarChart3 className="h-5 w-5 text-slate-700" />
             </div>
             <div>
-              <span className="inline-block px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border border-blue-200/90 border-b-[3px] border-b-blue-300 font-bold text-base sm:text-lg shadow-md shadow-blue-950/10 ring-1 ring-inset ring-white/80">
+              {/* รายงานผลการดำเนินงาน แถบสีเทาอ่อน แบบนูน ย่อขนาดกะทัดรัด (Compact 3D Embossed Relief in Light Gray) */}
+              <span className="inline-block px-3 py-1 rounded-lg bg-gradient-to-r from-slate-100 via-slate-50 to-slate-150 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-400 font-bold text-sm sm:text-base shadow-sm ring-1 ring-inset ring-white/90">
                 รายงานผลการดำเนินงาน ปีงบประมาณ 2570
               </span>
             </div>
           </div>
-          <p className="text-xs text-slate-500 mt-1 ml-10">
+          <p className="text-xs text-slate-500 mt-1.5 ml-1">
             คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
           </p>
         </div>
@@ -257,12 +258,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">{totalTasks}</span>
+            <span className="text-xl sm:text-2xl font-bold text-slate-700 tracking-tight">{totalTasks}</span>
             <span className="text-xs text-slate-600">รายการ</span>
           </div>
           <div className="mt-2 pt-1.5 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-600">
             <span>ความก้าวหน้ารวม</span>
-            <span className="font-semibold text-slate-800">{averageProgress}%</span>
+            <span className="font-semibold text-slate-700">{averageProgress}%</span>
           </div>
         </div>
 
@@ -281,7 +282,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-xl sm:text-2xl font-bold text-emerald-950 tracking-tight">{completedTasks}</span>
+            <span className="text-xl sm:text-2xl font-bold text-emerald-900 tracking-tight">{completedTasks}</span>
             <span className="text-xs text-emerald-800">รายการ</span>
           </div>
           <div className="mt-2 pt-1.5 border-t border-emerald-200/80 flex items-center justify-between text-[11px] text-emerald-800">
@@ -305,7 +306,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-xl sm:text-2xl font-bold text-blue-950 tracking-tight">{inProgressTasks}</span>
+            <span className="text-xl sm:text-2xl font-bold text-blue-900 tracking-tight">{inProgressTasks}</span>
             <span className="text-xs text-blue-800">รายการ</span>
           </div>
           <div className="mt-2 pt-1.5 border-t border-blue-200/80 flex items-center justify-between text-[11px] text-blue-800">
@@ -316,22 +317,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        {/* Card 4: ยังไม่ดำเนินการ - แถบสีฟ้าแบบนูน */}
+        {/* Card 4: ยังไม่ดำเนินการ - แถบสีฟ้าอ่อนแบบนูน (Light Sky Blue Embossed) */}
         <div
           id="kpi-card-notstarted"
           onClick={() => onSelectStatusFilter && onSelectStatusFilter('ยังไม่ดำเนินการ')}
-          className="bg-sky-50/80 rounded-xl p-3 sm:p-3.5 border border-sky-300 border-b-[3px] border-b-sky-500 shadow-sm shadow-sky-950/10 ring-1 ring-inset ring-white/80 relative overflow-hidden group hover:border-sky-400 transition-all cursor-pointer"
+          className="bg-sky-50/85 rounded-xl p-3 sm:p-3.5 border border-sky-300 border-b-[3px] border-b-sky-500 shadow-sm shadow-sky-950/10 ring-1 ring-inset ring-white/80 relative overflow-hidden group hover:border-sky-400 transition-all cursor-pointer"
         >
           <div className="flex items-center justify-between">
-            <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white border border-sky-400 border-b-[2px] border-b-sky-800 font-bold text-xs shadow-xs ring-1 ring-inset ring-white/20">
+            <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-sky-400 to-cyan-500 text-white border border-sky-300 border-b-[2px] border-b-sky-600 font-bold text-xs shadow-xs ring-1 ring-inset ring-white/20">
               ยังไม่ดำเนินการ
             </span>
-            <div className="h-7 w-7 rounded-lg bg-sky-500 border border-sky-400 border-b-[2px] border-b-sky-800 flex items-center justify-center text-white shadow-xs">
+            <div className="h-7 w-7 rounded-lg bg-sky-400 border border-sky-300 border-b-[2px] border-b-sky-600 flex items-center justify-center text-white shadow-xs">
               <AlertCircle className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-xl sm:text-2xl font-bold text-sky-950 tracking-tight">{notStartedTasks}</span>
+            <span className="text-xl sm:text-2xl font-bold text-sky-900 tracking-tight">{notStartedTasks}</span>
             <span className="text-xs text-sky-800">รายการ</span>
           </div>
           <div className="mt-2 pt-1.5 border-t border-sky-200/80 flex items-center justify-between text-[11px] text-sky-800">
@@ -347,10 +348,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
           <h3 className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
+            <div className="h-7 w-7 rounded-xl bg-slate-150 text-slate-700 border border-slate-300 flex items-center justify-center shrink-0">
               <TrendingUp className="h-4 w-4" />
             </div>
-            <span className="inline-block px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border border-blue-200/90 border-b-[3px] border-b-blue-300 font-bold text-base sm:text-lg shadow-md shadow-blue-950/10 ring-1 ring-inset ring-white/80">
+            <span className="inline-block px-4 py-1.5 rounded-xl bg-gradient-to-r from-slate-100 via-slate-50 to-slate-150 text-slate-700 border border-slate-200 border-b-[3.5px] border-b-slate-400 font-bold text-base sm:text-lg shadow-md shadow-slate-900/10 ring-1 ring-inset ring-white/90">
               ผลการดำเนินงานของสำนักงานเลขานุการ
             </span>
           </h3>
@@ -370,7 +371,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               id={`dept-card-${dept.id}`}
               className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all overflow-hidden flex flex-col"
             >
-              {/* ส่วนหัวของงาน 4 กลุ่มงานหลัก: ธีมสีขาว (White Theme) พร้อมแถบสีอ่อนคลุมตัวอักษร */}
+              {/* ส่วนหัวของงาน 4 งานหลัก: ธีมสีขาว (White Theme) พร้อมแถบสีอ่อนคลุมตัวอักษร */}
               <div className="bg-white px-5 py-4 text-slate-900 flex items-start justify-between gap-3 border-b border-slate-100">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
@@ -400,7 +401,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <span className="font-semibold text-slate-700 flex items-center gap-1.5">
                     <span className={`h-1.5 w-1.5 rounded-full ${getDeptProgressColor(dept.id).dot}`}></span>
-                    แถบความคืบหน้าภาพรวมกลุ่มงาน:
+                    แถบความคืบหน้าภาพรวมงาน:
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-medium text-slate-500">
@@ -440,7 +441,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     />
                     <div
                       style={{ width: `${dept.total > 0 ? (dept.notStarted / dept.total) * 100 : 0}%` }}
-                      className="bg-slate-300 transition-all duration-500"
+                      className="bg-sky-300 transition-all duration-500"
                       title={`ยังไม่ดำเนินการ ${dept.notStarted} รายการ`}
                     />
                   </div>
@@ -456,9 +457,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <div className="font-bold text-sm text-blue-800">{dept.inProgress}</div>
                     <div className="text-[10px] text-blue-700">กำลังทำ</div>
                   </div>
-                  <div className="bg-slate-50/70 text-slate-700 rounded-xl py-1.5 px-2 border border-slate-200/60 shadow-xs">
-                    <div className="font-bold text-sm text-slate-700">{dept.notStarted}</div>
-                    <div className="text-[10px] text-slate-500">ยังไม่เริ่ม</div>
+                  <div className="bg-sky-50/80 text-sky-800 rounded-xl py-1.5 px-2 border border-sky-200/80 shadow-xs">
+                    <div className="font-bold text-sm text-sky-800">{dept.notStarted}</div>
+                    <div className="text-[10px] text-sky-700">ยังไม่เริ่ม</div>
                   </div>
                 </div>
 
@@ -469,11 +470,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     {dept.unitStats.map(unit => (
                       <div
                         key={unit.id}
-                        className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-blue-50/50 transition-colors"
+                        className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/70 transition-colors"
                       >
-                        <div className="flex items-center gap-1.5 truncate pr-2">
-                          <span className="font-bold text-blue-700 shrink-0">{unit.code}</span>
-                          <span className="text-slate-800 truncate font-medium">{unit.name}</span>
+                        <div className="flex items-center gap-2 truncate pr-2">
+                          {/* จุดวงกลมตามสีงาน (แทนเลขหัวข้อย่อย 1.1 - 4.3) */}
+                          <span
+                            className={`h-2.5 w-2.5 rounded-full shrink-0 shadow-xs ring-2 ring-white ${getDeptProgressColor(dept.id).dot}`}
+                            title={`${unit.code} ${unit.name}`}
+                          />
+                          <span className="text-slate-700 truncate font-medium">{unit.name}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-[11px] text-slate-500">

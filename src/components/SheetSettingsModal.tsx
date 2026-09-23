@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { SheetSyncState } from '../types';
+import { cleanSheetTitle } from '../services/sheetsService';
 
 interface SheetSettingsModalProps {
   isOpen: boolean;
@@ -167,7 +168,7 @@ export const SheetSettingsModal: React.FC<SheetSettingsModalProps> = ({
 
                   <div className="space-y-1">
                     <h4 className="font-bold text-sm text-slate-900 break-all">
-                      {syncState.spreadsheetTitle || 'ระบบติดตามงาน_ปีงบประมาณ_2570_คณะโลจิสติกส์ฯ_มน'}
+                      {cleanSheetTitle(syncState.spreadsheetTitle) || 'ระบบติดตามงาน ปีงบประมาณ 2570'}
                     </h4>
                     <p className="text-[11px] font-mono text-slate-500 truncate">
                       ID: {syncState.spreadsheetId}

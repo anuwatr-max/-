@@ -15,7 +15,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { TaskItem, TaskStatus, MainDepartmentId } from '../types';
-import { DEPARTMENTS, FISCAL_MONTHS, TASK_STATUSES } from '../data/departments';
+import { DEPARTMENTS, FISCAL_MONTHS, TASK_STATUSES, getDeptDotClass } from '../data/departments';
 
 interface TaskListViewProps {
   tasks: TaskItem[];
@@ -128,11 +128,12 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 flex flex-wrap items-center gap-2">
-              <span className="inline-block px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border border-blue-200/90 border-b-[3px] border-b-blue-300 font-bold text-base sm:text-lg shadow-md shadow-blue-950/10 ring-1 ring-inset ring-white/80">
-                รายงานการติดตามงาน ปีงบประมาณ 2570
+            <h2 className="text-lg font-bold text-slate-700 flex flex-wrap items-center gap-2">
+              {/* ติดตามงาน แถบสีเทาอ่อน แบบนูน ย่อขนาดกะทัดรัด (Compact 3D Embossed Relief in Light Gray) */}
+              <span className="inline-block px-3 py-1 rounded-lg bg-gradient-to-r from-slate-100 via-slate-50 to-slate-150 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-400 font-bold text-sm sm:text-base shadow-sm ring-1 ring-inset ring-white/90">
+                ติดตามงาน ปีงบประมาณ 2570
               </span>
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-900 border border-blue-200">
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-300 shadow-xs">
                 {filteredTasks.length} / {tasks.length} รายการ
               </span>
             </h2>
@@ -161,17 +162,17 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="ค้นหาตามชื่องาน, ผู้รับผิดชอบ, หรือหน่วยงาน..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors"
           />
         </div>
 
         {/* Dropdown Filters with Blue Focus Ring */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1 border-t border-slate-100">
-          {/* 1. กลุ่มงานหลัก (ทำเป็น drop down) */}
+          {/* 1. งานหลัก (ทำเป็น drop down) */}
           <div>
             <label className="block mb-1.5">
               <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
-                กลุ่มงานหลัก
+                งานหลัก
               </span>
             </label>
             <select
@@ -278,7 +279,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
           </div>
           <h3 className="text-base font-semibold text-slate-800">ไม่พบรายการงานที่ตรงกับเงื่อนไข</h3>
           <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-            ลองปรับเปลี่ยนคำค้นหา หรือเลือกตัวกรองกลุ่มงาน/สถานะใหม่ หรือเพิ่มรายการงานใหม่
+            ลองปรับเปลี่ยนคำค้นหา หรือเลือกตัวกรองงาน/สถานะใหม่ หรือเพิ่มรายการงานใหม่
           </p>
           <div className="mt-4 flex items-center justify-center gap-3">
             {hasActiveFilters && (
@@ -308,12 +309,12 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                 <tr className="bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border-b-[2.5px] border-b-blue-300 shadow-xs">
                   <th className="py-3.5 px-4 w-16 font-bold text-blue-950">รหัส</th>
                   <th className="py-3.5 px-4 font-bold text-blue-950">ชื่องาน / รายละเอียด</th>
-                  <th className="py-3.5 px-4 w-48 font-bold text-blue-950">กลุ่มงาน / หน่วยงาน</th>
+                  <th className="py-3.5 px-4 w-48 font-bold text-blue-950">งาน / หน่วยงาน</th>
                   <th className="py-3.5 px-4 w-36 font-bold text-blue-950">ผู้รับผิดชอบ</th>
                   <th className="py-3.5 px-4 w-28 font-bold text-blue-950">ประจำเดือน</th>
                   <th className="py-3.5 px-4 w-44 font-bold text-blue-950">สถานะการดำเนินงาน</th>
                   <th className="py-3.5 px-4 w-24 font-bold text-blue-950">ความคืบหน้า</th>
-                  <th className="py-3.5 px-4 w-20 text-center font-bold text-blue-950">จัดการ</th>
+                  <th className="py-3.5 px-4 w-24 text-center font-bold text-blue-950">การจัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -332,7 +333,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
 
                       {/* ชื่องาน */}
                       <td className="py-3 px-4">
-                        <div className="font-semibold text-slate-900 text-sm">{task.title}</div>
+                        <div className="font-semibold text-slate-700 text-sm">{task.title}</div>
                         {task.description && (
                           <div className="text-slate-500 text-[11px] mt-0.5 line-clamp-1">
                             {task.description}
@@ -346,13 +347,14 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                         )}
                       </td>
 
-                      {/* หน่วยงาน: Unit Badge with light blue background & dark blue text */}
+                      {/* หน่วยงาน: Unit Badge with department color circular dot */}
                       <td className="py-3 px-4">
                         <div className="font-medium text-slate-600 text-[11px]">
                           {task.departmentName}
                         </div>
-                        <span className="inline-block mt-1 px-2 py-0.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-900 font-semibold text-[11px]">
-                          {task.unitName}
+                        <span className="inline-flex items-center gap-1.5 mt-1 px-2.5 py-0.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-[11px]">
+                          <span className={`h-2 w-2 rounded-full shrink-0 ${getDeptDotClass(task.departmentId)}`} />
+                          <span>{task.unitName}</span>
                         </span>
                       </td>
 
@@ -385,7 +387,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
                                 : task.status === 'ระหว่างดำเนินการ'
                                 ? 'bg-blue-50 text-blue-800 border-blue-300 hover:bg-blue-100'
-                                : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                                : 'bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100'
                             }`}
                           >
                             <option value="ยังไม่ดำเนินการ">ยังไม่ดำเนินการ</option>
@@ -462,12 +464,13 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                         <span className="text-[10px] font-mono text-slate-400 font-semibold">
                           {task.id}
                         </span>
-                        {/* Unit Badge (light blue background & dark blue text) */}
-                        <span className="text-[11px] font-semibold text-blue-900 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">
-                          {task.unitName}
+                        {/* Unit Badge with department color circular dot */}
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 bg-slate-50 px-2.5 py-0.5 rounded-lg border border-slate-200">
+                          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${getDeptDotClass(task.departmentId)}`} />
+                          <span>{task.unitName}</span>
                         </span>
                       </div>
-                      <h4 className="font-bold text-slate-900 text-sm leading-snug">
+                      <h4 className="font-bold text-slate-700 text-sm leading-snug">
                         {task.title}
                       </h4>
                     </div>
@@ -523,7 +526,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                             ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                             : task.status === 'ระหว่างดำเนินการ'
                             ? 'bg-blue-50 text-blue-800 border-blue-300'
-                            : 'bg-amber-50 text-amber-800 border-amber-300'
+                            : 'bg-sky-50 text-sky-800 border-sky-200'
                         }`}
                       >
                         <option value="ยังไม่ดำเนินการ">ยังไม่ดำเนินการ</option>

@@ -2,7 +2,7 @@ import { TaskItem, TaskStatus, MainDepartmentId } from '../types';
 import { DEPARTMENTS } from '../data/departments';
  
 const SHEET_NAME = 'ติดตามงาน2570';
-const SPREADSHEET_TITLE = 'ระบบติดตามงาน_ปีงบประมาณ_2570_คณะโลจิสติกส์ฯ_มน';
+const SPREADSHEET_TITLE = 'ระบบติดตามงาน_ปีงบประมาณ_2570';
 const STORAGE_KEY_SPREADSHEET_ID = 'nuls_tracking_spreadsheet_id_2570';
  
 // [เพิ่มใหม่] รหัส Google Sheet ที่ใช้เป็น "ศูนย์กลาง" ของระบบ
@@ -18,7 +18,7 @@ const encodeRange = (range: string): string => encodeURIComponent(range);
 export const HEADERS = [
   'รหัสงาน',
   'ชื่องาน/โครงการ/กิจกรรม',
-  'กลุ่มงานหลัก',
+  'งานหลัก',
   'หน่วยงานย่อย',
   'ผู้รับผิดชอบ',
   'ประจำเดือน',
@@ -44,6 +44,25 @@ export const saveSpreadsheetId = (id: string): void => {
  
 export const clearSavedSpreadsheetId = (): void => {
   localStorage.removeItem(STORAGE_KEY_SPREADSHEET_ID);
+};
+
+/**
+ * ตัดคำว่า "คณะโลจิสติกส์ฯ มน...." หรือชื่อคณะ/มหาวิทยาลัย ออกจากชื่อ Google Sheet
+ * และจัดรูปแบบให้แสดงผลอ่านง่าย สวยงาม
+ */
+export const cleanSheetTitle = (title?: string | null): string => {
+  if (!title) return '';
+  const isRawId = /^[a-zA-Z0-9_-]{25,}$/.test(title.trim());
+  if (isRawId) return title;
+
+  let cleaned = title
+    .replace(/[_\s-]*[\(\[]?คณะโลจิสติกส์.*$/gi, '')
+    .replace(/[_\s-]*[\(\[]?โลจิสติกส์.*$/gi, '')
+    .replace(/[_\s]+$/g, '')
+    .trim();
+
+  cleaned = cleaned.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  return cleaned || title;
 };
  
 // แปลงแถวจาก Sheet เป็น TaskItem

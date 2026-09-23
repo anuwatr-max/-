@@ -16,6 +16,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { UserAuthInfo, SheetSyncState } from '../types';
+import { cleanSheetTitle } from '../services/sheetsService';
 
 export type ActiveTab = 'dashboard' | 'tasks' | 'monthly-report';
 
@@ -42,21 +43,42 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
+  const navItems: {
+    id: ActiveTab;
+    label: string;
+    icon: React.ReactNode;
+    activeClass: string;
+    inactiveClass: string;
+  }[] = [
     {
       id: 'dashboard',
       label: 'รายงานผลการดำเนินงาน',
-      icon: <BarChart3 className="h-4 w-4" />,
+      icon: <BarChart3 className="h-3.5 w-3.5 drop-shadow-xs" />,
+      // แถบสีเมนูแบบนูน สีเทาอ่อน ขนาดย่อส่วนกะทัดรัด (Compact 3D Embossed Relief in Light Gray)
+      activeClass:
+        'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200 text-slate-800 font-bold border-t border-t-white border-x border-slate-300 border-b-[2.5px] border-b-slate-400 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/90 scale-[1.01]',
+      inactiveClass:
+        'bg-gradient-to-b from-slate-50/90 via-slate-100 to-slate-150 text-slate-600 hover:text-slate-800 font-medium border-t border-t-white/80 border-x border-slate-200 border-b-[2px] border-b-slate-300 shadow-2xs hover:from-slate-100 hover:to-slate-200 hover:border-b-slate-400',
     },
     {
       id: 'tasks',
-      label: 'ติดตามงานและสถานะ',
-      icon: <CheckSquare className="h-4 w-4" />,
+      label: 'ติดตามงาน',
+      icon: <CheckSquare className="h-3.5 w-3.5 drop-shadow-xs" />,
+      // แถบสีเมนูแบบนูน สีเทาอ่อน ขนาดย่อส่วนกะทัดรัด (Compact 3D Embossed Relief in Light Gray)
+      activeClass:
+        'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200 text-slate-800 font-bold border-t border-t-white border-x border-slate-300 border-b-[2.5px] border-b-slate-400 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/90 scale-[1.01]',
+      inactiveClass:
+        'bg-gradient-to-b from-slate-50/90 via-slate-100 to-slate-150 text-slate-600 hover:text-slate-800 font-medium border-t border-t-white/80 border-x border-slate-200 border-b-[2px] border-b-slate-300 shadow-2xs hover:from-slate-100 hover:to-slate-200 hover:border-b-slate-400',
     },
     {
       id: 'monthly-report',
       label: 'สรุปผลประจำเดือน',
-      icon: <FileText className="h-4 w-4" />,
+      icon: <FileText className="h-3.5 w-3.5 drop-shadow-xs" />,
+      // แถบสีเมนูแบบนูน สีเทาอ่อน ขนาดย่อส่วนกะทัดรัด (Compact 3D Embossed Relief in Light Gray)
+      activeClass:
+        'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200 text-slate-800 font-bold border-t border-t-white border-x border-slate-300 border-b-[2.5px] border-b-slate-400 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/90 scale-[1.01]',
+      inactiveClass:
+        'bg-gradient-to-b from-slate-50/90 via-slate-100 to-slate-150 text-slate-600 hover:text-slate-800 font-medium border-t border-t-white/80 border-x border-slate-200 border-b-[2px] border-b-slate-300 shadow-2xs hover:from-slate-100 hover:to-slate-200 hover:border-b-slate-400',
     },
   ];
 
@@ -72,26 +94,26 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-18">
-          {/* Logo & Org Title */}
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3 h-auto min-h-[66px] sm:min-h-[72px] py-2">
+          {/* Logo & Org Title: แบบคลีน ไม่มีแถบสี */}
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <img
-              src="/logo-nu-logistics.svg"
+              src={`${import.meta.env.BASE_URL}logo-nu-logistics.svg`}
               alt="โลโก้ คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร"
-              className="h-9 sm:h-10 w-auto max-w-[80px] sm:max-w-[95px] object-contain shrink-0"
+              className="h-10 sm:h-11 w-auto max-w-[85px] sm:max-w-[100px] object-contain shrink-0"
             />
             <div>
-              <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
+              <h1 className="font-bold text-blue-800 text-xs sm:text-sm md:text-base leading-tight whitespace-nowrap">
                 ระบบติดตามงาน ปีงบประมาณ 2570
               </h1>
-              <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate max-w-[200px] sm:max-w-none">
+              <p className="text-[11px] sm:text-xs text-slate-500 font-medium leading-tight mt-0.5 whitespace-nowrap">
                 คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
               </p>
             </div>
           </div>
 
-          {/* Desktop Nav Tabs */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60">
+          {/* Desktop Nav Tabs (แถบสีเมนูแบบนูน สีเทาอ่อน ขนาดย่อส่วนกะทัดรัด ไม่ทับตัวอักษรชื่อสถาบัน) */}
+          <nav className="hidden md:flex items-center gap-1.5 p-1 bg-slate-100/80 rounded-xl border border-slate-200/90 shadow-inner shrink-0">
             {navItems.map(item => {
               const isActive = activeTab === item.id;
               return (
@@ -99,48 +121,51 @@ export const Navbar: React.FC<NavbarProps> = ({
                   key={item.id}
                   id={`nav-tab-${item.id}`}
                   onClick={() => onTabChange(item.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-white text-blue-700 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                  className={`flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs transition-all cursor-pointer active:translate-y-0.5 select-none ${
+                    isActive ? item.activeClass : item.inactiveClass
                   }`}
                 >
                   {item.icon}
-                  <span>{item.label}</span>
+                  <span className="whitespace-nowrap">{item.label}</span>
                 </button>
               );
             })}
           </nav>
 
-          {/* Right Action Tools: Sheets status + Google Sign In */}
+          {/* Right Action Tools: Google Sheet (สีฟ้าอ่อน แบบนูน) + Google Sign In */}
           <div className="hidden sm:flex items-center gap-2.5">
-            {/* Google Sheets Badge / Quick Link */}
+            {/* 4. Google Sheet สีฟ้าอ่อน แบบนูน (Soft Light Sky Blue Embossed) */}
             {syncState.spreadsheetId ? (
-              <div className="flex items-center gap-1.5 bg-blue-50/80 border border-blue-200/80 px-2.5 py-1.5 rounded-xl text-xs">
-                <FileSpreadsheet className="h-4 w-4 text-blue-700 shrink-0" />
+              <div
+                id="navbar-sheet-button"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-sky-200 text-sky-950 font-bold border-t border-t-white border-x border-sky-200 border-b-[2.5px] border-b-sky-400 shadow-sm shadow-sky-900/10 ring-1 ring-inset ring-white text-xs active:translate-y-0.5 transition-all select-none"
+              >
+                <FileSpreadsheet className="h-4 w-4 text-sky-700 shrink-0 drop-shadow-xs" />
                 <button
                   onClick={onOpenSheetSettings}
-                  className="font-medium text-blue-900 hover:underline cursor-pointer truncate max-w-[120px] text-[11px]"
+                  className="font-bold text-sky-950 hover:text-sky-800 cursor-pointer text-xs"
                   title="คลิกเพื่อจัดการ Google Sheet"
                 >
                   Google Sheet
                 </button>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" title="เชื่อมต่ออยู่" />
                 <button
                   onClick={onQuickSync}
                   disabled={syncState.isSyncing}
                   title="ซิงค์ข้อมูลกับ Google Sheet"
-                  className="p-1 hover:bg-blue-100 rounded-md text-blue-700 transition-colors cursor-pointer"
+                  className="p-1 hover:bg-sky-200/80 rounded-md text-sky-800 transition-colors cursor-pointer ml-0.5"
                 >
                   <RefreshCw className={`h-3 w-3 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
                 </button>
               </div>
             ) : (
               <button
+                id="navbar-sheet-button"
                 onClick={onOpenSheetSettings}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 text-xs font-medium transition-colors cursor-pointer"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-sky-200 hover:from-sky-200 hover:to-sky-300 text-sky-950 font-bold border-t border-t-white border-x border-sky-200 border-b-[2.5px] border-b-sky-400 shadow-sm shadow-sky-900/10 ring-1 ring-inset ring-white text-xs active:translate-y-0.5 transition-all cursor-pointer select-none"
               >
-                <FileSpreadsheet className="h-4 w-4 text-blue-600" />
-                <span>ต่อ Google Sheet</span>
+                <FileSpreadsheet className="h-4 w-4 text-sky-700 drop-shadow-xs" />
+                <span>Google Sheet</span>
               </button>
             )}
 
@@ -160,7 +185,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 )}
                 <div className="hidden lg:block text-left">
-                  <div className="text-xs font-semibold text-slate-900 truncate max-w-[110px]">
+                  <div className="text-xs font-semibold text-slate-700 truncate max-w-[110px]">
                     {userInfo.displayName || 'ผู้ใช้ Google'}
                   </div>
                   <div className="text-[10px] text-slate-400 truncate max-w-[110px]">
@@ -214,7 +239,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex sm:hidden items-center gap-2">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              className="p-2 rounded-xl text-slate-600 hover:text-slate-700 hover:bg-slate-100"
             >
               {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -243,10 +268,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                       Google Sheet เชื่อมต่ออยู่:
                     </span>
                     <span
-                      className="font-medium text-slate-200 truncate max-w-[180px] sm:max-w-sm md:max-w-md bg-white/10 px-2 py-0.5 rounded-md border border-white/10"
-                      title={syncState.spreadsheetTitle || syncState.spreadsheetId}
+                      className="font-medium text-slate-200 truncate max-w-[200px] sm:max-w-sm md:max-w-md bg-white/10 px-2 py-0.5 rounded-md border border-white/10"
+                      title={cleanSheetTitle(syncState.spreadsheetTitle) || syncState.spreadsheetId}
                     >
-                      {syncState.spreadsheetTitle || syncState.spreadsheetId}
+                      {cleanSheetTitle(syncState.spreadsheetTitle) || syncState.spreadsheetId}
                     </span>
                   </div>
                 </>
@@ -266,16 +291,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Right: Quick Actions & Sync State */}
-            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0 w-full sm:w-auto justify-between sm:justify-end ml-auto">
               {syncState.spreadsheetId ? (
                 <>
-                  <div className="flex items-center gap-1 text-[11px] text-slate-300">
-                    <Clock className="h-3 w-3 text-cyan-400" />
-                    <span>ซิงค์ล่าสุด:</span>
-                    <span className="font-medium text-cyan-200">{formatLastSync(syncState.lastSyncedAt)}</span>
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-300 pr-1">
+                    <Clock className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                    <span className="text-slate-300">ซิงค์ล่าสุด:</span>
+                    <span className="font-semibold text-cyan-200">{formatLastSync(syncState.lastSyncedAt)}</span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <button
                       id="navbar-quick-sync-btn"
                       onClick={onQuickSync}
@@ -293,7 +318,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         href={syncState.spreadsheetUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600/60 hover:bg-emerald-600 border border-emerald-400/30 text-white font-medium text-[11px] transition-all"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600/70 hover:bg-emerald-600 border border-emerald-400/30 text-white font-medium text-[11px] transition-all"
                         title="เปิดดูไฟล์ Google Sheet บน Google Drive"
                       >
                         <ExternalLink className="h-3 w-3 text-emerald-300" />
@@ -304,11 +329,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <button
                       id="navbar-manage-sheet-btn"
                       onClick={onOpenSheetSettings}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white text-[11px] font-medium transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-slate-200 hover:text-white text-[11px] font-medium transition-colors cursor-pointer shadow-xs"
                       title="ตั้งค่าและจัดการการเชื่อมต่อ Google Sheet"
                     >
-                      <SlidersHorizontal className="h-3 w-3" />
-                      <span>จัดการ</span>
+                      <SlidersHorizontal className="h-3 w-3 text-cyan-300" />
+                      <span>การจัดการ</span>
                     </button>
                   </div>
                 </>
@@ -330,7 +355,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="sm:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-4 space-y-3">
-          <nav className="space-y-1">
+          <nav className="space-y-2">
             {navItems.map(item => {
               const isActive = activeTab === item.id;
               return (
@@ -340,10 +365,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onTabChange(item.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-slate-700 hover:bg-slate-50'
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer active:translate-y-0.5 transition-all select-none ${
+                    isActive ? item.activeClass : item.inactiveClass
                   }`}
                 >
                   {item.icon}
@@ -360,13 +383,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onOpenSheetSettings();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-blue-50 text-blue-900 text-xs font-medium border border-blue-200"
+                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-sky-200 text-sky-950 text-xs font-bold border-t border-t-white border-x border-sky-200 border-b-[2.5px] border-b-sky-400 shadow-sm ring-1 ring-inset ring-white cursor-pointer active:translate-y-0.5 select-none"
               >
-                <div className="flex items-center gap-2">
-                  <FileSpreadsheet className="h-4 w-4 text-blue-600" />
-                  <span className="truncate">Google Sheet: {syncState.spreadsheetTitle || 'เชื่อมต่อแล้ว'}</span>
+                <div className="flex items-center gap-2 truncate">
+                  <FileSpreadsheet className="h-4 w-4 text-sky-700 shrink-0 drop-shadow-xs" />
+                  <span className="truncate">Google Sheet: {cleanSheetTitle(syncState.spreadsheetTitle) || 'เชื่อมต่อแล้ว'}</span>
                 </div>
-                <span className="text-[11px] underline shrink-0 text-blue-700">จัดการ</span>
+                <span className="text-[11px] underline shrink-0 text-sky-900 ml-2 font-semibold">การจัดการ</span>
               </button>
             ) : (
               <button
@@ -374,10 +397,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onOpenSheetSettings();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-medium"
+                className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-sky-200 hover:from-sky-200 hover:to-sky-300 text-sky-950 text-xs font-bold border-t border-t-white border-x border-sky-200 border-b-[2.5px] border-b-sky-400 shadow-sm ring-1 ring-inset ring-white cursor-pointer active:translate-y-0.5 select-none"
               >
-                <FileSpreadsheet className="h-4 w-4 text-slate-500" />
-                <span>เชื่อมต่อ Google Sheet</span>
+                <FileSpreadsheet className="h-4 w-4 text-sky-700 drop-shadow-xs" />
+                <span>Google Sheet (เชื่อมต่อ Sheet)</span>
               </button>
             )}
 
@@ -397,7 +420,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   )}
                   <div className="text-left text-xs">
-                    <div className="font-semibold text-slate-900">{userInfo.displayName || 'ผู้ใช้ Google'}</div>
+                    <div className="font-semibold text-slate-700">{userInfo.displayName || 'ผู้ใช้ Google'}</div>
                     <div className="text-[10px] text-slate-500">{userInfo.email}</div>
                   </div>
                 </div>

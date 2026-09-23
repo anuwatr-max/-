@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+@layer base {
+  body {
+    color: #475569; /* สีเทาหม่น (Slate 600) */
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #334155; /* สีเทาหม่นเข้ม (Slate 700) */
+  }
+
+  /* ปรับตัวอักษรที่เป็นสีดำให้กลายเป็นสีเทาหม่นทั่วทั้งระบบ */
+  .text-slate-900,
+  .text-slate-950,
+  .text-black,
+  .text-gray-900,
+  .text-zinc-900 {
+    color: #334155 !important;
+  }
+}

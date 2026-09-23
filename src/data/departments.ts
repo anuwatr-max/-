@@ -89,3 +89,20 @@ export const FISCAL_MONTHS: FiscalMonth[] = [
   { id: '2570-08', name: 'สิงหาคม 2570', quarter: 4, year: 2570 },
   { id: '2570-09', name: 'กันยายน 2570', quarter: 4, year: 2570 },
 ];
+
+export const getDeptDotClass = (deptId: string): string => {
+  switch (deptId) {
+    case 'admin':
+    case 'general':
+      return 'bg-slate-500';
+    case 'academic':
+    case 'education':
+      return 'bg-emerald-500';
+    case 'research':
+      return 'bg-blue-600';
+    case 'finance':
+      return 'bg-sky-400';
+    default:
+      return 'bg-slate-400';
+  }
+};

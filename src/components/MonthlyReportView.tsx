@@ -9,31 +9,31 @@ import {
   Building2,
 } from 'lucide-react';
 import { TaskItem } from '../types';
-import { DEPARTMENTS, FISCAL_MONTHS } from '../data/departments';
+import { DEPARTMENTS, FISCAL_MONTHS, getDeptDotClass } from '../data/departments';
 
 interface MonthlyReportViewProps {
   tasks: TaskItem[];
 }
 
-// แถบสีอ่อน ๆ คลุมเฉพาะตัวอักษรสำหรับแต่ละกลุ่มงาน โทนสีกรอบนูนมีมิติ (Embossed 3D)
+// แถบสีอ่อน ๆ คลุมเฉพาะตัวอักษรสำหรับแต่ละงาน โทนสีกรอบนูนมีมิติ (Embossed 3D)
 const getDeptStripStyle = (id: string) => {
   switch (id) {
     case 'admin':
     case 'general':
       // งานธุรการ สีเทา
-      return 'bg-gradient-to-r from-slate-200/95 via-slate-100 to-slate-200/90 text-slate-900 border border-slate-300 border-b-[2.5px] border-b-slate-400 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/80';
+      return 'bg-gradient-to-r from-slate-150 via-slate-100 to-slate-200/90 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-350 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/80';
     case 'academic':
     case 'education':
       // งานบริการการศึกษา สีเขียว
-      return 'bg-gradient-to-r from-emerald-100/95 via-emerald-50 to-teal-100/90 text-emerald-950 border border-emerald-200 border-b-[2.5px] border-b-emerald-300 shadow-sm shadow-emerald-900/10 ring-1 ring-inset ring-white/80';
+      return 'bg-gradient-to-r from-emerald-100/95 via-emerald-50 to-teal-100/90 text-emerald-900 border border-emerald-200 border-b-[2.5px] border-b-emerald-300 shadow-sm shadow-emerald-900/10 ring-1 ring-inset ring-white/80';
     case 'research':
       // งานวิจัยและพัฒนาคุณภาพการศึกษา แถบสีน้ำเงิน
-      return 'bg-gradient-to-r from-blue-100/95 via-blue-50 to-sky-100/90 text-blue-950 border border-blue-200 border-b-[2.5px] border-b-blue-300 shadow-sm shadow-blue-900/10 ring-1 ring-inset ring-white/80';
+      return 'bg-gradient-to-r from-blue-100/95 via-blue-50 to-sky-100/90 text-blue-900 border border-blue-200 border-b-[2.5px] border-b-blue-300 shadow-sm shadow-blue-900/10 ring-1 ring-inset ring-white/80';
     case 'finance':
       // งานการเงินและพัสดุ แถบสีฟ้า
-      return 'bg-gradient-to-r from-sky-100/95 via-sky-50 to-cyan-100/90 text-sky-950 border border-sky-200 border-b-[2.5px] border-b-sky-300 shadow-sm shadow-sky-900/10 ring-1 ring-inset ring-white/80';
+      return 'bg-gradient-to-r from-sky-100/95 via-sky-50 to-cyan-100/90 text-sky-900 border border-sky-200 border-b-[2.5px] border-b-sky-300 shadow-sm shadow-sky-900/10 ring-1 ring-inset ring-white/80';
     default:
-      return 'bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 text-slate-900 border border-slate-200 border-b-[2.5px] border-b-slate-300 shadow-sm ring-1 ring-inset ring-white/80';
+      return 'bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-300 shadow-sm ring-1 ring-inset ring-white/80';
   }
 };
 
@@ -98,16 +98,17 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
       <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 print:hidden">
         <div>
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
-              <FileText className="h-5 w-5" />
+            <div className="h-8 w-8 rounded-xl bg-blue-100/80 text-blue-800 flex items-center justify-center shrink-0 border border-blue-300 shadow-xs">
+              <FileText className="h-5 w-5 text-blue-700" />
             </div>
             <h2>
-              <span className="inline-block px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border border-blue-200/90 border-b-[3px] border-b-blue-300 font-bold text-base sm:text-lg shadow-md shadow-blue-950/10 ring-1 ring-inset ring-white/80">
-                สรุปผลการดำเนินงานแต่ละงานประจำเดือน
+              {/* สรุปผลประจำเดือน แถบสีเทาอ่อน แบบนูน ย่อขนาดกะทัดรัด (Compact 3D Embossed Relief in Light Gray) */}
+              <span className="inline-block px-3 py-1 rounded-lg bg-gradient-to-r from-slate-100 via-slate-50 to-slate-150 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-400 font-bold text-sm sm:text-base shadow-sm ring-1 ring-inset ring-white/90">
+                สรุปผลประจำเดือน ปีงบประมาณ 2570
               </span>
             </h2>
           </div>
-          <p className="text-xs text-slate-500 mt-1 ml-10">
+          <p className="text-xs text-slate-500 mt-1.5 ml-1">
             คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร ประจำปีงบประมาณ 2570
           </p>
         </div>
@@ -121,7 +122,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
               id="report-month-select"
               value={selectedMonth}
               onChange={e => setSelectedMonth(e.target.value)}
-              className="bg-transparent text-xs font-bold text-slate-900 focus:outline-hidden cursor-pointer"
+              className="bg-transparent text-xs font-bold text-slate-700 focus:outline-hidden cursor-pointer"
             >
               {FISCAL_MONTHS.map(m => (
                 <option key={m.id} value={m.name}>
@@ -148,15 +149,15 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
         <div className="text-center pb-6 border-b border-slate-200 space-y-2">
           <div className="flex justify-center mb-1">
             <img
-              src="/logo-nu-logistics.svg"
+              src={`${import.meta.env.BASE_URL}logo-nu-logistics.svg`}
               alt="ตราสัญลักษณ์ คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร"
               className="h-10 sm:h-12 w-auto object-contain drop-shadow-xs"
             />
           </div>
-          <h1 className="text-sm sm:text-base font-bold text-slate-900">
+          <h1 className="text-sm sm:text-base font-bold text-slate-700">
             รายงานสรุปผลการดำเนินงานประจำเดือน {selectedMonth}
           </h1>
-          <p className="text-sm sm:text-base text-slate-800 font-semibold">
+          <p className="text-sm sm:text-base text-slate-700 font-semibold">
             คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
           </p>
           <p className="text-xs text-slate-500 font-medium">
@@ -177,7 +178,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
               งานทั้งหมด
             </span>
             <div className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-xl sm:text-2xl font-bold text-slate-900">{totalMonthTasks}</span>
+              <span className="text-xl sm:text-2xl font-bold text-slate-700">{totalMonthTasks}</span>
               <span className="text-xs text-slate-600">งาน</span>
             </div>
           </div>
@@ -188,7 +189,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
               ดำเนินการแล้วเสร็จ
             </span>
             <div className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-xl sm:text-2xl font-bold text-emerald-950">{completedMonthTasks}</span>
+              <span className="text-xl sm:text-2xl font-bold text-emerald-900">{completedMonthTasks}</span>
               <span className="text-xs text-emerald-800 font-semibold">งาน ({completionRate}%)</span>
             </div>
           </div>
@@ -199,18 +200,18 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
               ระหว่างดำเนินการ
             </span>
             <div className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-xl sm:text-2xl font-bold text-blue-950">{inProgressMonthTasks}</span>
+              <span className="text-xl sm:text-2xl font-bold text-blue-900">{inProgressMonthTasks}</span>
               <span className="text-xs text-blue-800 font-semibold">งาน</span>
             </div>
           </div>
 
-          {/* Card 4: ยังไม่ดำเนินการ - แถบสีฟ้าแบบนูน */}
-          <div className="p-3 sm:p-3.5 rounded-xl bg-sky-50/80 border border-sky-300 border-b-[3px] border-b-sky-500 shadow-sm shadow-sky-950/10 ring-1 ring-inset ring-white/80">
-            <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white border border-sky-400 border-b-[2px] border-b-sky-800 font-bold text-xs shadow-xs ring-1 ring-inset ring-white/20">
+          {/* Card 4: ยังไม่ดำเนินการ - แถบสีฟ้าอ่อนแบบนูน (Light Sky Blue Embossed) */}
+          <div className="p-3 sm:p-3.5 rounded-xl bg-sky-50/85 border border-sky-300 border-b-[3px] border-b-sky-500 shadow-sm shadow-sky-950/10 ring-1 ring-inset ring-white/80">
+            <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-sky-400 to-cyan-500 text-white border border-sky-300 border-b-[2px] border-b-sky-600 font-bold text-xs shadow-xs ring-1 ring-inset ring-white/20">
               ยังไม่ดำเนินการ
             </span>
             <div className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-xl sm:text-2xl font-bold text-sky-950">{notStartedMonthTasks}</span>
+              <span className="text-xl sm:text-2xl font-bold text-sky-900">{notStartedMonthTasks}</span>
               <span className="text-xs text-sky-800 font-semibold">งาน</span>
             </div>
           </div>
@@ -220,7 +221,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
         <div className="space-y-6 pt-2">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2">
             <h3>
-              <span className="inline-block px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-sm shadow-sm shadow-blue-950/10 ring-1 ring-inset ring-white/80">
+              <span className="inline-block px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-slate-100 via-slate-50 to-slate-150 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-300 font-bold text-sm shadow-sm ring-1 ring-inset ring-white/90">
                 ผลการดำเนินงานของสำนักงานเลขานุการ (จำแนกตาม 4 งาน)
               </span>
             </h3>
@@ -235,7 +236,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
               className="rounded-2xl border border-slate-200 overflow-hidden break-inside-avoid shadow-xs"
             >
               {/* Dept Header: ธีมสีขาว (White Theme) พร้อมแถบสีอ่อนคลุมตัวอักษร */}
-              <div className="bg-white px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-slate-900">
+              <div className="bg-white px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-slate-700">
                 <div className="flex items-center gap-3">
                   <span className="h-7 w-7 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 font-black text-xs flex items-center justify-center shadow-xs">
                     {index + 1}
@@ -271,7 +272,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
               <div className="px-5 py-3 bg-slate-50/70 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                 <div className="flex items-center justify-between sm:justify-start gap-2 text-xs text-slate-700 font-semibold shrink-0">
                   <span className="h-2 w-2 rounded-full bg-blue-600"></span>
-                  <span>ความก้าวหน้าโครงการในกลุ่มงาน:</span>
+                  <span>ความก้าวหน้าโครงการในงาน:</span>
                 </div>
                 <div className="flex-1 flex items-center gap-3">
                   <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200 shadow-inner">
@@ -307,11 +308,14 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
                       <tbody className="divide-y divide-slate-100">
                         {dept.tasks.map(task => (
                           <tr key={task.id} className="hover:bg-slate-50/50">
-                            <td className="py-2.5 px-3 font-semibold text-blue-900">
-                              {task.unitName}
+                            <td className="py-2.5 px-3 font-semibold text-slate-700">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`h-2 w-2 rounded-full shrink-0 ${getDeptDotClass(dept.id)}`} />
+                                <span>{task.unitName}</span>
+                              </div>
                             </td>
                             <td className="py-2.5 px-3">
-                              <div className="font-semibold text-slate-900">{task.title}</div>
+                              <div className="font-semibold text-slate-700">{task.title}</div>
                               {task.performanceSummary && (
                                 <div className="text-emerald-700 text-[11px] mt-0.5 bg-emerald-50/60 p-1.5 rounded-md border border-emerald-100">
                                   <span className="font-semibold">ผลสัมฤทธิ์:</span>{' '}

@@ -195,19 +195,19 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="เช่น จัดทำแผนปฏิบัติการประจำปีงบประมาณ 2570"
-              className={`w-full px-3.5 py-2 rounded-xl border text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors ${
+              className={`w-full px-3.5 py-2 rounded-xl border text-sm text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors ${
                 errors.title ? 'border-rose-400 bg-rose-50/30' : 'border-slate-300'
               }`}
             />
             {errors.title && <p className="mt-1 text-xs text-rose-600">{errors.title}</p>}
           </div>
 
-          {/* กลุ่มงาน และ หน่วยงานย่อย (Cascading Dropdowns) */}
+          {/* งาน และ หน่วยงานย่อย (Cascading Dropdowns) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block mb-1.5">
-                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
-                  กลุ่มงานหลัก
+                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-slate-100 via-slate-50 to-slate-150 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-300 font-bold text-xs shadow-xs ring-1 ring-inset ring-white">
+                  งานหลัก
                 </span>{' '}
                 <span className="text-rose-500">*</span>
               </label>
@@ -215,7 +215,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 id="task-department-select"
                 value={departmentId}
                 onChange={e => handleDepartmentChange(e.target.value as MainDepartmentId)}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
               >
                 {DEPARTMENTS.map(dept => (
                   <option key={dept.id} value={dept.id}>
@@ -227,7 +227,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
             <div>
               <label className="block mb-1.5">
-                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
+                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-slate-100 via-slate-50 to-slate-150 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-300 font-bold text-xs shadow-xs ring-1 ring-inset ring-white">
                   หน่วยงานย่อย
                 </span>{' '}
                 <span className="text-rose-500">*</span>
@@ -236,7 +236,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 id="task-unit-select"
                 value={unitId}
                 onChange={e => setUnitId(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
               >
                 {currentDept?.units.map(unit => (
                   <option key={unit.id} value={unit.id}>
@@ -251,7 +251,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block mb-1.5">
-                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
+                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-slate-100 via-slate-50 to-slate-150 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-300 font-bold text-xs shadow-xs ring-1 ring-inset ring-white">
                   สถานะการดำเนินงาน
                 </span>{' '}
                 <span className="text-rose-500">*</span>
@@ -260,7 +260,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 id="task-status-select"
                 value={status}
                 onChange={e => handleStatusChange(e.target.value as TaskStatus)}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 bg-white font-medium focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 bg-white font-medium focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
               >
                 {TASK_STATUSES.map(s => (
                   <option key={s.label} value={s.label}>
@@ -272,7 +272,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
             <div>
               <label className="block mb-1.5">
-                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
+                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-slate-100 via-slate-50 to-slate-150 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-300 font-bold text-xs shadow-xs ring-1 ring-inset ring-white">
                   ประจำเดือน
                 </span>
               </label>
@@ -280,7 +280,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 id="task-month-select"
                 value={month}
                 onChange={e => setMonth(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
               >
                 {FISCAL_MONTHS.map(m => (
                   <option key={m.id} value={m.name}>
@@ -330,7 +330,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   value={assignee}
                   onChange={e => setAssignee(e.target.value)}
                   placeholder="ชื่อ-นามสกุล ผู้รับผิดชอบ"
-                  className={`w-full pl-9 pr-3 py-2 rounded-xl border text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 ${
+                  className={`w-full pl-9 pr-3 py-2 rounded-xl border text-sm text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 ${
                     errors.assignee ? 'border-rose-400 bg-rose-50/30' : 'border-slate-300'
                   }`}
                 />
@@ -349,7 +349,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   type="date"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                 />
               </div>
             </div>
@@ -365,7 +365,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   type="date"
                   value={dueDate}
                   onChange={e => setDueDate(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                 />
               </div>
             </div>
@@ -382,7 +382,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="ระบุวัตถุประสงค์ ขอบเขตงาน หรือขั้นตอนการดำเนินงาน..."
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
             />
           </div>
 
@@ -397,7 +397,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               value={performanceSummary}
               onChange={e => setPerformanceSummary(e.target.value)}
               placeholder="เช่น ดำเนินการส่งรายงานเรียบร้อยแล้ว, เอกสารอนุมัติครบถ้วน..."
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
             />
           </div>
 
