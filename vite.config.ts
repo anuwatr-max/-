@@ -2,9 +2,9 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
-
 export default defineConfig(() => {
   return {
+base: '/task_tracking_system/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
@@ -19,4 +19,3 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
   };
-});
