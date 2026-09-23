@@ -205,8 +205,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           {/* กลุ่มงาน และ หน่วยงานย่อย (Cascading Dropdowns) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                กลุ่มงานหลัก <span className="text-rose-500">*</span>
+              <label className="block mb-1.5">
+                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
+                  กลุ่มงานหลัก
+                </span>{' '}
+                <span className="text-rose-500">*</span>
               </label>
               <select
                 id="task-department-select"
@@ -223,8 +226,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                หน่วยงานย่อย (ทำเป็น drop down) <span className="text-rose-500">*</span>
+              <label className="block mb-1.5">
+                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
+                  หน่วยงานย่อย
+                </span>{' '}
+                <span className="text-rose-500">*</span>
               </label>
               <select
                 id="task-unit-select"
@@ -244,8 +250,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           {/* สถานะการดำเนินงาน & ประจำเดือน */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                สถานะการดำเนินงาน (ทำเป็น drop down) <span className="text-rose-500">*</span>
+              <label className="block mb-1.5">
+                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
+                  สถานะการดำเนินงาน
+                </span>{' '}
+                <span className="text-rose-500">*</span>
               </label>
               <select
                 id="task-status-select"
@@ -262,8 +271,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                ประจำเดือน (ปีงบประมาณ 2570)
+              <label className="block mb-1.5">
+                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
+                  ประจำเดือน
+                </span>
               </label>
               <select
                 id="task-month-select"

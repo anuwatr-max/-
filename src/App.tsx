@@ -334,6 +334,37 @@ export default function App() {
     }
   };
 
+  // ดึงข้อมูลล่าสุดจาก Google Sheet มาแสดง (ใช้ตอนอยากเช็คว่ามีใครแก้ไขข้อมูลไปหรือไม่) [NEW]
+  const handleRefreshFromSheet = async () => {
+    let token = await getAccessToken();
+    if (!token && userInfo?.accessToken) token = userInfo.accessToken;
+
+    if (!token || !syncState.spreadsheetId) {
+      showToast('กรุณาเข้าสู่ระบบ Google และเชื่อมต่อ Sheet ก่อน', 'error');
+      return;
+    }
+
+    setSyncState(prev => ({ ...prev, isSyncing: true, error: null }));
+    try {
+      const sheetTasks = await fetchTasksFromSheet(syncState.spreadsheetId, token);
+      setTasks(sheetTasks);
+      setSyncState(prev => ({
+        ...prev,
+        isSyncing: false,
+        lastSyncedAt: new Date(),
+        error: null,
+      }));
+      showToast('รีเฟรชข้อมูลล่าสุดจาก Google Sheet สำเร็จ', 'success');
+    } catch (err: any) {
+      setSyncState(prev => ({
+        ...prev,
+        isSyncing: false,
+        error: err?.message || 'ไม่สามารถดึงข้อมูลล่าสุดได้',
+      }));
+      showToast('ไม่สามารถดึงข้อมูลล่าสุดจาก Sheet ได้ ลองใหม่อีกครั้ง', 'error');
+    }
+  };
+
   // Add or Edit Task handler
   const handleSaveTask = async (taskData: TaskItem) => {
     const isEdit = tasks.some(t => t.id === taskData.id);
@@ -362,8 +393,13 @@ export default function App() {
           }
         }
         setSyncState(prev => ({ ...prev, lastSyncedAt: new Date() }));
-      } catch (sheetErr) {
+      } catch (sheetErr: any) {
+        // [แก้ไข 1.1] แจ้งเตือนผู้ใช้แบบเห็นได้จริง แทนที่จะเงียบไว้แค่ใน console
         console.warn('Background sync failed:', sheetErr);
+        showToast(
+          'บันทึกในเครื่องสำเร็จ แต่ส่งข้อมูลขึ้น Google Sheet ไม่สำเร็จ กรุณากดซิงค์ใหม่อีกครั้ง',
+          'error'
+        );
       }
     }
   };
@@ -395,8 +431,13 @@ export default function App() {
       try {
         await updateTaskInSheet(syncState.spreadsheetId, token, task.rowNumber, updatedTask);
         setSyncState(prev => ({ ...prev, lastSyncedAt: new Date() }));
-      } catch (err) {
+      } catch (err: any) {
+        // [แก้ไข 1.2] แจ้งเตือนผู้ใช้แบบเห็นได้จริง แทนที่จะเงียบไว้แค่ใน console
         console.warn('Status update on sheet failed:', err);
+        showToast(
+          'เปลี่ยนสถานะในเครื่องสำเร็จ แต่ยังไม่ได้อัปเดตลง Google Sheet กรุณากดซิงค์ใหม่',
+          'error'
+        );
       }
     }
   };
@@ -425,10 +466,18 @@ export default function App() {
               await fullSyncToSheet(syncState.spreadsheetId, token, remainingTasks);
             }
             setSyncState(prev => ({ ...prev, lastSyncedAt: new Date() }));
-          } catch (sheetErr) {
+          } catch (sheetErr: any) {
+            // [แก้ไข 1.3] แจ้งเตือนผู้ใช้แบบเห็นได้จริง ถ้าลองซิงค์ซ้ำแล้วยังไม่สำเร็จ
             console.warn('Delete on sheet failed, performing full sync:', sheetErr);
-            if (syncState.spreadsheetId) {
-              await fullSyncToSheet(syncState.spreadsheetId, token, remainingTasks);
+            try {
+              if (syncState.spreadsheetId) {
+                await fullSyncToSheet(syncState.spreadsheetId, token, remainingTasks);
+              }
+            } catch (retryErr) {
+              showToast(
+                'ลบในเครื่องสำเร็จ แต่ลบใน Google Sheet ไม่สำเร็จ กรุณากดซิงค์ใหม่',
+                'error'
+              );
             }
           }
         }
@@ -482,6 +531,20 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* [NEW] ปุ่มรีเฟรชข้อมูลล่าสุด - แสดงเฉพาะตอนเชื่อมต่อ Sheet แล้ว */}
+        {syncState.spreadsheetId && (
+          <div className="mb-4 flex justify-end">
+            <button
+              onClick={handleRefreshFromSheet}
+              disabled={syncState.isSyncing}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              <RefreshCw className={`h-4 w-4 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
+              {syncState.isSyncing ? 'กำลังรีเฟรช...' : 'รีเฟรชข้อมูลล่าสุด'}
+            </button>
+          </div>
+        )}
+
         {/* Connection Notice Banner if Not Connected */}
         {!syncState.spreadsheetId && (
           <div className="mb-5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-transparent border border-blue-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
@@ -587,3 +650,4 @@ export default function App() {
     </div>
   );
 }
+

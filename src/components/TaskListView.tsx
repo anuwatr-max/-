@@ -128,13 +128,15 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <span>รายการติดตามงาน คณะโลจิสติกส์ฯ (ปี 2570)</span>
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-900 border border-blue-200">
+            <h2 className="text-lg font-bold text-slate-900 flex flex-wrap items-center gap-2">
+              <span className="inline-block px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border border-blue-200/90 border-b-[3px] border-b-blue-300 font-bold text-base sm:text-lg shadow-md shadow-blue-950/10 ring-1 ring-inset ring-white/80">
+                รายงานการติดตามงาน ปีงบประมาณ 2570
+              </span>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-900 border border-blue-200">
                 {filteredTasks.length} / {tasks.length} รายการ
               </span>
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-1">
               ปรับเปลี่ยนสถานะการดำเนินงานได้ทันทีผ่านเมนูดรอปดาวน์ และระบบจะบันทึกลง Google Sheet
             </p>
           </div>
@@ -167,8 +169,10 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1 border-t border-slate-100">
           {/* 1. กลุ่มงานหลัก (ทำเป็น drop down) */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
-              กลุ่มงานหลัก
+            <label className="block mb-1.5">
+              <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
+                กลุ่มงานหลัก
+              </span>
             </label>
             <select
               id="filter-dept-select"
@@ -187,8 +191,10 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
 
           {/* 2. หน่วยงานย่อย (ทำเป็น drop down) */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
-              หน่วยงานย่อย (14 หน่วย)
+            <label className="block mb-1.5">
+              <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
+                หน่วยงานย่อย
+              </span>
             </label>
             <select
               id="filter-unit-select"
@@ -207,8 +213,10 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
 
           {/* 3. สถานะการดำเนินงาน (ทำเป็น drop down) */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
-              สถานะการดำเนินงาน
+            <label className="block mb-1.5">
+              <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
+                สถานะการดำเนินงาน
+              </span>
             </label>
             <select
               id="filter-status-select"
@@ -227,8 +235,10 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
 
           {/* 4. ประจำเดือน */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
-              ประจำเดือน (ปีงบ 2570)
+            <label className="block mb-1.5">
+              <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-100/70 via-sky-50 to-indigo-50/80 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-xs shadow-xs shadow-blue-900/10 ring-1 ring-inset ring-white">
+                ประจำเดือน
+              </span>
             </label>
             <div className="flex gap-1.5">
               <select
@@ -295,15 +305,15 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
           <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold">
-                  <th className="py-3 px-4 w-16">รหัส</th>
-                  <th className="py-3 px-4">ชื่องาน / รายละเอียด</th>
-                  <th className="py-3 px-4 w-48">กลุ่มงาน / หน่วยงาน</th>
-                  <th className="py-3 px-4 w-36">ผู้รับผิดชอบ</th>
-                  <th className="py-3 px-4 w-28">ประจำเดือน</th>
-                  <th className="py-3 px-4 w-44">สถานะการดำเนินงาน</th>
-                  <th className="py-3 px-4 w-24">ความคืบหน้า</th>
-                  <th className="py-3 px-4 w-20 text-center">จัดการ</th>
+                <tr className="bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border-b-[2.5px] border-b-blue-300 shadow-xs">
+                  <th className="py-3.5 px-4 w-16 font-bold text-blue-950">รหัส</th>
+                  <th className="py-3.5 px-4 font-bold text-blue-950">ชื่องาน / รายละเอียด</th>
+                  <th className="py-3.5 px-4 w-48 font-bold text-blue-950">กลุ่มงาน / หน่วยงาน</th>
+                  <th className="py-3.5 px-4 w-36 font-bold text-blue-950">ผู้รับผิดชอบ</th>
+                  <th className="py-3.5 px-4 w-28 font-bold text-blue-950">ประจำเดือน</th>
+                  <th className="py-3.5 px-4 w-44 font-bold text-blue-950">สถานะการดำเนินงาน</th>
+                  <th className="py-3.5 px-4 w-24 font-bold text-blue-950">ความคืบหน้า</th>
+                  <th className="py-3.5 px-4 w-20 text-center font-bold text-blue-950">จัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

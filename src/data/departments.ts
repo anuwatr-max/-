@@ -3,9 +3,9 @@ import { MainDepartment, FiscalMonth, TaskStatus } from '../types';
 export const TASK_STATUSES: { label: TaskStatus; color: string; bg: string; border: string }[] = [
   {
     label: 'ยังไม่ดำเนินการ',
-    color: 'text-amber-700',
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
+    color: 'text-sky-700',
+    bg: 'bg-sky-50',
+    border: 'border-sky-200',
   },
   {
     label: 'ระหว่างดำเนินการ',
@@ -25,9 +25,9 @@ export const DEPARTMENTS: MainDepartment[] = [
   {
     id: 'admin',
     name: 'งานธุรการ',
-    color: 'text-indigo-600',
-    bgLight: 'bg-indigo-50',
-    borderColor: 'border-indigo-200',
+    color: 'text-slate-700',
+    bgLight: 'bg-slate-100',
+    borderColor: 'border-slate-300',
     units: [
       { id: '1.1', code: '1.1', name: 'หน่วยแผน', departmentId: 'admin' },
       { id: '1.2', code: '1.2', name: 'หน่วยสารบรรณ', departmentId: 'admin' },
@@ -38,9 +38,9 @@ export const DEPARTMENTS: MainDepartment[] = [
   {
     id: 'academic',
     name: 'งานบริการการศึกษา',
-    color: 'text-sky-600',
-    bgLight: 'bg-sky-50',
-    borderColor: 'border-sky-200',
+    color: 'text-emerald-700',
+    bgLight: 'bg-emerald-50',
+    borderColor: 'border-emerald-200',
     units: [
       { id: '2.1', code: '2.1', name: 'หน่วยวิชาการระดับปริญญาตรี', departmentId: 'academic' },
       { id: '2.2', code: '2.2', name: 'หน่วยวิชาการระดับบัณฑิตศึกษา', departmentId: 'academic' },
@@ -51,9 +51,9 @@ export const DEPARTMENTS: MainDepartment[] = [
   {
     id: 'research',
     name: 'งานวิจัยและพัฒนาคุณภาพการศึกษา',
-    color: 'text-violet-600',
-    bgLight: 'bg-violet-50',
-    borderColor: 'border-violet-200',
+    color: 'text-blue-700',
+    bgLight: 'bg-blue-50',
+    borderColor: 'border-blue-200',
     units: [
       { id: '3.1', code: '3.1', name: 'หน่วยเทคโนโลยีสารสนเทศ', departmentId: 'research' },
       { id: '3.2', code: '3.2', name: 'หน่วยวิจัย', departmentId: 'research' },
@@ -63,9 +63,9 @@ export const DEPARTMENTS: MainDepartment[] = [
   {
     id: 'finance',
     name: 'งานการเงินและพัสดุ',
-    color: 'text-amber-600',
-    bgLight: 'bg-amber-50',
-    borderColor: 'border-amber-200',
+    color: 'text-sky-700',
+    bgLight: 'bg-sky-50',
+    borderColor: 'border-sky-200',
     units: [
       { id: '4.1', code: '4.1', name: 'หน่วยการเงิน', departmentId: 'finance' },
       { id: '4.2', code: '4.2', name: 'หน่วยบัญชี', departmentId: 'finance' },

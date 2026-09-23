@@ -75,18 +75,15 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center justify-between h-16 sm:h-18">
           {/* Logo & Org Title */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center h-11 w-11 rounded-2xl bg-gradient-to-br from-blue-700 via-indigo-800 to-slate-900 text-white shadow-sm shrink-0">
-              <Building2 className="h-6 w-6" />
-            </div>
+            <img
+              src="/logo-nu-logistics.svg"
+              alt="โลโก้ คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร"
+              className="h-9 sm:h-10 w-auto max-w-[80px] sm:max-w-[95px] object-contain shrink-0"
+            />
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
-                  ระบบติดตามงาน ปีงบประมาณ 2570
-                </h1>
-                <span className="hidden sm:inline-block bg-blue-100 text-blue-900 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-200">
-                  ปีงบ 2570
-                </span>
-              </div>
+              <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
+                ระบบติดตามงาน ปีงบประมาณ 2570
+              </h1>
               <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate max-w-[200px] sm:max-w-none">
                 คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
               </p>
@@ -283,10 +280,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                       id="navbar-quick-sync-btn"
                       onClick={onQuickSync}
                       disabled={syncState.isSyncing}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600/60 hover:bg-blue-600 border border-blue-400/30 text-white font-medium text-[11px] transition-all cursor-pointer disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 border border-blue-400/40 text-white font-semibold text-[11px] transition-all cursor-pointer disabled:opacity-50 shadow-xs"
                       title="ซิงค์ข้อมูลกับ Google Sheet ตอนนี้"
                     >
-                      <RefreshCw className={`h-3 w-3 text-cyan-300 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`h-3 w-3 text-cyan-200 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
                       <span>{syncState.isSyncing ? 'กำลังซิงค์...' : 'ซิงค์ด่วน'}</span>
                     </button>
 

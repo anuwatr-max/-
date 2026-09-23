@@ -15,9 +15,31 @@ interface MonthlyReportViewProps {
   tasks: TaskItem[];
 }
 
+// แถบสีอ่อน ๆ คลุมเฉพาะตัวอักษรสำหรับแต่ละกลุ่มงาน โทนสีกรอบนูนมีมิติ (Embossed 3D)
+const getDeptStripStyle = (id: string) => {
+  switch (id) {
+    case 'admin':
+    case 'general':
+      // งานธุรการ สีเทา
+      return 'bg-gradient-to-r from-slate-200/95 via-slate-100 to-slate-200/90 text-slate-900 border border-slate-300 border-b-[2.5px] border-b-slate-400 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/80';
+    case 'academic':
+    case 'education':
+      // งานบริการการศึกษา สีเขียว
+      return 'bg-gradient-to-r from-emerald-100/95 via-emerald-50 to-teal-100/90 text-emerald-950 border border-emerald-200 border-b-[2.5px] border-b-emerald-300 shadow-sm shadow-emerald-900/10 ring-1 ring-inset ring-white/80';
+    case 'research':
+      // งานวิจัยและพัฒนาคุณภาพการศึกษา แถบสีน้ำเงิน
+      return 'bg-gradient-to-r from-blue-100/95 via-blue-50 to-sky-100/90 text-blue-950 border border-blue-200 border-b-[2.5px] border-b-blue-300 shadow-sm shadow-blue-900/10 ring-1 ring-inset ring-white/80';
+    case 'finance':
+      // งานการเงินและพัสดุ แถบสีฟ้า
+      return 'bg-gradient-to-r from-sky-100/95 via-sky-50 to-cyan-100/90 text-sky-950 border border-sky-200 border-b-[2.5px] border-b-sky-300 shadow-sm shadow-sky-900/10 ring-1 ring-inset ring-white/80';
+    default:
+      return 'bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 text-slate-900 border border-slate-200 border-b-[2.5px] border-b-slate-300 shadow-sm ring-1 ring-inset ring-white/80';
+  }
+};
+
 export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) => {
-  // Default to current active month or March 2570
-  const [selectedMonth, setSelectedMonth] = useState<string>('มีนาคม 2570');
+  // Default to current active month or October 2569
+  const [selectedMonth, setSelectedMonth] = useState<string>('ตุลาคม 2569');
 
   // Filter tasks for the selected month
   const monthTasks = useMemo(() => {
@@ -79,11 +101,13 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
             <div className="h-8 w-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
               <FileText className="h-5 w-5" />
             </div>
-            <h2 className="text-lg font-bold text-slate-900">
-              สรุปผลการดำเนินงานของแต่ละงานประจำเดือน
+            <h2>
+              <span className="inline-block px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border border-blue-200/90 border-b-[3px] border-b-blue-300 font-bold text-base sm:text-lg shadow-md shadow-blue-950/10 ring-1 ring-inset ring-white/80">
+                สรุปผลการดำเนินงานแต่ละงานประจำเดือน
+              </span>
             </h2>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5 ml-10">
+          <p className="text-xs text-slate-500 mt-1 ml-10">
             คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร ประจำปีงบประมาณ 2570
           </p>
         </div>
@@ -120,19 +144,23 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
 
       {/* Printable Report Document Container */}
       <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-xs print:p-0 print:border-none print:shadow-none space-y-6">
-        {/* Official Header for University Report: Premium Blue Emblem & Official Letterhead */}
-        <div className="text-center pb-6 border-b border-slate-200 space-y-1.5">
-          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-blue-700 via-indigo-800 to-slate-900 text-white shadow-md shadow-blue-950/20 mb-2">
-            <Building2 className="h-7 w-7" />
+        {/* Official Header for University Report: Official NU Logistics Emblem & Official Letterhead */}
+        <div className="text-center pb-6 border-b border-slate-200 space-y-2">
+          <div className="flex justify-center mb-1">
+            <img
+              src="/logo-nu-logistics.svg"
+              alt="ตราสัญลักษณ์ คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร"
+              className="h-10 sm:h-12 w-auto object-contain drop-shadow-xs"
+            />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+          <h1 className="text-sm sm:text-base font-bold text-slate-900">
             รายงานสรุปผลการดำเนินงานประจำเดือน {selectedMonth}
           </h1>
-          <p className="text-sm text-slate-800 font-semibold">
+          <p className="text-sm sm:text-base text-slate-800 font-semibold">
             คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
           </p>
-          <p className="text-xs text-blue-800/80 font-medium">
-            แผนปฏิบัติการประจำปีงบประมาณ พ.ศ. 2570 | ข้อมูล ณ วันที่{' '}
+          <p className="text-xs text-slate-500 font-medium">
+            ข้อมูล ณ วันที่{' '}
             {new Date().toLocaleDateString('th-TH', {
               year: 'numeric',
               month: 'long',
@@ -141,76 +169,120 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
           </p>
         </div>
 
-        {/* Executive Summary Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-200/70">
-            <span className="text-xs text-blue-900 font-medium">งานในรอบเดือนนี้</span>
-            <div className="mt-1 flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-slate-900">{totalMonthTasks}</span>
-              <span className="text-xs text-slate-500">งาน</span>
+        {/* Executive Summary Cards: ช่องสี่เหลี่ยมขนาดกะทัดรัด แถบสีนูนมีมิติ (Embossed 3D) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
+          {/* Card 1: งานทั้งหมด - แถบสีเทาเข้มแบบนูน */}
+          <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50/90 border border-slate-300 border-b-[3px] border-b-slate-600 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/80">
+            <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-slate-700 to-slate-800 text-white border border-slate-600 border-b-[2px] border-b-slate-950 font-bold text-xs shadow-xs ring-1 ring-inset ring-white/20">
+              งานทั้งหมด
+            </span>
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-xl sm:text-2xl font-bold text-slate-900">{totalMonthTasks}</span>
+              <span className="text-xs text-slate-600">งาน</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
-            <span className="text-xs text-emerald-700 font-medium">ดำเนินการแล้วเสร็จ</span>
-            <div className="mt-1 flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-emerald-700">{completedMonthTasks}</span>
-              <span className="text-xs text-emerald-600">งาน ({completionRate}%)</span>
+          {/* Card 2: ดำเนินการแล้วเสร็จ - แถบสีเขียวแบบนูน */}
+          <div className="p-3 sm:p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-300 border-b-[3px] border-b-emerald-600 shadow-sm shadow-emerald-950/10 ring-1 ring-inset ring-white/80">
+            <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 text-white border border-emerald-500 border-b-[2px] border-b-emerald-900 font-bold text-xs shadow-xs ring-1 ring-inset ring-white/20">
+              ดำเนินการแล้วเสร็จ
+            </span>
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-xl sm:text-2xl font-bold text-emerald-950">{completedMonthTasks}</span>
+              <span className="text-xs text-emerald-800 font-semibold">งาน ({completionRate}%)</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-            <span className="text-xs text-blue-700 font-medium">ระหว่างดำเนินการ</span>
-            <div className="mt-1 flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-blue-700">{inProgressMonthTasks}</span>
-              <span className="text-xs text-blue-600">งาน</span>
+          {/* Card 3: ระหว่างดำเนินการ - แถบสีน้ำเงินแบบนูน */}
+          <div className="p-3 sm:p-3.5 rounded-xl bg-blue-50/80 border border-blue-300 border-b-[3px] border-b-blue-600 shadow-sm shadow-blue-950/10 ring-1 ring-inset ring-white/80">
+            <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white border border-blue-500 border-b-[2px] border-b-blue-950 font-bold text-xs shadow-xs ring-1 ring-inset ring-white/20">
+              ระหว่างดำเนินการ
+            </span>
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-xl sm:text-2xl font-bold text-blue-950">{inProgressMonthTasks}</span>
+              <span className="text-xs text-blue-800 font-semibold">งาน</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
-            <span className="text-xs text-amber-700 font-medium">ยังไม่ดำเนินการ</span>
-            <div className="mt-1 flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-amber-700">{notStartedMonthTasks}</span>
-              <span className="text-xs text-amber-600">งาน</span>
+          {/* Card 4: ยังไม่ดำเนินการ - แถบสีฟ้าแบบนูน */}
+          <div className="p-3 sm:p-3.5 rounded-xl bg-sky-50/80 border border-sky-300 border-b-[3px] border-b-sky-500 shadow-sm shadow-sky-950/10 ring-1 ring-inset ring-white/80">
+            <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white border border-sky-400 border-b-[2px] border-b-sky-800 font-bold text-xs shadow-xs ring-1 ring-inset ring-white/20">
+              ยังไม่ดำเนินการ
+            </span>
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-xl sm:text-2xl font-bold text-sky-950">{notStartedMonthTasks}</span>
+              <span className="text-xs text-sky-800 font-semibold">งาน</span>
             </div>
           </div>
         </div>
 
-        {/* Detail Breakdown by 4 Departments */}
+        {/* Detail Breakdown by 4 Departments - สำนักงานเลขานุการ */}
         <div className="space-y-6 pt-2">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h3>
+              <span className="inline-block px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border border-blue-200/90 border-b-[2.5px] border-b-blue-300 font-bold text-sm shadow-sm shadow-blue-950/10 ring-1 ring-inset ring-white/80">
+                ผลการดำเนินงานของสำนักงานเลขานุการ (จำแนกตาม 4 งาน)
+              </span>
+            </h3>
+            <span className="text-xs text-slate-500">
+              คณะโลจิสติกส์และดิจิทัลซัพพลายเชน
+            </span>
+          </div>
           {departmentReports.map((dept, index) => (
             <div
               key={dept.id}
               id={`report-dept-${dept.id}`}
-              className="rounded-2xl border border-slate-200 overflow-hidden break-inside-avoid"
+              className="rounded-2xl border border-slate-200 overflow-hidden break-inside-avoid shadow-xs"
             >
-              {/* Dept Header */}
-              <div className="bg-slate-50/90 px-5 py-3 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="h-6 w-6 rounded-lg bg-blue-800 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+              {/* Dept Header: ธีมสีขาว (White Theme) พร้อมแถบสีอ่อนคลุมตัวอักษร */}
+              <div className="bg-white px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-slate-900">
+                <div className="flex items-center gap-3">
+                  <span className="h-7 w-7 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 font-black text-xs flex items-center justify-center shadow-xs">
                     {index + 1}
                   </span>
                   <div>
-                    <h3 className="font-bold text-slate-900 text-sm sm:text-base">{dept.name}</h3>
-                    <span className="text-[11px] text-slate-500">
-                      มีทั้งหมด {dept.units.length} หน่วยงานย่อย
+                    <h3 className="tracking-tight">
+                      <span
+                        className={`inline-block px-3 py-1 rounded-xl text-sm sm:text-base font-bold ${getDeptStripStyle(dept.id)}`}
+                      >
+                        {dept.name}
+                      </span>
+                    </h3>
+                    <span className="text-xs text-slate-500 block mt-1">
+                      มีทั้งหมด {dept.units.length} หน่วยงานย่อยในสังกัด
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
                   <div className="text-xs font-semibold text-slate-600">
                     ความสำเร็จ:{' '}
-                    <span className="text-blue-800 font-bold">
-                      {dept.completed}/{dept.total} งาน ({dept.rate}%)
+                    <span className="text-blue-700 font-bold text-sm">
+                      {dept.completed}/{dept.total} งาน
                     </span>
                   </div>
-                  <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden hidden sm:block">
+                  <div className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-blue-50 border border-blue-200 text-blue-700 shadow-xs">
+                    {dept.rate}%
+                  </div>
+                </div>
+              </div>
+
+              {/* แถบสไลเดอร์เปอร์เซ็นต์ความคืบหน้า โทนสีอ่อนเบา สุภาพ */}
+              <div className="px-5 py-3 bg-slate-50/70 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <div className="flex items-center justify-between sm:justify-start gap-2 text-xs text-slate-700 font-semibold shrink-0">
+                  <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                  <span>ความก้าวหน้าโครงการในกลุ่มงาน:</span>
+                </div>
+                <div className="flex-1 flex items-center gap-3">
+                  <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200 shadow-inner">
                     <div
-                      style={{ width: `${dept.rate}%` }}
-                      className="h-full bg-emerald-500 rounded-full"
+                      style={{ width: `${Math.max(dept.rate, 2)}%` }}
+                      className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 shadow-xs"
                     />
                   </div>
+                  <span className="text-xs font-bold text-blue-700 shrink-0 min-w-[36px] text-right">
+                    {dept.rate}%
+                  </span>
                 </div>
               </div>
 
@@ -224,12 +296,12 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="border-b border-slate-200 text-slate-600 font-semibold bg-slate-50/40">
-                          <th className="py-2.5 px-3 w-44">หน่วยงานย่อย</th>
-                          <th className="py-2.5 px-3">ชื่องาน / รายละเอียด</th>
-                          <th className="py-2.5 px-3 w-32">ผู้รับผิดชอบ</th>
-                          <th className="py-2.5 px-3 w-28">สถานะ</th>
-                          <th className="py-2.5 px-3 w-16 text-right">ความคืบหน้า</th>
+                        <tr className="bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border-b-[2.5px] border-b-blue-300 font-bold shadow-xs">
+                          <th className="py-2.5 px-3 w-44 font-bold text-blue-950">หน่วยงานย่อย</th>
+                          <th className="py-2.5 px-3 font-bold text-blue-950">ชื่องาน / รายละเอียด</th>
+                          <th className="py-2.5 px-3 w-32 font-bold text-blue-950">ผู้รับผิดชอบ</th>
+                          <th className="py-2.5 px-3 w-28 font-bold text-blue-950">สถานะ</th>
+                          <th className="py-2.5 px-3 w-16 text-right font-bold text-blue-950">ความคืบหน้า</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
