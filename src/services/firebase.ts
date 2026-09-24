@@ -16,6 +16,10 @@ const provider = new GoogleAuthProvider();
 // Workspace scopes requested
 provider.addScope('https://www.googleapis.com/auth/spreadsheets');
 provider.addScope('https://www.googleapis.com/auth/drive.file');
+// Allow user to select their @nu.ac.th account
+provider.setCustomParameters({
+  prompt: 'select_account',
+});
 
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;
@@ -51,8 +55,17 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
 
     cachedAccessToken = credential.accessToken;
     return { user: result.user, accessToken: cachedAccessToken };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Sign in error:', error);
+    if (error?.code === 'auth/popup-blocked') {
+      throw new Error('เบราว์เซอร์บนมือถือบล็อกหน้าต่างป๊อปอัป กรุณาอนุญาตป๊อปอัปในการตั้งค่าเบราว์เซอร์ หรือเปิดด้วย Google Chrome/Safari');
+    }
+    if (error?.code === 'auth/popup-closed-by-user') {
+      throw new Error('หน้าต่างเข้าสู่ระบบถูกปิดก่อนยืนยันสำเร็จ');
+    }
+    if (error?.code === 'auth/cancelled-popup-request') {
+      throw new Error('มีการเรียกเข้าสู่ระบบซ้ำซ้อน กรุณาลองใหม่อีกครั้ง');
+    }
     throw error;
   } finally {
     isSigningIn = false;
