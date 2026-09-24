@@ -6,6 +6,7 @@ import { MonthlyReportView } from './components/MonthlyReportView';
 import { TaskModal } from './components/TaskModal';
 import { ConfirmModal } from './components/ConfirmModal';
 import { SheetSettingsModal } from './components/SheetSettingsModal';
+import { LoginView } from './components/LoginView';
 import { TaskItem, TaskStatus, UserAuthInfo, SheetSyncState } from './types';
 import { INITIAL_SAMPLE_TASKS } from './data/sampleTasks';
 import {
@@ -25,7 +26,7 @@ import {
   deleteTaskFromSheet,
   fullSyncToSheet,
 } from './services/sheetsService';
-import { CheckCircle2, AlertCircle, RefreshCw, FileSpreadsheet } from 'lucide-react';
+import { CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 
 const LOCAL_STORAGE_TASKS_KEY = 'nuls_tracking_tasks_2570';
 
@@ -48,6 +49,15 @@ export default function App() {
 
   // User Auth State
   const [userInfo, setUserInfo] = useState<UserAuthInfo | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
+
+  // Helper ตรวจสอบว่าใช้อีเมลมหาวิทยาลัยนเรศวร (@nu.ac.th) หรือไม่
+  const isNuEmail = (email?: string | null): boolean => {
+    if (!email) return false;
+    return email.trim().toLowerCase().endsWith('@nu.ac.th');
+  };
 
   // Google Sheet Sync State
   const [syncState, setSyncState] = useState<SheetSyncState>({
@@ -108,6 +118,17 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = initAuth(
       async (user, token) => {
+        // ตรวจสอบว่าใช้อีเมล @nu.ac.th หรือไม่
+        if (!isNuEmail(user.email)) {
+          console.warn('Unauthorized email domain on load:', user.email);
+          await logout();
+          setUserInfo(null);
+          setAuthError(`ขออภัย บัญชีอีเมล ${user.email} ไม่ได้รับอนุญาต ระบบสงวนสิทธิ์เฉพาะอีเมลสถาบัน @nu.ac.th เท่านั้น`);
+          setIsAuthChecking(false);
+          return;
+        }
+
+        setAuthError(null);
         setUserInfo({
           uid: user.uid,
           displayName: user.displayName,
@@ -146,21 +167,38 @@ export default function App() {
             }
           }
         }
+        setIsAuthChecking(false);
       },
       () => {
         setUserInfo(null);
+        setIsAuthChecking(false);
       }
     );
 
     return () => unsubscribe();
   }, [showToast]);
 
-  // Google Sign In
+  // Google Sign In (บังคับเฉพาะ @nu.ac.th)
   const handleSignInWithGoogle = async () => {
     try {
+      setIsLoggingIn(true);
+      setAuthError(null);
       setSyncState(prev => ({ ...prev, isSyncing: true, error: null }));
       const result = await googleSignIn();
       if (result) {
+        // ตรวจสอบโดเมนอีเมล @nu.ac.th
+        if (!isNuEmail(result.user.email)) {
+          await logout();
+          setUserInfo(null);
+          const errorMsg = `ขออภัย บัญชีอีเมล "${result.user.email}" ไม่ได้รับอนุญาต ระบบสงวนสิทธิ์เฉพาะอีเมลสถาบัน @nu.ac.th เท่านั้น`;
+          setAuthError(errorMsg);
+          showToast('กรุณาใช้อีเมล @nu.ac.th ในการเข้าสู่ระบบ', 'error');
+          setSyncState(prev => ({ ...prev, isSyncing: false }));
+          setIsLoggingIn(false);
+          return;
+        }
+
+        setAuthError(null);
         setUserInfo({
           uid: result.user.uid,
           displayName: result.user.displayName,
@@ -168,7 +206,7 @@ export default function App() {
           photoURL: result.user.photoURL,
           accessToken: result.accessToken,
         });
-        showToast(`เข้าสู่ระบบสำเร็จ: ${result.user.displayName || result.user.email}`, 'success');
+        showToast(`ยินดีต้อนรับ: ${result.user.displayName || result.user.email}`, 'success');
 
         // Check if spreadsheet exists, if not prompt to create one
         let sheetId = getSavedSpreadsheetId();
@@ -223,8 +261,15 @@ export default function App() {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      showToast(err?.message || 'การเข้าสู่ระบบ Google ขัดข้อง กรุณาลองใหม่อีกครั้ง', 'error');
+      const isPopupClosed = err?.code === 'auth/popup-closed-by-user';
+      const msg = isPopupClosed
+        ? 'ยกเลิกการเข้าสู่ระบบ Google'
+        : (err?.message || 'การเข้าสู่ระบบ Google ขัดข้อง กรุณาลองใหม่อีกครั้ง');
+      setAuthError(msg);
+      showToast(msg, 'error');
       setSyncState(prev => ({ ...prev, isSyncing: false }));
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -233,6 +278,7 @@ export default function App() {
     try {
       await logout();
       setUserInfo(null);
+      setAuthError(null);
       showToast('ออกจากระบบเรียบร้อยแล้ว', 'success');
     } catch (err) {
       console.error('Sign out error:', err);
@@ -496,6 +542,64 @@ export default function App() {
     setActiveTab('tasks');
   };
 
+  // กรณีโหลดหน้าเว็บและกำลังตรวจสอบสิทธิ์เริ่มต้น
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-950 text-white font-['Prompt',sans-serif]">
+        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300 p-6 text-center">
+          <img
+            src={`${import.meta.env.BASE_URL}logo-nu-logistics.svg`}
+            alt="โลโก้ คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร"
+            className="h-16 sm:h-20 w-auto object-contain drop-shadow-md animate-pulse"
+          />
+          <div className="space-y-1">
+            <h1 className="text-base sm:text-lg font-bold tracking-tight text-blue-200">
+              ระบบติดตามงาน ปีงบประมาณ 2570
+            </h1>
+            <p className="text-xs text-slate-300">
+              คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-cyan-300 mt-2 px-3.5 py-1.5 rounded-full bg-blue-900/40 border border-blue-700/50">
+            <div className="h-3.5 w-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+            <span>กำลังตรวจสอบสิทธิ์การเข้าใช้งาน...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ประตูด่านหน้า Login View หากยังไม่ได้ล็อกอินด้วย @nu.ac.th
+  if (!userInfo) {
+    return (
+      <>
+        {toastMessage && (
+          <div
+            id="toast-notification"
+            className={`fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold animate-in slide-in-from-bottom-5 duration-200 ${
+              toastMessage.type === 'success'
+                ? 'bg-slate-900 text-white border border-slate-800'
+                : 'bg-rose-600 text-white'
+            }`}
+          >
+            {toastMessage.type === 'success' ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-white" />
+            )}
+            <span>{toastMessage.text}</span>
+          </div>
+        )}
+        <LoginView
+          onSignIn={handleSignInWithGoogle}
+          isLoading={isLoggingIn}
+          errorMessage={authError}
+          onClearError={() => setAuthError(null)}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-['Prompt',sans-serif]">
       {/* Toast Notification */}
@@ -545,31 +649,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Connection Notice Banner if Not Connected */}
-        {!syncState.spreadsheetId && (
-          <div className="mb-5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-transparent border border-blue-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-                <FileSpreadsheet className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="font-bold text-slate-900">
-                  ระบบกำลังทำงานในโหมดจัดเก็บข้อมูลเฉพาะเครื่อง (Local Mode)
-                </span>
-                <p className="text-slate-600 text-[11px] mt-0.5">
-                  เข้าสู่ระบบด้วย Google Account เพื่อเชื่อมต่อและบันทึกข้อมูลลง Google Sheet อัตโนมัติ
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleSignInWithGoogle}
-              className="px-3.5 py-1.5 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-semibold rounded-xl text-xs transition-colors cursor-pointer shrink-0 shadow-2xs"
-            >
-              เข้าสู่ระบบ Google
-            </button>
-          </div>
-        )}
-
         {/* Tab Views */}
         {activeTab === 'dashboard' && (
           <DashboardView
@@ -606,14 +685,14 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-6 mt-8 text-center text-xs text-slate-500 print:hidden">
-        <div className="max-w-7xl mx-auto px-4 space-y-1">
+        <div className="max-w-7xl mx-auto px-4 space-y-1.5">
           <p className="font-semibold text-slate-700">
-            ระบบติดตามงาน (Task Tracking System) ปีงบประมาณ 2570
+            ระบบติดตามงาน ปีงบประมาณ 2570
           </p>
           <p className="text-slate-500 text-[11px]">
-            คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร (Faculty of Logistics and Digital Supply Chain, Naresuan University)
+            คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
           </p>
-          <p className="text-slate-400 text-[10px] pt-1">
+          <p className="text-slate-400 text-[10px] pt-0.5">
             เชื่อมต่อการจัดเก็บข้อมูลด้วย Google Sheets API & Google Authentication
           </p>
         </div>
