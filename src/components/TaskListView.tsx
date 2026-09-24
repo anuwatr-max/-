@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { TaskItem, TaskStatus, MainDepartmentId } from '../types';
 import { DEPARTMENTS, FISCAL_MONTHS, TASK_STATUSES, getDeptDotClass } from '../data/departments';
+import { DeviceMode } from './DeviceDropdown';
 
 interface TaskListViewProps {
   tasks: TaskItem[];
@@ -29,6 +30,7 @@ interface TaskListViewProps {
   onQuickStatusChange: (task: TaskItem, newStatus: TaskStatus) => Promise<void>;
   initialStatusFilter?: TaskStatus | 'all';
   initialDeptFilter?: string;
+  deviceMode?: DeviceMode;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -41,7 +43,9 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
   onQuickStatusChange,
   initialStatusFilter = 'all',
   initialDeptFilter = 'all',
+  deviceMode = 'desktop',
 }) => {
+  const isMobileLayout = deviceMode === 'mobile';
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState<string>(initialDeptFilter);
   const [selectedUnit, setSelectedUnit] = useState<string>('all');
@@ -359,7 +363,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
       ) : (
         <div className="space-y-3">
           {/* Desktop & Tablet Table View */}
-          <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className={`${isMobileLayout ? 'hidden' : 'hidden md:block'} bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden`}>
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-gradient-to-r from-blue-100/95 via-sky-50 to-indigo-100/90 text-blue-950 border-b-[2.5px] border-b-blue-300 shadow-xs">
@@ -504,7 +508,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
           </div>
 
           {/* Mobile Card View (optimized for smartphones) */}
-          <div className="grid grid-cols-1 gap-3 md:hidden">
+          <div className={`${isMobileLayout ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-1 gap-3 md:hidden'}`}>
             {paginatedTasks.map(task => {
               const isUpdating = updatingTaskId === task.id;
               return (

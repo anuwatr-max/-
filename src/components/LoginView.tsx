@@ -1,11 +1,14 @@
 import React from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import { DeviceDropdown, DeviceMode } from './DeviceDropdown';
 
 interface LoginViewProps {
   onSignIn: () => void;
   isLoading: boolean;
   errorMessage: string | null;
   onClearError: () => void;
+  deviceMode?: DeviceMode;
+  onChangeDeviceMode?: (mode: DeviceMode) => void;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({
@@ -13,9 +16,21 @@ export const LoginView: React.FC<LoginViewProps> = ({
   isLoading,
   errorMessage,
   onClearError,
+  deviceMode,
+  onChangeDeviceMode,
 }) => {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-slate-900 via-blue-950 to-slate-950 text-slate-100 relative overflow-hidden font-['Prompt',sans-serif]">
+      {/* Device Dropdown at top right corner */}
+      {deviceMode && onChangeDeviceMode && (
+        <div className="absolute top-4 right-4 z-30">
+          <DeviceDropdown
+            deviceMode={deviceMode}
+            onChangeDeviceMode={onChangeDeviceMode}
+          />
+        </div>
+      )}
+
       {/* Subtle Background Glows */}
       <div className="absolute top-[-10%] left-[20%] w-[500px] h-[500px] rounded-full bg-blue-600/15 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[15%] w-[450px] h-[450px] rounded-full bg-cyan-500/10 blur-[130px] pointer-events-none" />

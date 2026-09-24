@@ -13,12 +13,14 @@ import {
 import { TaskItem, MainDepartmentId, TaskStatus } from '../types';
 import { DEPARTMENTS, FISCAL_MONTHS } from '../data/departments';
 import { DepartmentPerformanceChart } from './DepartmentPerformanceChart';
+import { DeviceMode } from './DeviceDropdown';
 
 interface DashboardViewProps {
   tasks: TaskItem[];
   onSelectDepartmentFilter?: (deptId: string) => void;
   onSelectStatusFilter?: (status: TaskStatus) => void;
   onOpenNewTaskModal: () => void;
+  deviceMode?: DeviceMode;
 }
 
 // แถบสีอ่อน ๆ คลุมเฉพาะตัวอักษรสำหรับแต่ละงาน โทนสีกรอบนูนมีมิติ (Embossed 3D)
@@ -90,6 +92,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectDepartmentFilter,
   onSelectStatusFilter,
   onOpenNewTaskModal,
+  deviceMode = 'desktop',
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedQuarter, setSelectedQuarter] = useState<string>('all');
@@ -170,19 +173,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     <div id="dashboard-view" className="space-y-6">
       {/* Top Filter Bar: Deep Navy & Cyan/Blue Accents */}
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 min-w-0">
             <div className="h-8 w-8 rounded-xl bg-slate-150 text-slate-800 flex items-center justify-center shrink-0 border border-slate-300 shadow-xs">
-              <BarChart3 className="h-5 w-5 text-slate-700" />
+              <BarChart3 className="h-5 w-5 text-slate-700 shrink-0" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               {/* รายงานผลการดำเนินงาน แถบสีเทาอ่อน แบบนูน ย่อขนาดกะทัดรัด (Compact 3D Embossed Relief in Light Gray) */}
-              <span className="inline-block px-3 py-1 rounded-lg bg-gradient-to-r from-slate-100 via-slate-50 to-slate-150 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-400 font-bold text-sm sm:text-base shadow-sm ring-1 ring-inset ring-white/90">
+              <span className="inline-block px-2.5 sm:px-3 py-1 rounded-lg bg-gradient-to-r from-slate-100 via-slate-50 to-slate-150 text-slate-700 border border-slate-200 border-b-[2.5px] border-b-slate-400 font-bold text-xs sm:text-sm md:text-base shadow-sm ring-1 ring-inset ring-white/90 leading-tight">
                 รายงานผลการดำเนินงาน ปีงบประมาณ 2570
               </span>
             </div>
           </div>
-          <p className="text-xs text-slate-500 mt-1.5 ml-1">
+          <p className="text-[11px] sm:text-xs text-slate-500 mt-1.5 ml-1 truncate">
             คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
           </p>
         </div>
@@ -243,7 +246,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* KPI Cards Grid: ช่องสี่เหลี่ยมขนาดกะทัดรัด แถบสีนูนมีมิติ (Embossed 3D) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+      <div className={`grid gap-2.5 sm:gap-3.5 ${
+        deviceMode === 'mobile'
+          ? 'grid-cols-2'
+          : deviceMode === 'tablet'
+          ? 'grid-cols-2 sm:grid-cols-4'
+          : 'grid-cols-2 lg:grid-cols-4'
+      }`}>
         {/* Card 1: งานทั้งหมด - แถบสีเทาเข้มแบบนูน */}
         <div
           id="kpi-card-total"

@@ -7,6 +7,7 @@ import { TaskModal } from './components/TaskModal';
 import { ConfirmModal } from './components/ConfirmModal';
 import { SheetSettingsModal } from './components/SheetSettingsModal';
 import { LoginView } from './components/LoginView';
+import { DeviceDropdown, DeviceMode } from './components/DeviceDropdown';
 import { TaskItem, TaskStatus, UserAuthInfo, SheetSyncState } from './types';
 import { INITIAL_SAMPLE_TASKS } from './data/sampleTasks';
 import {
@@ -26,12 +27,14 @@ import {
   deleteTaskFromSheet,
   fullSyncToSheet,
 } from './services/sheetsService';
-import { CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle2, AlertCircle, RefreshCw, Smartphone, Tablet, X } from 'lucide-react';
 
 const LOCAL_STORAGE_TASKS_KEY = 'nuls_tracking_tasks_2570';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
+  const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
+  const [deviceZoom, setDeviceZoom] = useState<number>(1);
 
   // Tasks state (initial load from localStorage or fallback to sample tasks)
   const [tasks, setTasks] = useState<TaskItem[]>(() => {
@@ -572,36 +575,295 @@ export default function App() {
   // ประตูด่านหน้า Login View หากยังไม่ได้ล็อกอินด้วย @nu.ac.th
   if (!userInfo) {
     return (
-      <>
-        {toastMessage && (
-          <div
-            id="toast-notification"
-            className={`fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold animate-in slide-in-from-bottom-5 duration-200 ${
-              toastMessage.type === 'success'
-                ? 'bg-slate-900 text-white border border-slate-800'
-                : 'bg-rose-600 text-white'
-            }`}
-          >
-            {toastMessage.type === 'success' ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-            ) : (
-              <AlertCircle className="h-4 w-4 text-white" />
-            )}
-            <span>{toastMessage.text}</span>
-          </div>
+      <div className={`min-h-screen flex flex-col ${
+        deviceMode !== 'desktop'
+          ? 'bg-slate-100 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] py-4 px-2 sm:px-4 items-center justify-start overflow-x-auto'
+          : ''
+      }`}>
+        {/* Top Simulator Control Bar (เมื่อเลือก Mobile หรือ Tablet) */}
+        {deviceMode !== 'desktop' && (
+          <header className="w-full max-w-4xl mx-auto bg-white/95 backdrop-blur-md border border-slate-200/90 py-2 px-4 shadow-sm rounded-2xl mb-4 flex flex-wrap items-center justify-between gap-3 text-xs z-50">
+            <div className="flex items-center gap-3">
+              <DeviceDropdown deviceMode={deviceMode} onChangeDeviceMode={setDeviceMode} />
+              <span className="text-slate-300">|</span>
+              <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
+                {deviceMode === 'mobile' ? (
+                  <>
+                    <Smartphone className="h-4 w-4 text-blue-600" />
+                    <span>จำลองสมาร์ตโฟน (Mobile: 390 × 844 px)</span>
+                  </>
+                ) : (
+                  <>
+                    <Tablet className="h-4 w-4 text-blue-600" />
+                    <span>จำลองแท็บเล็ต (Tablet: 768 × 1024 px)</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs">
+                <span className="px-2 text-slate-500 font-medium text-[11px]">ขนาด:</span>
+                <button
+                  type="button"
+                  onClick={() => setDeviceZoom(1)}
+                  className={`px-2.5 py-0.5 rounded-lg text-[11px] font-medium transition-all ${
+                    deviceZoom === 1
+                      ? 'bg-white text-blue-700 shadow-2xs font-bold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  100%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeviceZoom(1.2)}
+                  className={`px-2.5 py-0.5 rounded-lg text-[11px] font-medium transition-all ${
+                    deviceZoom === 1.2
+                      ? 'bg-white text-blue-700 shadow-2xs font-bold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                  title="ขยายขนาดให้อ่านง่าย ชัดเจน เต็มตา"
+                >
+                  120% (ขยายชัดเจน)
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setDeviceMode('desktop')}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 rounded-xl border border-slate-200 font-medium text-xs transition-colors cursor-pointer select-none"
+                title="กลับสู่มุมมองขนาดหน้าจอปกติ (เต็มจอ)"
+              >
+                <X className="h-3.5 w-3.5" />
+                <span>กลับหน้าจอปกติ</span>
+              </button>
+            </div>
+          </header>
         )}
-        <LoginView
-          onSignIn={handleSignInWithGoogle}
-          isLoading={isLoggingIn}
-          errorMessage={authError}
-          onClearError={() => setAuthError(null)}
-        />
-      </>
+
+        <div
+          style={deviceMode === 'mobile' && deviceZoom !== 1 ? { transform: `scale(${deviceZoom})`, transformOrigin: 'top center' } : undefined}
+          className={`w-full transition-all duration-300 ${
+            deviceMode === 'tablet'
+              ? 'max-w-[768px] mx-auto my-2 rounded-[32px] shadow-2xl border-[10px] border-slate-800 overflow-hidden min-h-[90vh]'
+              : deviceMode === 'mobile'
+              ? 'max-w-[390px] mx-auto my-2 rounded-[42px] shadow-2xl border-[10px] border-slate-800 overflow-hidden min-h-[844px]'
+              : 'flex-1 flex flex-col'
+          }`}
+        >
+          {toastMessage && (
+            <div
+              id="toast-notification"
+              className={`fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold animate-in slide-in-from-bottom-5 duration-200 ${
+                toastMessage.type === 'success'
+                  ? 'bg-slate-900 text-white border border-slate-800'
+                  : 'bg-rose-600 text-white'
+              }`}
+            >
+              {toastMessage.type === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-white" />
+              )}
+              <span>{toastMessage.text}</span>
+            </div>
+          )}
+          <LoginView
+            onSignIn={handleSignInWithGoogle}
+            isLoading={isLoggingIn}
+            errorMessage={authError}
+            onClearError={() => setAuthError(null)}
+            deviceMode={deviceMode}
+            onChangeDeviceMode={setDeviceMode}
+          />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-['Prompt',sans-serif]">
+    <div className={`min-h-screen flex flex-col ${
+      deviceMode !== 'desktop'
+        ? 'bg-slate-100 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] py-4 px-2 sm:px-4 items-center justify-start overflow-x-auto'
+        : 'bg-slate-50'
+    }`}>
+      {/* Top Simulator Control Bar (เมื่อเลือก Mobile หรือ Tablet) */}
+      {deviceMode !== 'desktop' && (
+        <header className="w-full max-w-4xl mx-auto bg-white/95 backdrop-blur-md border border-slate-200/90 py-2 px-4 shadow-sm rounded-2xl mb-4 flex flex-wrap items-center justify-between gap-3 text-xs z-50">
+          <div className="flex items-center gap-3">
+            <DeviceDropdown deviceMode={deviceMode} onChangeDeviceMode={setDeviceMode} />
+            <span className="text-slate-300">|</span>
+            <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
+              {deviceMode === 'mobile' ? (
+                <>
+                  <Smartphone className="h-4 w-4 text-blue-600" />
+                  <span>จำลองสมาร์ตโฟน (Mobile: 390 × 844 px)</span>
+                </>
+              ) : (
+                <>
+                  <Tablet className="h-4 w-4 text-blue-600" />
+                  <span>จำลองแท็บเล็ต (Tablet: 768 × 1024 px)</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            {/* Zoom Scale Selector */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs">
+              <span className="px-2 text-slate-500 font-medium text-[11px]">ขนาด:</span>
+              <button
+                type="button"
+                onClick={() => setDeviceZoom(1)}
+                className={`px-2.5 py-0.5 rounded-lg text-[11px] font-medium transition-all ${
+                  deviceZoom === 1
+                    ? 'bg-white text-blue-700 shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                100%
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeviceZoom(1.2)}
+                className={`px-2.5 py-0.5 rounded-lg text-[11px] font-medium transition-all ${
+                  deviceZoom === 1.2
+                    ? 'bg-white text-blue-700 shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="ขยายขนาดให้อ่านง่าย ชัดเจน เต็มตา"
+              >
+                120% (ขยายชัดเจน)
+              </button>
+            </div>
+
+            {/* Close / Return to full screen */}
+            <button
+              type="button"
+              onClick={() => setDeviceMode('desktop')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 rounded-xl border border-slate-200 font-medium text-xs transition-colors cursor-pointer select-none"
+              title="กลับสู่มุมมองขนาดหน้าจอปกติ (เต็มจอ)"
+            >
+              <X className="h-3.5 w-3.5" />
+              <span>กลับหน้าจอปกติ</span>
+            </button>
+          </div>
+        </header>
+      )}
+
+      {/* Frame Container for Simulated Devices */}
+      <div
+        style={deviceMode === 'mobile' && deviceZoom !== 1 ? { transform: `scale(${deviceZoom})`, transformOrigin: 'top center' } : undefined}
+        className={`w-full transition-all duration-300 flex flex-col flex-1 ${
+          deviceMode === 'tablet'
+            ? 'max-w-[768px] mx-auto my-2 rounded-[32px] shadow-2xl border-[10px] border-slate-800 overflow-hidden bg-slate-50 min-h-[85vh] max-h-[90vh] ring-1 ring-slate-900/10'
+            : deviceMode === 'mobile'
+            ? 'max-w-[390px] mx-auto my-2 rounded-[42px] shadow-2xl border-[10px] border-slate-800 overflow-hidden bg-slate-50 min-h-[844px] max-h-[88vh] ring-1 ring-slate-900/10'
+            : 'bg-slate-50 text-slate-900'
+        } font-['Prompt',sans-serif]`}
+      >
+        {/* Mobile Top Notch / Dynamic Island */}
+        {deviceMode === 'mobile' && (
+          <div className="w-full bg-slate-800 py-1.5 flex justify-center items-center shrink-0">
+            <div className="w-24 h-4 bg-slate-900 rounded-full flex items-center justify-end pr-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500/40" />
+            </div>
+          </div>
+        )}
+
+        {/* Scrollable Container inside phone/tablet frame */}
+        <div className={`flex flex-col flex-1 ${deviceMode !== 'desktop' ? 'overflow-y-auto' : ''}`}>
+          {/* Main Navbar */}
+          <Navbar
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            userInfo={userInfo}
+            syncState={syncState}
+            onSignInWithGoogle={handleSignInWithGoogle}
+            onSignOut={handleSignOut}
+            onOpenSheetSettings={() => setIsSheetSettingsOpen(true)}
+            onQuickSync={handleSyncAllTasks}
+            deviceMode={deviceMode}
+            onChangeDeviceMode={setDeviceMode}
+          />
+
+          {/* Main Container */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {/* [NEW] ปุ่มรีเฟรชข้อมูลล่าสุด - แสดงเฉพาะตอนเชื่อมต่อ Sheet แล้ว โทนสีฟ้า แบบนูน */}
+            {syncState.spreadsheetId && (
+              <div className="mb-4 flex justify-end">
+                <button
+                  onClick={handleRefreshFromSheet}
+                  disabled={syncState.isSyncing}
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 hover:from-sky-500 hover:to-sky-700 border-t border-t-sky-200 border-x border-sky-500 border-b-[3.5px] border-b-sky-850 shadow-md shadow-sky-600/25 ring-1 ring-inset ring-white/30 rounded-xl transition-all active:translate-y-0.5 active:border-b-2 disabled:opacity-50 cursor-pointer select-none"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
+                  <span>รีเฟรชข้อมูลล่าสุดจาก Google Sheet</span>
+                </button>
+              </div>
+            )}
+
+            {/* Tab Views */}
+            {activeTab === 'dashboard' && (
+              <DashboardView
+                tasks={tasks}
+                onSelectDepartmentFilter={handleSelectDeptFromDashboard}
+                onSelectStatusFilter={handleSelectStatusFromDashboard}
+                onOpenNewTaskModal={() => {
+                  setTaskToEdit(null);
+                  setIsTaskModalOpen(true);
+                }}
+                deviceMode={deviceMode}
+              />
+            )}
+
+            {activeTab === 'tasks' && (
+              <TaskListView
+                tasks={tasks}
+                initialStatusFilter={initialFilterStatus}
+                initialDeptFilter={initialFilterDept}
+                onAddTask={() => {
+                  setTaskToEdit(null);
+                  setIsTaskModalOpen(true);
+                }}
+                onEditTask={task => {
+                  setTaskToEdit(task);
+                  setIsTaskModalOpen(true);
+                }}
+                onDeleteTask={handleDeleteTaskRequest}
+                onQuickStatusChange={handleQuickStatusChange}
+                deviceMode={deviceMode}
+              />
+            )}
+
+            {activeTab === 'monthly-report' && <MonthlyReportView tasks={tasks} />}
+          </main>
+
+          {/* Footer */}
+          <footer className="border-t border-slate-200 bg-white py-6 mt-8 text-center text-xs text-slate-500 print:hidden">
+            <div className="max-w-7xl mx-auto px-4 space-y-1.5">
+              <p className="font-semibold text-slate-700">
+                ระบบติดตามงาน ปีงบประมาณ 2570
+              </p>
+              <p className="text-slate-500 text-[11px]">
+                คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
+              </p>
+              <p className="text-slate-400 text-[10px] pt-0.5">
+                เชื่อมต่อการจัดเก็บข้อมูลด้วย Google Sheets API & Google Authentication
+              </p>
+            </div>
+          </footer>
+        </div>
+
+        {/* Mobile Home Indicator bar */}
+        {deviceMode === 'mobile' && (
+          <div className="w-full bg-slate-800 py-2 flex justify-center items-center shrink-0">
+            <div className="w-28 h-1 bg-slate-500 rounded-full" />
+          </div>
+        )}
+      </div>
+
       {/* Toast Notification */}
       {toastMessage && (
         <div
@@ -620,83 +882,6 @@ export default function App() {
           <span>{toastMessage.text}</span>
         </div>
       )}
-
-      {/* Main Navbar */}
-      <Navbar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        userInfo={userInfo}
-        syncState={syncState}
-        onSignInWithGoogle={handleSignInWithGoogle}
-        onSignOut={handleSignOut}
-        onOpenSheetSettings={() => setIsSheetSettingsOpen(true)}
-        onQuickSync={handleSyncAllTasks}
-      />
-
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* [NEW] ปุ่มรีเฟรชข้อมูลล่าสุด - แสดงเฉพาะตอนเชื่อมต่อ Sheet แล้ว โทนสีฟ้า แบบนูน */}
-        {syncState.spreadsheetId && (
-          <div className="mb-4 flex justify-end">
-            <button
-              onClick={handleRefreshFromSheet}
-              disabled={syncState.isSyncing}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 hover:from-sky-500 hover:to-sky-700 border-t border-t-sky-200 border-x border-sky-500 border-b-[3.5px] border-b-sky-850 shadow-md shadow-sky-600/25 ring-1 ring-inset ring-white/30 rounded-xl transition-all active:translate-y-0.5 active:border-b-2 disabled:opacity-50 cursor-pointer select-none"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
-              <span>รีเฟรชข้อมูลล่าสุดจาก Google Sheet</span>
-            </button>
-          </div>
-        )}
-
-        {/* Tab Views */}
-        {activeTab === 'dashboard' && (
-          <DashboardView
-            tasks={tasks}
-            onSelectDepartmentFilter={handleSelectDeptFromDashboard}
-            onSelectStatusFilter={handleSelectStatusFromDashboard}
-            onOpenNewTaskModal={() => {
-              setTaskToEdit(null);
-              setIsTaskModalOpen(true);
-            }}
-          />
-        )}
-
-        {activeTab === 'tasks' && (
-          <TaskListView
-            tasks={tasks}
-            initialStatusFilter={initialFilterStatus}
-            initialDeptFilter={initialFilterDept}
-            onAddTask={() => {
-              setTaskToEdit(null);
-              setIsTaskModalOpen(true);
-            }}
-            onEditTask={task => {
-              setTaskToEdit(task);
-              setIsTaskModalOpen(true);
-            }}
-            onDeleteTask={handleDeleteTaskRequest}
-            onQuickStatusChange={handleQuickStatusChange}
-          />
-        )}
-
-        {activeTab === 'monthly-report' && <MonthlyReportView tasks={tasks} />}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-6 mt-8 text-center text-xs text-slate-500 print:hidden">
-        <div className="max-w-7xl mx-auto px-4 space-y-1.5">
-          <p className="font-semibold text-slate-700">
-            ระบบติดตามงาน ปีงบประมาณ 2570
-          </p>
-          <p className="text-slate-500 text-[11px]">
-            คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
-          </p>
-          <p className="text-slate-400 text-[10px] pt-0.5">
-            เชื่อมต่อการจัดเก็บข้อมูลด้วย Google Sheets API & Google Authentication
-          </p>
-        </div>
-      </footer>
 
       {/* Modals */}
       <TaskModal
