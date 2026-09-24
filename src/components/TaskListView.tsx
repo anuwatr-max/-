@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Plus,
@@ -13,6 +13,10 @@ import {
   Building2,
   ChevronDown,
   RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import { TaskItem, TaskStatus, MainDepartmentId } from '../types';
 import { DEPARTMENTS, FISCAL_MONTHS, TASK_STATUSES, getDeptDotClass } from '../data/departments';
@@ -26,6 +30,8 @@ interface TaskListViewProps {
   initialStatusFilter?: TaskStatus | 'all';
   initialDeptFilter?: string;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 export const TaskListView: React.FC<TaskListViewProps> = ({
   tasks,
@@ -42,6 +48,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
   const [selectedStatus, setSelectedStatus] = useState<string>(initialStatusFilter);
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   // Cascading units for current selected department
   const availableUnits = useMemo(() => {
@@ -96,6 +103,55 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
       return true;
     });
   }, [tasks, searchTerm, selectedDept, selectedUnit, selectedStatus, selectedMonth]);
+
+  // Reset to page 1 when any filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedDept, selectedUnit, selectedStatus, selectedMonth]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTasks.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredTasks.length);
+
+  const paginatedTasks = useMemo(() => {
+    return filteredTasks.slice(startIndex, endIndex);
+  }, [filteredTasks, startIndex, endIndex]);
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages || page === safeCurrentPage) return;
+    setCurrentPage(page);
+    const element = document.getElementById('task-list-view');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const getPageNumbers = (): (number | string)[] => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (safeCurrentPage <= 4) {
+        for (let i = 1; i <= 5; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (safeCurrentPage >= totalPages - 3) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(safeCurrentPage - 1);
+        pages.push(safeCurrentPage);
+        pages.push(safeCurrentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
 
   const handleStatusSelect = async (task: TaskItem, newStatus: TaskStatus) => {
     if (task.status === newStatus) return;
@@ -318,7 +374,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredTasks.map(task => {
+                {paginatedTasks.map(task => {
                   const isUpdating = updatingTaskId === task.id;
                   return (
                     <tr
@@ -449,7 +505,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
 
           {/* Mobile Card View (optimized for smartphones) */}
           <div className="grid grid-cols-1 gap-3 md:hidden">
-            {filteredTasks.map(task => {
+            {paginatedTasks.map(task => {
               const isUpdating = updatingTaskId === task.id;
               return (
                 <div
@@ -556,6 +612,94 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
               );
             })}
           </div>
+
+          {/* Pagination Controls */}
+          {filteredTasks.length > 0 && (
+            <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs select-none">
+              {/* Items summary */}
+              <div className="text-slate-500 text-center sm:text-left">
+                แสดง <span className="font-bold text-slate-800">{filteredTasks.length > 0 ? startIndex + 1 : 0} - {endIndex}</span> จากทั้งหมด <span className="font-bold text-slate-800">{filteredTasks.length}</span> รายการ
+                <span className="ml-1.5 text-slate-400 font-normal">
+                  (หน้า {safeCurrentPage} จาก {totalPages} หน้า • หน้าละ 10 รายการ)
+                </span>
+              </div>
+
+              {/* Navigation buttons */}
+              <div className="flex items-center gap-1 flex-wrap justify-center">
+                {/* First page button */}
+                {totalPages > 2 && (
+                  <button
+                    onClick={() => handlePageChange(1)}
+                    disabled={safeCurrentPage === 1}
+                    title="ไปหน้าแรก"
+                    className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-700 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </button>
+                )}
+
+                {/* Previous page button */}
+                <button
+                  onClick={() => handlePageChange(safeCurrentPage - 1)}
+                  disabled={safeCurrentPage === 1}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-700 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer font-medium"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">ก่อนหน้า</span>
+                </button>
+
+                {/* Numbered page buttons */}
+                <div className="flex items-center gap-1">
+                  {getPageNumbers().map((p, idx) => {
+                    if (p === '...') {
+                      return (
+                        <span key={`ellipsis-${idx}`} className="px-1.5 py-1 text-slate-400 font-medium">
+                          …
+                        </span>
+                      );
+                    }
+                    const pageNum = p as number;
+                    const isActive = pageNum === safeCurrentPage;
+                    return (
+                      <button
+                        key={`page-btn-${pageNum}`}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`h-8 min-w-[32px] px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-blue-800 text-white shadow-xs'
+                            : 'text-slate-700 hover:bg-slate-100 hover:text-blue-800'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Next page button */}
+                <button
+                  onClick={() => handlePageChange(safeCurrentPage + 1)}
+                  disabled={safeCurrentPage === totalPages}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-700 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer font-medium"
+                >
+                  <span className="hidden sm:inline">ถัดไป</span>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+
+                {/* Last page button */}
+                {totalPages > 2 && (
+                  <button
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={safeCurrentPage === totalPages}
+                    title="ไปหน้าสุดท้าย"
+                    className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-700 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
