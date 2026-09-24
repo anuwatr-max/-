@@ -713,8 +713,8 @@ export default function App() {
               </div>
             )}
 
-            {/* [NEW] ปุ่มรีเฟรชข้อมูลล่าสุด - แสดงเฉพาะตอนเชื่อมต่อ Sheet แล้ว โทนสีฟ้า แบบนูน */}
-            {syncState.spreadsheetId && (
+            {/* ปุ่มรีเฟรชข้อมูลล่าสุด - แสดงเฉพาะหน้า รายงานผลการดำเนินงาน (dashboard) เท่านั้น */}
+            {syncState.spreadsheetId && activeTab === 'dashboard' && (
               <div className="mb-4 flex justify-end">
                 <button
                   onClick={handleRefreshFromSheet}
