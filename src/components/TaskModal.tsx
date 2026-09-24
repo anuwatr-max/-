@@ -166,7 +166,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </div>
             <div>
               <h3 className="font-semibold text-base sm:text-lg">
-                {taskToEdit ? 'แก้ไขข้อมูลงาน / โครงการ' : 'เพิ่มงาน / โครงการใหม่'}
+                {taskToEdit ? 'แก้ไขข้อมูลงาน' : 'เพิ่มงานใหม่'}
               </h3>
               <p className="text-xs text-blue-200/90">
                 คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร (ปีงบประมาณ 2570)

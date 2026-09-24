@@ -526,7 +526,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           onClick={onOpenNewTaskModal}
           className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-semibold rounded-xl text-sm shadow-md shadow-blue-950/60 transition-all cursor-pointer shrink-0 border border-cyan-400/30"
         >
-          + เพิ่มงาน / โครงการใหม่
+          + เพิ่มงานใหม่
         </button>
       </div>
     </div>

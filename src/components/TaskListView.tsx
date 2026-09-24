@@ -205,7 +205,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
             className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-blue-700 via-blue-600 to-cyan-600 hover:from-blue-800 hover:via-blue-700 hover:to-cyan-700 text-white text-sm font-semibold rounded-xl shadow-xs hover:shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
           >
             <Plus className="h-4 w-4" />
-            <span>เพิ่มงาน / โครงการใหม่</span>
+            <span>เพิ่มงานใหม่</span>
           </button>
         </div>
 
