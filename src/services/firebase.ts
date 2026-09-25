@@ -5,12 +5,23 @@ import {
   GoogleAuthProvider,
   onAuthStateChanged,
   signOut,
+  setPersistence,
+  browserLocalPersistence,
   User,
 } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
+
+// Use local persistence so users stay logged in across page reloads on mobile
+try {
+  setPersistence(auth, browserLocalPersistence).catch(err => {
+    console.warn('Set auth persistence warning:', err);
+  });
+} catch (e) {
+  console.warn('Set auth persistence exception:', e);
+}
 
 const provider = new GoogleAuthProvider();
 // Workspace scopes requested
@@ -57,8 +68,16 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.error('Sign in error:', error);
+    const msg = String(error?.message || '');
+    if (
+      msg.includes('missing initial state') ||
+      msg.includes('sessionStorage') ||
+      error?.code === 'auth/internal-error'
+    ) {
+      throw new Error('ไม่สามารถเข้าสู่ระบบในหน้านี้ได้ เนื่องจากเบราว์เซอร์ของแอป (เช่น LINE) ไม่อนุญาต กรุณากดปุ่ม 3 จุด (...) แล้วเลือก "เปิดในเบราว์เซอร์อื่น" หรือเปิดด้วย Google Chrome');
+    }
     if (error?.code === 'auth/popup-blocked') {
-      throw new Error('เบราว์เซอร์บนมือถือบล็อกหน้าต่างป๊อปอัป กรุณาอนุญาตป๊อปอัปในการตั้งค่าเบราว์เซอร์ หรือเปิดด้วย Google Chrome/Safari');
+      throw new Error('เบราว์เซอร์บนมือถือบล็อกหน้าต่างป๊อปอัป กรุณาเปิดด้วย Google Chrome หรือ Safari เพื่อเข้าสู่ระบบ');
     }
     if (error?.code === 'auth/popup-closed-by-user') {
       throw new Error('หน้าต่างเข้าสู่ระบบถูกปิดก่อนยืนยันสำเร็จ');

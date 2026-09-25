@@ -194,7 +194,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                 ติดตามงาน ปีงบประมาณ 2570
               </span>
               <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-300 shadow-xs">
-                {filteredTasks.length} / {tasks.length} รายการ
+                {filteredTasks.length} / {tasks.length} งาน
               </span>
             </h2>
             <p className="text-xs text-slate-500 mt-1">
@@ -622,9 +622,9 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
             <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs select-none">
               {/* Items summary */}
               <div className="text-slate-500 text-center sm:text-left">
-                แสดง <span className="font-bold text-slate-800">{filteredTasks.length > 0 ? startIndex + 1 : 0} - {endIndex}</span> จากทั้งหมด <span className="font-bold text-slate-800">{filteredTasks.length}</span> รายการ
+                แสดง <span className="font-bold text-slate-800">{filteredTasks.length > 0 ? startIndex + 1 : 0} - {endIndex}</span> จากทั้งหมด <span className="font-bold text-slate-800">{filteredTasks.length}</span> งาน
                 <span className="ml-1.5 text-slate-400 font-normal">
-                  (หน้า {safeCurrentPage} จาก {totalPages} หน้า • หน้าละ 10 รายการ)
+                  (หน้า {safeCurrentPage} จาก {totalPages} หน้า • หน้าละ 10 งาน)
                 </span>
               </div>
 

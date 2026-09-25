@@ -248,7 +248,7 @@ export const DepartmentPerformanceChart: React.FC<DepartmentPerformanceChartProp
               </span>
             </div>
             <div className="text-base font-bold text-slate-950">
-              {totalAllTasks} <span className="text-xs font-normal text-slate-600">โครงการ/งาน</span>
+              {totalAllTasks} <span className="text-xs font-normal text-slate-600">งาน</span>
             </div>
           </div>
         </div>
@@ -293,8 +293,25 @@ export const DepartmentPerformanceChart: React.FC<DepartmentPerformanceChartProp
         {/* คอลัมน์ซ้าย: Pie / Donut Chart พร้อม Center Display */}
         <div className="lg:col-span-5 flex flex-col items-center justify-center">
           <div className="relative w-full max-w-[280px] h-[280px] sm:max-w-[300px] sm:h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+            {/* ตรงกลาง Donut แสดงตัวเลขสรุป (Center Metric Infographic) - วางไว้ก่อน ResponsiveContainer เพื่อไม่ให้ทับ Tooltip */}
+            <div
+              className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4 transition-all duration-200 z-0 ${
+                hoveredIndex !== null ? 'opacity-0 scale-90' : 'opacity-100 scale-100'
+              }`}
+            >
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                {viewMode === 'departments' ? 'งานรวม 4 กลุ่ม' : 'ความสำเร็จรวม'}
+              </span>
+              <span className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight my-0.5">
+                {viewMode === 'departments' ? totalAllTasks : `${averageCompletionRate}%`}
+              </span>
+              <span className="text-xs font-medium text-slate-500">
+                {viewMode === 'departments' ? 'ภาระงาน' : `เสร็จ ${totalCompleted}/${totalAllTasks} งาน`}
+              </span>
+            </div>
+
+            <ResponsiveContainer width="100%" height="100%" className="relative z-10">
+              <PieChart onMouseLeave={() => setHoveredIndex(null)}>
                 <Pie
                   data={activePieData}
                   cx="50%"
@@ -306,6 +323,7 @@ export const DepartmentPerformanceChart: React.FC<DepartmentPerformanceChartProp
                   animationDuration={800}
                   onMouseEnter={(_, index) => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
+                  onClick={(_, index) => setHoveredIndex(hoveredIndex === index ? null : index)}
                 >
                   {activePieData.map((entry, index) => (
                     <Cell
@@ -323,28 +341,29 @@ export const DepartmentPerformanceChart: React.FC<DepartmentPerformanceChartProp
                   ))}
                 </Pie>
                 <Tooltip
+                  wrapperStyle={{ zIndex: 50, outline: 'none', pointerEvents: 'none' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="bg-white/95 backdrop-blur-xs p-3 rounded-xl border border-slate-200 shadow-md text-xs space-y-1.5 min-w-[170px]">
-                          <div className="flex items-center gap-1.5 font-bold text-slate-900 text-sm">
+                        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xl text-xs space-y-1.5 min-w-[175px] ring-1 ring-slate-900/10">
+                          <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
                             <span
-                              className="h-2.5 w-2.5 rounded-full"
+                              className="h-2.5 w-2.5 rounded-full shrink-0"
                               style={{ backgroundColor: data.color }}
                             />
                             <span>{data.name}</span>
                           </div>
-                          <div className="flex items-center justify-between text-slate-700 pt-1 border-t border-slate-100">
+                          <div className="flex items-center justify-between text-slate-700 pt-1.5 border-t border-slate-100">
                             <span>จำนวน:</span>
-                            <span className="font-bold">{data.value} งาน</span>
+                            <span className="font-bold text-slate-900">{data.value} งาน</span>
                           </div>
                           <div className="flex items-center justify-between text-slate-600">
                             <span>สัดส่วน:</span>
-                            <span className="font-bold">{data.share}%</span>
+                            <span className="font-bold text-slate-900">{data.share}%</span>
                           </div>
                           {data.completionRate !== undefined && (
-                            <div className="flex items-center justify-between text-blue-700 font-bold">
+                            <div className="flex items-center justify-between text-blue-700 font-bold pt-0.5">
                               <span>ความสำเร็จ:</span>
                               <span>{data.completionRate}%</span>
                             </div>
@@ -357,19 +376,6 @@ export const DepartmentPerformanceChart: React.FC<DepartmentPerformanceChartProp
                 />
               </PieChart>
             </ResponsiveContainer>
-
-            {/* ตรงกลาง Donut แสดงตัวเลขสรุป (Center Metric Infographic) */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                {viewMode === 'departments' ? 'งานรวม 4 กลุ่ม' : 'ความสำเร็จรวม'}
-              </span>
-              <span className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight my-0.5">
-                {viewMode === 'departments' ? totalAllTasks : `${averageCompletionRate}%`}
-              </span>
-              <span className="text-xs font-medium text-slate-500">
-                {viewMode === 'departments' ? 'โครงการ / ภาระงาน' : `เสร็จ ${totalCompleted}/${totalAllTasks} งาน`}
-              </span>
-            </div>
           </div>
 
           <p className="text-[11px] text-slate-400 mt-2 text-center">

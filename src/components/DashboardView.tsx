@@ -268,7 +268,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-xl sm:text-2xl font-bold text-slate-700 tracking-tight">{totalTasks}</span>
-            <span className="text-xs text-slate-600">รายการ</span>
+            <span className="text-xs text-slate-600">งาน</span>
           </div>
           <div className="mt-2 pt-1.5 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-600">
             <span>ความก้าวหน้ารวม</span>
@@ -292,7 +292,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-xl sm:text-2xl font-bold text-emerald-900 tracking-tight">{completedTasks}</span>
-            <span className="text-xs text-emerald-800">รายการ</span>
+            <span className="text-xs text-emerald-800">งาน</span>
           </div>
           <div className="mt-2 pt-1.5 border-t border-emerald-200/80 flex items-center justify-between text-[11px] text-emerald-800">
             <span>คิดเป็นร้อยละ</span>
@@ -316,7 +316,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-xl sm:text-2xl font-bold text-blue-900 tracking-tight">{inProgressTasks}</span>
-            <span className="text-xs text-blue-800">รายการ</span>
+            <span className="text-xs text-blue-800">งาน</span>
           </div>
           <div className="mt-2 pt-1.5 border-t border-blue-200/80 flex items-center justify-between text-[11px] text-blue-800">
             <span>คิดเป็นร้อยละ</span>
@@ -342,7 +342,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-xl sm:text-2xl font-bold text-sky-900 tracking-tight">{notStartedTasks}</span>
-            <span className="text-xs text-sky-800">รายการ</span>
+            <span className="text-xs text-sky-800">งาน</span>
           </div>
           <div className="mt-2 pt-1.5 border-t border-sky-200/80 flex items-center justify-between text-[11px] text-sky-800">
             <span>คิดเป็นร้อยละ</span>
@@ -414,7 +414,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-medium text-slate-500">
-                      {dept.completed}/{dept.total} รายการ
+                      {dept.completed}/{dept.total} งาน
                     </span>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-bold border shadow-xs ${getDeptProgressColor(dept.id).badge}`}>
                       {dept.completionRate}%
@@ -441,17 +441,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <div
                       style={{ width: `${dept.total > 0 ? (dept.completed / dept.total) * 100 : 0}%` }}
                       className="bg-emerald-500 transition-all duration-500"
-                      title={`แล้วเสร็จ ${dept.completed} รายการ`}
+                      title={`แล้วเสร็จ ${dept.completed} งาน`}
                     />
                     <div
                       style={{ width: `${dept.total > 0 ? (dept.inProgress / dept.total) * 100 : 0}%` }}
                       className="bg-blue-600 transition-all duration-500"
-                      title={`ระหว่างดำเนินการ ${dept.inProgress} รายการ`}
+                      title={`ระหว่างดำเนินการ ${dept.inProgress} งาน`}
                     />
                     <div
                       style={{ width: `${dept.total > 0 ? (dept.notStarted / dept.total) * 100 : 0}%` }}
                       className="bg-sky-300 transition-all duration-500"
-                      title={`ยังไม่ดำเนินการ ${dept.notStarted} รายการ`}
+                      title={`ยังไม่ดำเนินการ ${dept.notStarted} งาน`}
                     />
                   </div>
                 </div>

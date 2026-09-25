@@ -37,7 +37,17 @@ import {
   X,
   ShieldCheck,
   LogIn,
+  ExternalLink,
+  Copy,
+  AlertTriangle,
 } from 'lucide-react';
+import {
+  isInAppBrowser,
+  getInAppBrowserName,
+  openInExternalBrowser,
+  copyCurrentUrl,
+  isLineBrowser,
+} from './utils/browserEnv';
 
 const LOCAL_STORAGE_TASKS_KEY = 'nuls_tracking_tasks_2570';
 
@@ -49,6 +59,28 @@ export default function App() {
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => {
     return typeof window !== 'undefined' ? window.innerWidth < 768 : false;
   });
+  const [inAppNoticeDismissed, setInAppNoticeDismissed] = useState<boolean>(false);
+
+  const inApp = isInAppBrowser();
+  const inAppName = getInAppBrowserName();
+
+  // ตรวจจับและเปิดผ่านเบราว์เซอร์หลักอัตโนมัติหากเปิดผ่าน LINE
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const ua = navigator.userAgent || '';
+      const isLine = /Line\//i.test(ua);
+      const hasParam = window.location.search.includes('openExternalBrowser=1');
+      if (isLine && !hasParam) {
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.set('openExternalBrowser', '1');
+          window.location.replace(url.toString());
+        } catch (e) {
+          console.warn('LINE auto-redirect error:', e);
+        }
+      }
+    }
+  }, []);
 
   // ตรวจจับขนาดหน้าจอจริง เพื่อไม่ให้เกิดกรอบจำลองบนมือถือจริง
   useEffect(() => {
@@ -681,6 +713,60 @@ export default function App() {
 
           {/* Main Container */}
           <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+            {/* [NEW] Banner แจ้งเตือนเมื่อเปิดใน LINE หรือ In-App Browser */}
+            {inApp && !inAppNoticeDismissed && (
+              <div className="mb-4 bg-gradient-to-r from-amber-50 via-amber-100/70 to-orange-50 border border-amber-300 rounded-2xl p-3.5 sm:p-4 text-amber-950 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-in fade-in duration-200">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0 mt-0.5 shadow-xs">
+                    <AlertTriangle className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-xs sm:text-sm font-bold text-amber-900">
+                        กำลังเปิดผ่านแอป {inAppName || 'LINE'}
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 text-[10px] font-bold">
+                        แนะนำเปิดใน Google Chrome
+                      </span>
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-amber-800 mt-1 leading-relaxed">
+                      Google ไม่อนุญาตให้ล็อกอินบัญชี <strong>@nu.ac.th</strong> ผ่านเบราว์เซอร์ของแอป (จะเกิดข้อผิดพลาด <em>missing initial state</em>) หากต้องการบันทึกหรือซิงค์ข้อมูล กรุณากดปุ่มเปิดใน Chrome
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 w-full md:w-auto shrink-0 pt-1 md:pt-0">
+                  <button
+                    type="button"
+                    onClick={() => openInExternalBrowser()}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span>เปิดใน Chrome</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const ok = await copyCurrentUrl();
+                      if (ok) showToast('คัดลอกลิงก์สำเร็จ นำไปวางใน Google Chrome ได้เลย', 'success');
+                    }}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-amber-100/60 border border-amber-300 text-amber-900 text-xs font-semibold shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
+                    title="คัดลอกลิงก์เพื่อไปวางใน Chrome"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">คัดลอกลิงก์</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInAppNoticeDismissed(true)}
+                    className="p-1.5 rounded-xl text-amber-700 hover:text-amber-950 hover:bg-amber-200/60 transition-colors"
+                    title="ปิดการแจ้งเตือนนี้"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Banner แจ้งเตือนสถานะเมื่อยังไม่ได้เข้าสู่ระบบ (โหมดผู้เยี่ยมชม) */}
             {!userInfo && (
               <div className="mb-4 bg-white rounded-2xl p-3.5 sm:p-4 border border-blue-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
