@@ -102,7 +102,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!title.trim()) {
-      newErrors.title = 'กรุณาระบุชื่องาน / โครงการ';
+      newErrors.title = 'กรุณาระบุชื่องาน';
     }
     if (!assignee.trim()) {
       newErrors.assignee = 'กรุณาระบุผู้รับผิดชอบ';
@@ -184,10 +184,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-          {/* ชื่องาน / โครงการ */}
+          {/* ชื่องาน */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              ชื่องาน / โครงการ / กิจกรรม <span className="text-rose-500">*</span>
+              ชื่องาน <span className="text-rose-500">*</span>
             </label>
             <input
               id="task-title-input"
@@ -374,7 +374,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           {/* รายละเอียดงาน */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              รายละเอียดงาน / กิจกรรม
+              รายละเอียดงาน
             </label>
             <textarea
               id="task-description-input"

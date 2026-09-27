@@ -272,7 +272,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
               <div className="px-5 py-3 bg-slate-50/70 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                 <div className="flex items-center justify-between sm:justify-start gap-2 text-xs text-slate-700 font-semibold shrink-0">
                   <span className="h-2 w-2 rounded-full bg-blue-600"></span>
-                  <span>ความก้าวหน้าโครงการในงาน:</span>
+                  <span>ความก้าวหน้าภาพรวมงาน:</span>
                 </div>
                 <div className="flex-1 flex items-center gap-3">
                   <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200 shadow-inner">
