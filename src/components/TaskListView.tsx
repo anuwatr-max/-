@@ -31,6 +31,7 @@ interface TaskListViewProps {
   initialStatusFilter?: TaskStatus | 'all';
   initialDeptFilter?: string;
   deviceMode?: DeviceMode;
+  isGuestMode?: boolean;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -44,6 +45,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
   initialStatusFilter = 'all',
   initialDeptFilter = 'all',
   deviceMode = 'desktop',
+  isGuestMode = false,
 }) => {
   const isMobileLayout = deviceMode === 'mobile';
   const [searchTerm, setSearchTerm] = useState('');
@@ -374,7 +376,9 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                   <th className="py-3.5 px-4 w-28 font-bold text-blue-950">ประจำเดือน</th>
                   <th className="py-3.5 px-4 w-44 font-bold text-blue-950">สถานะการดำเนินงาน</th>
                   <th className="py-3.5 px-4 w-24 font-bold text-blue-950">ความคืบหน้า</th>
-                  <th className="py-3.5 px-4 w-24 text-center font-bold text-blue-950">การจัดการ</th>
+                  {!isGuestMode && (
+                    <th className="py-3.5 px-4 w-24 text-center font-bold text-blue-950">การจัดการ</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -479,27 +483,29 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                         </div>
                       </td>
 
-                      {/* ปุ่มจัดการ */}
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            id={`task-edit-btn-${task.id}`}
-                            onClick={() => onEditTask(task)}
-                            title="แก้ไขข้อมูลงาน"
-                            className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            id={`task-delete-btn-${task.id}`}
-                            onClick={() => onDeleteTask(task)}
-                            title="ลบข้อมูลงาน"
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </td>
+                      {/* ปุ่มจัดการ - ไม่แสดงในโหมดผู้เยี่ยมชม */}
+                      {!isGuestMode && (
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              id={`task-edit-btn-${task.id}`}
+                              onClick={() => onEditTask(task)}
+                              title="แก้ไขข้อมูลงาน"
+                              className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              id={`task-delete-btn-${task.id}`}
+                              onClick={() => onDeleteTask(task)}
+                              title="ลบข้อมูลงาน"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -535,20 +541,24 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                       </h4>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => onEditTask(task)}
-                        className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => onDeleteTask(task)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                    {!isGuestMode && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => onEditTask(task)}
+                          title="แก้ไขข้อมูลงาน"
+                          className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg cursor-pointer"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => onDeleteTask(task)}
+                          title="ลบข้อมูลงาน"
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Description & Performance */}

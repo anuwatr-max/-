@@ -843,6 +843,7 @@ export default function App() {
                 onDeleteTask={handleDeleteTaskRequest}
                 onQuickStatusChange={handleQuickStatusChange}
                 deviceMode={deviceMode}
+                isGuestMode={!userInfo}
               />
             )}
 
