@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
 import { TaskListView } from './components/TaskListView';
+import { TaskCalendarView } from './components/TaskCalendarView';
 import { MonthlyReportView } from './components/MonthlyReportView';
 import { TaskModal } from './components/TaskModal';
 import { ConfirmModal } from './components/ConfirmModal';
@@ -133,6 +134,7 @@ export default function App() {
   // Modals state
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<TaskItem | null>(null);
+  const [taskModalDefaultDate, setTaskModalDefaultDate] = useState<string | undefined>(undefined);
   const [isSheetSettingsOpen, setIsSheetSettingsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
@@ -821,9 +823,11 @@ export default function App() {
                 onSelectStatusFilter={handleSelectStatusFromDashboard}
                 onOpenNewTaskModal={() => {
                   setTaskToEdit(null);
+                  setTaskModalDefaultDate(undefined);
                   setIsTaskModalOpen(true);
                 }}
                 deviceMode={deviceMode}
+                isGuestMode={!userInfo}
               />
             )}
 
@@ -834,13 +838,34 @@ export default function App() {
                 initialDeptFilter={initialFilterDept}
                 onAddTask={() => {
                   setTaskToEdit(null);
+                  setTaskModalDefaultDate(undefined);
                   setIsTaskModalOpen(true);
                 }}
                 onEditTask={task => {
                   setTaskToEdit(task);
+                  setTaskModalDefaultDate(undefined);
                   setIsTaskModalOpen(true);
                 }}
                 onDeleteTask={handleDeleteTaskRequest}
+                onQuickStatusChange={handleQuickStatusChange}
+                deviceMode={deviceMode}
+                isGuestMode={!userInfo}
+              />
+            )}
+
+            {activeTab === 'calendar' && (
+              <TaskCalendarView
+                tasks={tasks}
+                onAddTask={(defaultDate?: string) => {
+                  setTaskToEdit(null);
+                  setTaskModalDefaultDate(defaultDate);
+                  setIsTaskModalOpen(true);
+                }}
+                onEditTask={task => {
+                  setTaskToEdit(task);
+                  setTaskModalDefaultDate(undefined);
+                  setIsTaskModalOpen(true);
+                }}
                 onQuickStatusChange={handleQuickStatusChange}
                 deviceMode={deviceMode}
                 isGuestMode={!userInfo}
@@ -899,6 +924,7 @@ export default function App() {
         onClose={() => setIsTaskModalOpen(false)}
         onSave={handleSaveTask}
         taskToEdit={taskToEdit}
+        defaultDueDate={taskModalDefaultDate}
       />
 
       <ConfirmModal

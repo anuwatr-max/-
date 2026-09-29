@@ -9,6 +9,7 @@ interface TaskModalProps {
   onSave: (task: TaskItem) => Promise<void>;
   taskToEdit?: TaskItem | null;
   defaultMonth?: string;
+  defaultDueDate?: string;
 }
 
 export const TaskModal: React.FC<TaskModalProps> = ({
@@ -17,6 +18,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   onSave,
   taskToEdit,
   defaultMonth = 'มีนาคม 2570',
+  defaultDueDate,
 }) => {
   const [departmentId, setDepartmentId] = useState<MainDepartmentId>('admin');
   const [unitId, setUnitId] = useState<string>('1.1');
@@ -51,17 +53,32 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setUnitId('1.1');
       setTitle('');
       setAssignee('');
-      setMonth(defaultMonth);
+      
+      const targetDate = defaultDueDate || new Date().toISOString().split('T')[0];
+      setStartDate(targetDate);
+      setDueDate(targetDate);
+
+      // Auto calculate month from targetDate if possible
+      let initialMonth = defaultMonth;
+      if (defaultDueDate) {
+        const [y, m] = defaultDueDate.split('-').map(Number);
+        if (y && m) {
+          const beYear = y + 543;
+          const mPad = String(m).padStart(2, '0');
+          const fiscalId = `${beYear}-${mPad}`;
+          const found = FISCAL_MONTHS.find(fm => fm.id === fiscalId);
+          if (found) initialMonth = found.name;
+        }
+      }
+      setMonth(initialMonth);
+
       setStatus('ยังไม่ดำเนินการ');
       setProgress(0);
-      const today = new Date().toISOString().split('T')[0];
-      setStartDate(today);
-      setDueDate(today);
       setDescription('');
       setPerformanceSummary('');
     }
     setErrors({});
-  }, [taskToEdit, isOpen, defaultMonth]);
+  }, [taskToEdit, isOpen, defaultMonth, defaultDueDate]);
 
   // When department changes, set unitId to first unit of that department
   const handleDepartmentChange = (newDeptId: MainDepartmentId) => {

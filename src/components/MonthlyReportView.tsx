@@ -94,11 +94,11 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
 
   return (
     <div id="monthly-report-view" className="space-y-6">
-      {/* Top Header & Month Selector */}
-      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 print:hidden">
+      {/* Top Header & Month Selector: คอนโซลสรุปผลประจำเดือน พื้นสีฟ้าอ่อนแบบนูน (Light Blue 3D Embossed Relief Console) */}
+      <div className="bg-gradient-to-b from-sky-50/95 via-sky-50/50 to-blue-100/60 rounded-2xl p-4 sm:p-6 border border-sky-200/90 border-t-white border-b-[3.5px] border-b-sky-300 shadow-md shadow-sky-950/5 ring-1 ring-inset ring-white/90 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 print:hidden">
         <div>
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-blue-100/80 text-blue-800 flex items-center justify-center shrink-0 border border-blue-300 shadow-xs">
+            <div className="h-8 w-8 rounded-xl bg-white/90 text-blue-800 flex items-center justify-center shrink-0 border border-sky-200 shadow-2xs">
               <FileText className="h-5 w-5 text-blue-700" />
             </div>
             <h2>
@@ -108,21 +108,21 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ tasks }) =
               </span>
             </h2>
           </div>
-          <p className="text-xs text-slate-500 mt-1.5 ml-1">
+          <p className="text-xs text-slate-600 mt-1.5 ml-1">
             คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร ประจำปีงบประมาณ 2570
           </p>
         </div>
 
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-2 bg-blue-50/60 border border-blue-200/80 rounded-xl px-3 py-1.5">
+          <div className="flex items-center gap-2 bg-white/90 border border-sky-200/90 rounded-xl px-3 py-1.5 shadow-2xs">
             <Calendar className="h-4 w-4 text-blue-700 shrink-0" />
-            <span className="text-xs font-semibold text-blue-900">เลือกเดือน:</span>
+            <span className="text-xs font-semibold text-blue-950">เลือกเดือน:</span>
             <select
               id="report-month-select"
               value={selectedMonth}
               onChange={e => setSelectedMonth(e.target.value)}
-              className="bg-transparent text-xs font-bold text-slate-700 focus:outline-hidden cursor-pointer"
+              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-hidden cursor-pointer"
             >
               {FISCAL_MONTHS.map(m => (
                 <option key={m.id} value={m.name}>

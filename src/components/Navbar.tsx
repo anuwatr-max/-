@@ -14,12 +14,13 @@ import {
   AlertCircle,
   SlidersHorizontal,
   Clock,
+  Calendar,
 } from 'lucide-react';
 import { UserAuthInfo, SheetSyncState } from '../types';
 import { cleanSheetTitle } from '../services/sheetsService';
 import { DeviceDropdown, DeviceMode } from './DeviceDropdown';
 
-export type ActiveTab = 'dashboard' | 'tasks' | 'monthly-report';
+export type ActiveTab = 'dashboard' | 'tasks' | 'calendar' | 'monthly-report';
 
 export interface NavbarProps {
   activeTab: ActiveTab;
@@ -69,6 +70,16 @@ export const Navbar: React.FC<NavbarProps> = ({
       id: 'tasks',
       label: 'ติดตามงาน',
       icon: <CheckSquare className="h-3.5 w-3.5 drop-shadow-xs" />,
+      // แถบสีเมนูแบบนูน สีเทาอ่อน ขนาดย่อส่วนกะทัดรัด (Compact 3D Embossed Relief in Light Gray)
+      activeClass:
+        'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200 text-slate-800 font-bold border-t border-t-white border-x border-slate-300 border-b-[2.5px] border-b-slate-400 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/90 scale-[1.01]',
+      inactiveClass:
+        'bg-gradient-to-b from-slate-50/90 via-slate-100 to-slate-150 text-slate-600 hover:text-slate-800 font-medium border-t border-t-white/80 border-x border-slate-200 border-b-[2px] border-b-slate-300 shadow-2xs hover:from-slate-100 hover:to-slate-200 hover:border-b-slate-400',
+    },
+    {
+      id: 'calendar',
+      label: 'ปฏิทินงาน',
+      icon: <Calendar className="h-3.5 w-3.5 drop-shadow-xs" />,
       // แถบสีเมนูแบบนูน สีเทาอ่อน ขนาดย่อส่วนกะทัดรัด (Compact 3D Embossed Relief in Light Gray)
       activeClass:
         'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200 text-slate-800 font-bold border-t border-t-white border-x border-slate-300 border-b-[2.5px] border-b-slate-400 shadow-sm shadow-slate-900/10 ring-1 ring-inset ring-white/90 scale-[1.01]',

@@ -21,6 +21,7 @@ interface DashboardViewProps {
   onSelectStatusFilter?: (status: TaskStatus) => void;
   onOpenNewTaskModal: () => void;
   deviceMode?: DeviceMode;
+  isGuestMode?: boolean;
 }
 
 // แถบสีอ่อน ๆ คลุมเฉพาะตัวอักษรสำหรับแต่ละงาน โทนสีกรอบนูนมีมิติ (Embossed 3D)
@@ -93,6 +94,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectStatusFilter,
   onOpenNewTaskModal,
   deviceMode = 'desktop',
+  isGuestMode = false,
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedQuarter, setSelectedQuarter] = useState<string>('all');
@@ -171,12 +173,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div id="dashboard-view" className="space-y-6">
-      {/* Top Filter Bar: Deep Navy & Cyan/Blue Accents */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* Top Filter Bar: คอนโซลตัวกรอง พื้นสีฟ้าอ่อนแบบนูน (Light Blue 3D Embossed Relief Console) */}
+      <div className="bg-gradient-to-b from-sky-50/95 via-sky-50/50 to-blue-100/60 rounded-2xl p-4 sm:p-5 border border-sky-200/90 border-t-white border-b-[3.5px] border-b-sky-300 shadow-md shadow-sky-950/5 ring-1 ring-inset ring-white/90 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="h-8 w-8 rounded-xl bg-slate-150 text-slate-800 flex items-center justify-center shrink-0 border border-slate-300 shadow-xs">
-              <BarChart3 className="h-5 w-5 text-slate-700 shrink-0" />
+            <div className="h-8 w-8 rounded-xl bg-white/90 text-slate-800 flex items-center justify-center shrink-0 border border-sky-200 shadow-2xs">
+              <BarChart3 className="h-5 w-5 text-blue-700 shrink-0" />
             </div>
             <div className="min-w-0 flex-1">
               {/* รายงานผลการดำเนินงาน แถบสีเทาอ่อน แบบนูน ย่อขนาดกะทัดรัด (Compact 3D Embossed Relief in Light Gray) */}
@@ -185,14 +187,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </span>
             </div>
           </div>
-          <p className="text-[11px] sm:text-xs text-slate-500 mt-1.5 ml-1 truncate">
+          <p className="text-[11px] sm:text-xs text-slate-600 mt-1.5 ml-1 truncate">
             คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
           </p>
         </div>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-          <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200/60 px-3 py-1.5 rounded-xl text-xs font-semibold text-blue-900">
+          <div className="flex items-center gap-1.5 bg-white/90 border border-sky-200 px-3 py-1.5 rounded-xl text-xs font-semibold text-blue-950 shadow-2xs">
             <Filter className="h-3.5 w-3.5 text-blue-600" />
             <span>กรองข้อมูล:</span>
           </div>
@@ -204,7 +206,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               setSelectedQuarter(e.target.value);
               if (e.target.value !== 'all') setSelectedMonth('all');
             }}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-hidden"
+            className="px-3 py-1.5 bg-white/95 border border-sky-200/90 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-hidden shadow-2xs cursor-pointer"
           >
             <option value="all">ทุกไตรมาส (ทั้งปี 2570)</option>
             <option value="1">ไตรมาส 1 (ต.ค. - ธ.ค. 2569)</option>
@@ -220,7 +222,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               setSelectedMonth(e.target.value);
               if (e.target.value !== 'all') setSelectedQuarter('all');
             }}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-hidden"
+            className="px-3 py-1.5 bg-white/95 border border-sky-200/90 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-hidden shadow-2xs cursor-pointer"
           >
             <option value="all">ทุกเดือน</option>
             {FISCAL_MONTHS.map(m => (
@@ -515,29 +517,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* Quick Action Banner: Premium Dark Navy & Midnight Blue */}
-      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 rounded-2xl p-5 sm:p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg border border-blue-900/40">
-        <div className="flex items-center gap-4 text-center sm:text-left">
-          <div className="h-12 w-12 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0 shadow-inner">
-            <Sparkles className="h-6 w-6 text-cyan-300" />
+      {/* Quick Action Banner: Premium Dark Navy & Midnight Blue - ไม่แสดงในโหมดผู้เยี่ยมชม */}
+      {!isGuestMode && (
+        <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 rounded-2xl p-5 sm:p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg border border-blue-900/40">
+          <div className="flex items-center gap-4 text-center sm:text-left">
+            <div className="h-12 w-12 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0 shadow-inner">
+              <Sparkles className="h-6 w-6 text-cyan-300" />
+            </div>
+            <div>
+              <h4 className="font-bold text-base sm:text-lg text-white">
+                บันทึกความก้าวหน้างานประจำปี 2570
+              </h4>
+              <p className="text-xs text-blue-200/90 mt-0.5">
+                สามารถเพิ่มงานใหม่ อัปเดตสถานะการดำเนินงาน และซิงค์ลง Google Sheet ได้ตลอดเวลา
+              </p>
+            </div>
           </div>
-          <div>
-            <h4 className="font-bold text-base sm:text-lg text-white">
-              บันทึกความก้าวหน้างานประจำปี 2570
-            </h4>
-            <p className="text-xs text-blue-200/90 mt-0.5">
-              สามารถเพิ่มงานใหม่ อัปเดตสถานะการดำเนินงาน และซิงค์ลง Google Sheet ได้ตลอดเวลา
-            </p>
-          </div>
+          <button
+            id="dashboard-add-task-cta-btn"
+            onClick={onOpenNewTaskModal}
+            className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-semibold rounded-xl text-sm shadow-md shadow-blue-950/60 transition-all cursor-pointer shrink-0 border border-cyan-400/30"
+          >
+            + เพิ่มงานใหม่
+          </button>
         </div>
-        <button
-          id="dashboard-add-task-cta-btn"
-          onClick={onOpenNewTaskModal}
-          className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-semibold rounded-xl text-sm shadow-md shadow-blue-950/60 transition-all cursor-pointer shrink-0 border border-cyan-400/30"
-        >
-          + เพิ่มงานใหม่
-        </button>
-      </div>
+      )}
     </div>
   );
 };
