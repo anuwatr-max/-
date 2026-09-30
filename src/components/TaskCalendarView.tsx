@@ -475,7 +475,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
 
           {/* Quick Fiscal Month Selector */}
           <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-            <span className="text-xs font-semibold text-slate-600 shrink-0">เลือกเดือนงบฯ:</span>
+            <span className="text-xs font-semibold text-slate-600 shrink-0">เลือกเดือน:</span>
             <select
               value={currentFiscalMonthId}
               onChange={(e) => handleSelectFiscalMonth(e.target.value)}
