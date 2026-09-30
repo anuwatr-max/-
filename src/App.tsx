@@ -9,9 +9,16 @@ import { ConfirmModal } from './components/ConfirmModal';
 import { SheetSettingsModal } from './components/SheetSettingsModal';
 import { LoginView } from './components/LoginView';
 import { LoginModal } from './components/LoginModal';
+import { UserPermissionsModal } from './components/UserPermissionsModal';
 import { DeviceDropdown, DeviceMode } from './components/DeviceDropdown';
 import { TaskItem, TaskStatus, UserAuthInfo, SheetSyncState } from './types';
 import { INITIAL_SAMPLE_TASKS } from './data/sampleTasks';
+import {
+  canUserAddTask,
+  canUserEditTask,
+  canUserDeleteTask,
+  getUserPermission,
+} from './data/userPermissions';
 import {
   initAuth,
   googleSignIn,
@@ -57,6 +64,7 @@ export default function App() {
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [deviceZoom, setDeviceZoom] = useState<number>(1);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState<boolean>(false);
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => {
     return typeof window !== 'undefined' ? window.innerWidth < 768 : false;
   });
@@ -476,6 +484,21 @@ export default function App() {
   // Add or Edit Task handler
   const handleSaveTask = async (taskData: TaskItem) => {
     const isEdit = tasks.some(t => t.id === taskData.id);
+
+    // ตรวจสอบสิทธิ์ผู้ใช้งานตามบัญชี Google
+    const perm = getUserPermission(userInfo?.email);
+    if (isEdit) {
+      if (!canUserEditTask(taskData, userInfo?.email)) {
+        showToast(`คุณไม่มีสิทธิ์แก้ไขงานกลุ่มนี้ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
+        return;
+      }
+    } else {
+      if (!canUserAddTask(userInfo?.email) || (perm.role === 'department_admin' && !perm.allowedDepartmentIds.includes(taskData.departmentId))) {
+        showToast(`คุณไม่มีสิทธิ์เพิ่มงานในกลุ่มนี้ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
+        return;
+      }
+    }
+
     let updatedTasks: TaskItem[];
 
     if (isEdit) {
@@ -514,6 +537,13 @@ export default function App() {
 
   // Quick Status change directly from list or dashboard
   const handleQuickStatusChange = async (task: TaskItem, newStatus: TaskStatus) => {
+    // ตรวจสอบสิทธิ์แก้ไขงาน
+    if (!canUserEditTask(task, userInfo?.email)) {
+      const perm = getUserPermission(userInfo?.email);
+      showToast(`คุณไม่มีสิทธิ์เปลี่ยนสถานะงานกลุ่มนี้ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
+      return;
+    }
+
     let newProgress = task.progress;
     if (newStatus === 'ดำเนินการแล้วเสร็จ') {
       newProgress = 100;
@@ -552,6 +582,13 @@ export default function App() {
 
   // Request Task Delete (Google Workspace skill requires explicit confirmation)
   const handleDeleteTaskRequest = (task: TaskItem) => {
+    // ตรวจสอบสิทธิ์ลบงาน
+    if (!canUserDeleteTask(task, userInfo?.email)) {
+      const perm = getUserPermission(userInfo?.email);
+      showToast(`คุณไม่มีสิทธิ์ลบงานกลุ่มนี้ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
+      return;
+    }
+
     setConfirmModalState({
       isOpen: true,
       title: 'ยืนยันการลบรายการงาน',
@@ -711,6 +748,7 @@ export default function App() {
             onQuickSync={handleSyncAllTasks}
             deviceMode={deviceMode}
             onChangeDeviceMode={setDeviceMode}
+            onOpenPermissionsModal={() => setIsPermissionsModalOpen(true)}
           />
 
           {/* Main Container */}
@@ -828,6 +866,7 @@ export default function App() {
                 }}
                 deviceMode={deviceMode}
                 isGuestMode={!userInfo}
+                currentUserEmail={userInfo?.email}
               />
             )}
 
@@ -850,6 +889,7 @@ export default function App() {
                 onQuickStatusChange={handleQuickStatusChange}
                 deviceMode={deviceMode}
                 isGuestMode={!userInfo}
+                currentUserEmail={userInfo?.email}
               />
             )}
 
@@ -869,6 +909,7 @@ export default function App() {
                 onQuickStatusChange={handleQuickStatusChange}
                 deviceMode={deviceMode}
                 isGuestMode={!userInfo}
+                currentUserEmail={userInfo?.email}
               />
             )}
 
@@ -925,6 +966,7 @@ export default function App() {
         onSave={handleSaveTask}
         taskToEdit={taskToEdit}
         defaultDueDate={taskModalDefaultDate}
+        currentUserEmail={userInfo?.email}
       />
 
       <ConfirmModal
@@ -955,6 +997,12 @@ export default function App() {
         isLoading={isLoggingIn}
         errorMessage={authError}
         onClearError={() => setAuthError(null)}
+      />
+
+      <UserPermissionsModal
+        isOpen={isPermissionsModalOpen}
+        onClose={() => setIsPermissionsModalOpen(false)}
+        currentUserEmail={userInfo?.email}
       />
     </div>
   );

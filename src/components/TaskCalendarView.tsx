@@ -21,9 +21,11 @@ import {
   Sparkles,
   ArrowRight,
   Check,
+  Lock,
 } from 'lucide-react';
 import { TaskItem, TaskStatus, MainDepartmentId } from '../types';
 import { DEPARTMENTS, FISCAL_MONTHS, TASK_STATUSES, getDeptDotClass } from '../data/departments';
+import { canUserAddTask, canUserEditTask, getUserPermission } from '../data/userPermissions';
 import { DeviceMode } from './DeviceDropdown';
 
 interface TaskCalendarViewProps {
@@ -33,6 +35,7 @@ interface TaskCalendarViewProps {
   onQuickStatusChange: (task: TaskItem, newStatus: TaskStatus) => Promise<void>;
   deviceMode?: DeviceMode;
   isGuestMode?: boolean;
+  currentUserEmail?: string | null;
 }
 
 const THAI_MONTH_NAMES_FULL = [
@@ -57,8 +60,11 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
   onQuickStatusChange,
   deviceMode = 'desktop',
   isGuestMode = false,
+  currentUserEmail,
 }) => {
   const isMobileLayout = deviceMode === 'mobile';
+  const canAdd = !isGuestMode && canUserAddTask(currentUserEmail);
+  const userPerm = getUserPermission(currentUserEmail);
 
   // State สำหรับเดือนและปีที่แสดงในปฏิทิน
   // ค่าเริ่มต้น: ดึงจากเดือนปัจจุบันจริง หรือถ้าอยู่ในช่วงปีงบประมาณ 2570
@@ -421,8 +427,8 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
               วันนี้
             </button>
 
-            {/* ปุ่มเพิ่มงานใหม่ - ซ่อนในโหมดผู้เยี่ยมชม */}
-            {!isGuestMode && (
+            {/* ปุ่มเพิ่มงานใหม่ - แสดงเฉพาะผู้มีสิทธิ์ */}
+            {canAdd && (
               <button
                 type="button"
                 onClick={() => onAddTask()}
@@ -759,7 +765,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {!isGuestMode && (
+                  {canAdd && (
                     <button
                       type="button"
                       onClick={() => onAddTask(selectedDayString)}
@@ -1037,32 +1043,44 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                 </div>
               )}
 
-              {/* Quick Status Update for Authenticated Users */}
+              {/* Quick Status Update for Authorized Users */}
               {!isGuestMode && (
-                <div className="pt-2 border-t border-slate-200 space-y-2">
-                  <span className="font-bold text-slate-700">เปลี่ยนสถานะด่วน:</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    {TASK_STATUSES.map(s => {
-                      const isCurrent = selectedTask.status === s.label;
-                      return (
-                        <button
-                          key={s.label}
-                          type="button"
-                          disabled={isUpdatingStatus}
-                          onClick={() => handleQuickStatusUpdate(selectedTask, s.label)}
-                          className={`py-2 px-2 rounded-xl text-[11px] font-semibold border transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                            isCurrent
-                              ? 'bg-blue-800 text-white border-blue-900 shadow-xs'
-                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          {isCurrent && <Check className="h-3 w-3" />}
-                          <span>{s.label}</span>
-                        </button>
-                      );
-                    })}
+                canUserEditTask(selectedTask, currentUserEmail) ? (
+                  <div className="pt-2 border-t border-slate-200 space-y-2">
+                    <span className="font-bold text-slate-700">เปลี่ยนสถานะด่วน:</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {TASK_STATUSES.map(s => {
+                        const isCurrent = selectedTask.status === s.label;
+                        return (
+                          <button
+                            key={s.label}
+                            type="button"
+                            disabled={isUpdatingStatus}
+                            onClick={() => handleQuickStatusUpdate(selectedTask, s.label)}
+                            className={`py-2 px-2 rounded-xl text-[11px] font-semibold border transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                              isCurrent
+                                ? 'bg-blue-800 text-white border-blue-900 shadow-xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            {isCurrent && <Check className="h-3 w-3" />}
+                            <span>{s.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-xs flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5 text-slate-500">
+                      <Lock className="h-3.5 w-3.5 text-slate-400" />
+                      <span>สิทธิ์การแก้ไข:</span>
+                    </span>
+                    <span className="font-semibold text-slate-800">
+                      เฉพาะเจ้าหน้าที่ {selectedTask.departmentName}
+                    </span>
+                  </div>
+                )
               )}
 
               {/* Guest Mode Notice */}
@@ -1076,7 +1094,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
             {/* Modal Footer */}
             <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
               <div>
-                {!isGuestMode && (
+                {!isGuestMode && canUserEditTask(selectedTask, currentUserEmail) && (
                   <button
                     type="button"
                     onClick={() => {

@@ -15,9 +15,11 @@ import {
   SlidersHorizontal,
   Clock,
   Calendar,
+  ShieldCheck,
 } from 'lucide-react';
 import { UserAuthInfo, SheetSyncState } from '../types';
 import { cleanSheetTitle } from '../services/sheetsService';
+import { getUserPermission } from '../data/userPermissions';
 import { DeviceDropdown, DeviceMode } from './DeviceDropdown';
 
 export type ActiveTab = 'dashboard' | 'tasks' | 'calendar' | 'monthly-report';
@@ -33,6 +35,7 @@ export interface NavbarProps {
   onQuickSync: () => void;
   deviceMode: DeviceMode;
   onChangeDeviceMode: (mode: DeviceMode) => void;
+  onOpenPermissionsModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -46,8 +49,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   onQuickSync,
   deviceMode,
   onChangeDeviceMode,
+  onOpenPermissionsModal,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const userPerm = getUserPermission(userInfo?.email);
 
   const navItems: {
     id: ActiveTab;
@@ -211,13 +216,37 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   )}
                   <div className="hidden lg:block text-left">
-                    <div className="text-xs font-semibold text-slate-700 truncate max-w-[110px]">
-                      {userInfo.displayName || 'ผู้ใช้ Google'}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-slate-700 truncate max-w-[100px]">
+                        {userInfo.displayName || 'ผู้ใช้ Google'}
+                      </span>
+                      <span
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded border leading-none ${
+                          userPerm.role === 'super_admin'
+                            ? 'bg-amber-100 text-amber-900 border-amber-300'
+                            : userPerm.role === 'department_admin'
+                            ? 'bg-blue-100 text-blue-900 border-blue-300'
+                            : 'bg-slate-100 text-slate-700 border-slate-300'
+                        }`}
+                        title={`สิทธิ์: ${userPerm.departmentTitle}`}
+                      >
+                        {userPerm.role === 'super_admin' ? 'Super Admin' : userPerm.role === 'department_admin' ? 'สิทธิ์กลุ่มงาน' : 'อ่านอย่างเดียว'}
+                      </span>
                     </div>
-                    <div className="text-[10px] text-slate-400 truncate max-w-[110px]">
+                    <div className="text-[10px] text-slate-400 truncate max-w-[130px]" title={userInfo.email || undefined}>
                       {userInfo.email}
                     </div>
                   </div>
+                  {onOpenPermissionsModal && (
+                    <button
+                      id="navbar-check-permissions-btn"
+                      onClick={onOpenPermissionsModal}
+                      title="ตรวจสอบสิทธิ์ผู้ใช้งานทั้งหมด"
+                      className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                    </button>
+                  )}
                   <button
                     id="navbar-signout-btn"
                     onClick={onSignOut}
@@ -318,7 +347,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Right: Quick Actions & Sync State */}
-            <div className="flex items-center gap-3 sm:gap-4 shrink-0 w-full sm:w-auto justify-between sm:justify-end ml-auto">
+            <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto justify-between sm:justify-end ml-auto">
+              <div className="flex items-center gap-1.5 text-[11px] text-cyan-200 bg-white/10 px-2 py-0.5 rounded-md border border-white/10" title="สิทธิ์การใช้งานบัญชีของคุณ">
+                <ShieldCheck className="h-3 w-3 text-cyan-300 shrink-0" />
+                <span className="text-slate-300">สิทธิ์:</span>
+                <strong className="text-white font-medium truncate max-w-[120px] sm:max-w-none">{userPerm.departmentTitle}</strong>
+              </div>
+
               {syncState.spreadsheetId ? (
                 <>
                   <div className="flex items-center gap-1.5 text-[11px] text-slate-300 pr-1">
@@ -432,34 +467,55 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
 
             {userInfo ? (
-              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
-                <div className="flex items-center gap-2">
-                  {userInfo.photoURL ? (
-                    <img
-                      src={userInfo.photoURL}
-                      alt="User"
-                      referrerPolicy="no-referrer"
-                      className="h-7 w-7 rounded-full"
-                    />
-                  ) : (
-                    <div className="h-7 w-7 rounded-full bg-blue-800 text-white font-bold text-xs flex items-center justify-center">
-                      {(userInfo.displayName || userInfo.email || 'U')[0]}
+              <div className="p-2.5 rounded-xl bg-slate-50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {userInfo.photoURL ? (
+                      <img
+                        src={userInfo.photoURL}
+                        alt="User"
+                        referrerPolicy="no-referrer"
+                        className="h-8 w-8 rounded-full"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-blue-800 text-white font-bold text-xs flex items-center justify-center">
+                        {(userInfo.displayName || userInfo.email || 'U')[0]}
+                      </div>
+                    )}
+                    <div className="text-left text-xs">
+                      <div className="font-semibold text-slate-700">{userInfo.displayName || 'ผู้ใช้ Google'}</div>
+                      <div className="text-[10px] text-slate-500">{userInfo.email}</div>
                     </div>
-                  )}
-                  <div className="text-left text-xs">
-                    <div className="font-semibold text-slate-700">{userInfo.displayName || 'ผู้ใช้ Google'}</div>
-                    <div className="text-[10px] text-slate-500">{userInfo.email}</div>
                   </div>
+                  <button
+                    onClick={() => {
+                      onSignOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-xs text-rose-600 font-semibold px-2 py-1 rounded-lg hover:bg-rose-50"
+                  >
+                    ออกจากระบบ
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    onSignOut();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="text-xs text-rose-600 font-semibold px-2 py-1"
-                >
-                  ออก
-                </button>
+                {/* Mobile Role & Permissions */}
+                <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between text-xs">
+                  <span className="text-[11px] font-medium text-slate-600 flex items-center gap-1">
+                    <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+                    <span>สิทธิ์:</span>
+                    <strong className="text-blue-900">{userPerm.departmentTitle}</strong>
+                  </span>
+                  {onOpenPermissionsModal && (
+                    <button
+                      onClick={() => {
+                        onOpenPermissionsModal();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="text-[11px] text-blue-700 hover:text-blue-900 font-semibold underline"
+                    >
+                      ดูสิทธิ์ทั้งหมด
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               <button

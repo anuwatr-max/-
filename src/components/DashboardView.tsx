@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { TaskItem, MainDepartmentId, TaskStatus } from '../types';
 import { DEPARTMENTS, FISCAL_MONTHS } from '../data/departments';
+import { canUserAddTask } from '../data/userPermissions';
 import { DepartmentPerformanceChart } from './DepartmentPerformanceChart';
 import { DeviceMode } from './DeviceDropdown';
 
@@ -22,6 +23,7 @@ interface DashboardViewProps {
   onOpenNewTaskModal: () => void;
   deviceMode?: DeviceMode;
   isGuestMode?: boolean;
+  currentUserEmail?: string | null;
 }
 
 // แถบสีอ่อน ๆ คลุมเฉพาะตัวอักษรสำหรับแต่ละงาน โทนสีกรอบนูนมีมิติ (Embossed 3D)
@@ -95,7 +97,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenNewTaskModal,
   deviceMode = 'desktop',
   isGuestMode = false,
+  currentUserEmail,
 }) => {
+  const canAdd = !isGuestMode && canUserAddTask(currentUserEmail);
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedQuarter, setSelectedQuarter] = useState<string>('all');
 
@@ -517,8 +521,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* Quick Action Banner: Premium Dark Navy & Midnight Blue - ไม่แสดงในโหมดผู้เยี่ยมชม */}
-      {!isGuestMode && (
+      {/* Quick Action Banner: Premium Dark Navy & Midnight Blue - แสดงเฉพาะผู้มีสิทธิ์เพิ่มงาน */}
+      {!isGuestMode && canAdd && (
         <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 rounded-2xl p-5 sm:p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg border border-blue-900/40">
           <div className="flex items-center gap-4 text-center sm:text-left">
             <div className="h-12 w-12 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0 shadow-inner">

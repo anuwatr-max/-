@@ -17,9 +17,11 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Lock,
 } from 'lucide-react';
 import { TaskItem, TaskStatus, MainDepartmentId } from '../types';
 import { DEPARTMENTS, FISCAL_MONTHS, TASK_STATUSES, getDeptDotClass } from '../data/departments';
+import { canUserAddTask, canUserEditTask, canUserDeleteTask, getUserPermission } from '../data/userPermissions';
 import { DeviceMode } from './DeviceDropdown';
 
 interface TaskListViewProps {
@@ -32,6 +34,7 @@ interface TaskListViewProps {
   initialDeptFilter?: string;
   deviceMode?: DeviceMode;
   isGuestMode?: boolean;
+  currentUserEmail?: string | null;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -46,8 +49,11 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
   initialDeptFilter = 'all',
   deviceMode = 'desktop',
   isGuestMode = false,
+  currentUserEmail,
 }) => {
   const isMobileLayout = deviceMode === 'mobile';
+  const canAdd = !isGuestMode && canUserAddTask(currentUserEmail);
+  const userPerm = getUserPermission(currentUserEmail);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState<string>(initialDeptFilter);
   const [selectedUnit, setSelectedUnit] = useState<string>('all');
@@ -204,8 +210,8 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
             </p>
           </div>
 
-          {/* Premium Blue-Cyan Add Task Button - ไม่แสดงในโหมดผู้เยี่ยมชม */}
-          {!isGuestMode && (
+          {/* Premium Blue-Cyan Add Task Button - แสดงเฉพาะผู้มีสิทธิ์เพิ่มงาน */}
+          {canAdd && (
             <button
               id="task-list-add-task-btn"
               onClick={onAddTask}
@@ -355,7 +361,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                 ล้างตัวกรอง
               </button>
             )}
-            {!isGuestMode && (
+            {canAdd && (
               <button
                 id="empty-add-task-btn"
                 onClick={onAddTask}
@@ -388,6 +394,8 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {paginatedTasks.map(task => {
                   const isUpdating = updatingTaskId === task.id;
+                  const canEdit = !isGuestMode && canUserEditTask(task, currentUserEmail);
+                  const canDelete = !isGuestMode && canUserDeleteTask(task, currentUserEmail);
                   return (
                     <tr
                       key={task.id}
@@ -444,26 +452,41 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
 
                       {/* Dropdown สถานะการดำเนินงาน (Quick Dropdown) */}
                       <td className="py-3 px-4">
-                        <div className="relative">
-                          <select
-                            id={`quick-status-${task.id}`}
-                            value={task.status}
-                            disabled={isUpdating}
-                            onChange={e => handleStatusSelect(task, e.target.value as TaskStatus)}
-                            className={`w-full py-1.5 px-2.5 rounded-xl text-xs font-semibold border cursor-pointer appearance-none transition-all pr-7 ${
+                        {canEdit ? (
+                          <div className="relative">
+                            <select
+                              id={`quick-status-${task.id}`}
+                              value={task.status}
+                              disabled={isUpdating}
+                              onChange={e => handleStatusSelect(task, e.target.value as TaskStatus)}
+                              className={`w-full py-1.5 px-2.5 rounded-xl text-xs font-semibold border cursor-pointer appearance-none transition-all pr-7 ${
+                                task.status === 'ดำเนินการแล้วเสร็จ'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                                  : task.status === 'ระหว่างดำเนินการ'
+                                  ? 'bg-blue-50 text-blue-800 border-blue-300 hover:bg-blue-100'
+                                  : 'bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100'
+                              }`}
+                            >
+                              <option value="ยังไม่ดำเนินการ">ยังไม่ดำเนินการ</option>
+                              <option value="ระหว่างดำเนินการ">ระหว่างดำเนินการ</option>
+                              <option value="ดำเนินการแล้วเสร็จ">ดำเนินการแล้วเสร็จ</option>
+                            </select>
+                            <ChevronDown className="absolute right-2 top-2.5 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
+                          </div>
+                        ) : (
+                          <span
+                            className={`inline-block py-1 px-2.5 rounded-xl text-xs font-semibold border ${
                               task.status === 'ดำเนินการแล้วเสร็จ'
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                 : task.status === 'ระหว่างดำเนินการ'
-                                ? 'bg-blue-50 text-blue-800 border-blue-300 hover:bg-blue-100'
-                                : 'bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100'
+                                ? 'bg-blue-50 text-blue-800 border-blue-200'
+                                : 'bg-sky-50 text-sky-800 border-sky-200'
                             }`}
+                            title={`สิทธิ์เฉพาะเจ้าหน้าที่ ${task.departmentName}`}
                           >
-                            <option value="ยังไม่ดำเนินการ">ยังไม่ดำเนินการ</option>
-                            <option value="ระหว่างดำเนินการ">ระหว่างดำเนินการ</option>
-                            <option value="ดำเนินการแล้วเสร็จ">ดำเนินการแล้วเสร็จ</option>
-                          </select>
-                          <ChevronDown className="absolute right-2 top-2.5 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
-                        </div>
+                            {task.status}
+                          </span>
+                        )}
                       </td>
 
                       {/* ความคืบหน้า */}
@@ -487,27 +510,37 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                         </div>
                       </td>
 
-                      {/* ปุ่มจัดการ - ไม่แสดงในโหมดผู้เยี่ยมชม */}
+                      {/* ปุ่มจัดการ - แสดงตามสิทธิ์ของผู้ใช้งาน */}
                       {!isGuestMode && (
                         <td className="py-3 px-4 text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              id={`task-edit-btn-${task.id}`}
-                              onClick={() => onEditTask(task)}
-                              title="แก้ไขข้อมูลงาน"
-                              className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <Edit2 className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              id={`task-delete-btn-${task.id}`}
-                              onClick={() => onDeleteTask(task)}
-                              title="ลบข้อมูลงาน"
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
+                          {canEdit || canDelete ? (
+                            <div className="flex items-center justify-center gap-1">
+                              {canEdit && (
+                                <button
+                                  id={`task-edit-btn-${task.id}`}
+                                  onClick={() => onEditTask(task)}
+                                  title="แก้ไขข้อมูลงาน"
+                                  className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  id={`task-delete-btn-${task.id}`}
+                                  onClick={() => onDeleteTask(task)}
+                                  title="ลบข้อมูลงาน"
+                                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 font-medium px-2 py-0.5 rounded-md bg-slate-100" title={`สิทธิ์เฉพาะเจ้าหน้าที่ ${task.departmentName}`}>
+                              อ่านอย่างเดียว
+                            </span>
+                          )}
                         </td>
                       )}
                     </tr>
@@ -521,6 +554,8 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
           <div className={`${isMobileLayout ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-1 gap-3 md:hidden'}`}>
             {paginatedTasks.map(task => {
               const isUpdating = updatingTaskId === task.id;
+              const canEdit = !isGuestMode && canUserEditTask(task, currentUserEmail);
+              const canDelete = !isGuestMode && canUserDeleteTask(task, currentUserEmail);
               return (
                 <div
                   key={task.id}
@@ -547,20 +582,29 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
 
                     {!isGuestMode && (
                       <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => onEditTask(task)}
-                          title="แก้ไขข้อมูลงาน"
-                          className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg cursor-pointer"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => onDeleteTask(task)}
-                          title="ลบข้อมูลงาน"
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {canEdit && (
+                          <button
+                            onClick={() => onEditTask(task)}
+                            title="แก้ไขข้อมูลงาน"
+                            className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg cursor-pointer"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => onDeleteTask(task)}
+                            title="ลบข้อมูลงาน"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                        {!canEdit && !canDelete && (
+                          <span className="text-[10px] text-slate-400 font-medium px-2 py-0.5 rounded-md bg-slate-100">
+                            อ่านอย่างเดียว
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -590,25 +634,39 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
 
                   {/* Quick Status Dropdown & Progress */}
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
-                    <div className="relative flex-1">
-                      <select
-                        value={task.status}
-                        disabled={isUpdating}
-                        onChange={e => handleStatusSelect(task, e.target.value as TaskStatus)}
-                        className={`w-full py-2 px-3 rounded-xl text-xs font-semibold border appearance-none pr-8 cursor-pointer ${
+                    {canEdit ? (
+                      <div className="relative flex-1">
+                        <select
+                          value={task.status}
+                          disabled={isUpdating}
+                          onChange={e => handleStatusSelect(task, e.target.value as TaskStatus)}
+                          className={`w-full py-2 px-3 rounded-xl text-xs font-semibold border appearance-none pr-8 cursor-pointer ${
+                            task.status === 'ดำเนินการแล้วเสร็จ'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                              : task.status === 'ระหว่างดำเนินการ'
+                              ? 'bg-blue-50 text-blue-800 border-blue-300'
+                              : 'bg-sky-50 text-sky-800 border-sky-200'
+                          }`}
+                        >
+                          <option value="ยังไม่ดำเนินการ">ยังไม่ดำเนินการ</option>
+                          <option value="ระหว่างดำเนินการ">ระหว่างดำเนินการ</option>
+                          <option value="ดำเนินการแล้วเสร็จ">ดำเนินการแล้วเสร็จ</option>
+                        </select>
+                        <ChevronDown className="absolute right-2.5 top-3 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
+                      </div>
+                    ) : (
+                      <div className="flex-1">
+                        <span className={`inline-block py-1.5 px-3 rounded-xl text-xs font-semibold border ${
                           task.status === 'ดำเนินการแล้วเสร็จ'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                             : task.status === 'ระหว่างดำเนินการ'
-                            ? 'bg-blue-50 text-blue-800 border-blue-300'
+                            ? 'bg-blue-50 text-blue-800 border-blue-200'
                             : 'bg-sky-50 text-sky-800 border-sky-200'
-                        }`}
-                      >
-                        <option value="ยังไม่ดำเนินการ">ยังไม่ดำเนินการ</option>
-                        <option value="ระหว่างดำเนินการ">ระหว่างดำเนินการ</option>
-                        <option value="ดำเนินการแล้วเสร็จ">ดำเนินการแล้วเสร็จ</option>
-                      </select>
-                      <ChevronDown className="absolute right-2.5 top-3 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
-                    </div>
+                        }`}>
+                          {task.status}
+                        </span>
+                      </div>
+                    )}
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       <div className="w-10 h-2 bg-slate-200 rounded-full overflow-hidden">
