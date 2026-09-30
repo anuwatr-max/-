@@ -497,6 +497,10 @@ export default function App() {
         showToast(`คุณไม่มีสิทธิ์เพิ่มงานในกลุ่มนี้ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
         return;
       }
+      if (perm.allowedUnitIds && perm.allowedUnitIds.length > 0 && !perm.allowedUnitIds.includes(taskData.unitId)) {
+        showToast(`คุณสามารถเพิ่มงานได้เฉพาะ ${perm.departmentTitle} เท่านั้น`, 'error');
+        return;
+      }
     }
 
     let updatedTasks: TaskItem[];

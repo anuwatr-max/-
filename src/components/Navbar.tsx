@@ -224,13 +224,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                         className={`text-[9px] font-bold px-1.5 py-0.5 rounded border leading-none ${
                           userPerm.role === 'super_admin'
                             ? 'bg-amber-100 text-amber-900 border-amber-300'
+                            : userPerm.role === 'unit_contributor'
+                            ? 'bg-purple-100 text-purple-900 border-purple-300'
                             : userPerm.role === 'department_admin'
                             ? 'bg-blue-100 text-blue-900 border-blue-300'
                             : 'bg-slate-100 text-slate-700 border-slate-300'
                         }`}
                         title={`สิทธิ์: ${userPerm.departmentTitle}`}
                       >
-                        {userPerm.role === 'super_admin' ? 'Super Admin' : userPerm.role === 'department_admin' ? 'สิทธิ์กลุ่มงาน' : 'อ่านอย่างเดียว'}
+                        {userPerm.role === 'super_admin'
+                          ? 'Super Admin'
+                          : userPerm.role === 'unit_contributor'
+                          ? 'เฉพาะหน่วยงาน'
+                          : userPerm.role === 'department_admin'
+                          ? 'สิทธิ์กลุ่มงาน'
+                          : 'อ่านอย่างเดียว'}
                       </span>
                     </div>
                     <div className="text-[10px] text-slate-400 truncate max-w-[130px]" title={userInfo.email || undefined}>

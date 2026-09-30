@@ -76,6 +76,9 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     ) {
       throw new Error('ไม่สามารถเข้าสู่ระบบในหน้านี้ได้ เนื่องจากเบราว์เซอร์ของแอป (เช่น LINE) ไม่อนุญาต กรุณากดปุ่ม 3 จุด (...) แล้วเลือก "เปิดในเบราว์เซอร์อื่น" หรือเปิดด้วย Google Chrome');
     }
+    if (error?.code === 'auth/network-request-failed' || msg.includes('network-request-failed')) {
+      throw new Error('การเชื่อมต่อกับเซิร์ฟเวอร์ Google Authentication ล้มเหลว (Network Request Failed) สาเหตุส่วนใหญ่เกิดจากการเปิดผ่านแอป LINE/Facebook, สัญญาณอินเทอร์เน็ตไม่เสถียร หรือมี AdBlocker บล็อก แนะนำให้คัดลอกลิงก์ไปเปิดใน Google Chrome หรือ Safari โดยตรง');
+    }
     if (error?.code === 'auth/popup-blocked') {
       throw new Error('เบราว์เซอร์บนมือถือบล็อกหน้าต่างป๊อปอัป กรุณาเปิดด้วย Google Chrome หรือ Safari เพื่อเข้าสู่ระบบ');
     }

@@ -55,11 +55,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setDescription(taskToEdit.description || '');
       setPerformanceSummary(taskToEdit.performanceSummary || '');
     } else {
-      // Default new task - set to user's permitted department
+      // Default new task - set to user's permitted department and unit
       const initialDept = allowedDepts.length > 0 ? allowedDepts[0].id : 'admin';
-      const deptObj = DEPARTMENTS.find(d => d.id === initialDept);
+      const permittedDeptObj = allowedDepts.find(d => d.id === initialDept) || DEPARTMENTS.find(d => d.id === initialDept);
       setDepartmentId(initialDept);
-      setUnitId(deptObj?.units[0]?.id || '1.1');
+      setUnitId(permittedDeptObj?.units[0]?.id || '1.1');
       setTitle('');
       setAssignee('');
       
@@ -92,7 +92,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   // When department changes, set unitId to first unit of that department
   const handleDepartmentChange = (newDeptId: MainDepartmentId) => {
     setDepartmentId(newDeptId);
-    const dept = DEPARTMENTS.find(d => d.id === newDeptId);
+    const dept = allowedDepts.find(d => d.id === newDeptId) || DEPARTMENTS.find(d => d.id === newDeptId);
     if (dept && dept.units.length > 0) {
       setUnitId(dept.units[0].id);
     }
@@ -121,6 +121,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   };
 
   const currentDept = DEPARTMENTS.find(d => d.id === departmentId);
+  const deptAllowed = allowedDepts.find(d => d.id === departmentId);
+  const availableUnits = !taskToEdit && deptAllowed ? deptAllowed.units : (currentDept?.units || []);
   const currentUnit = currentDept?.units.find(u => u.id === unitId);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -236,7 +238,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 <span>เพิ่มงานในสิทธิ์ของคุณ:</span>
               </span>
               <span className="font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
-                {allowedDepts[0].name}
+                {userPerm.allowedUnitIds && userPerm.allowedUnitIds.length > 0
+                  ? userPerm.departmentTitle
+                  : allowedDepts[0].name}
               </span>
             </div>
           )}
@@ -310,15 +314,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               <select
                 id="task-unit-select"
                 value={unitId}
-                disabled={!isPermittedToEdit}
+                disabled={!isPermittedToEdit || (!taskToEdit && availableUnits.length <= 1)}
                 onChange={e => setUnitId(e.target.value)}
-                className={`w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 ${
-                  !isPermittedToEdit ? 'bg-slate-100 cursor-not-allowed text-slate-700' : 'bg-white text-slate-700 cursor-pointer'
+                className={`w-full px-3.5 py-2 rounded-xl border text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 ${
+                  !isPermittedToEdit || (!taskToEdit && availableUnits.length <= 1)
+                    ? 'border-slate-300 bg-slate-100 cursor-not-allowed text-slate-800 font-semibold'
+                    : 'border-slate-300 bg-white text-slate-700 cursor-pointer'
                 }`}
               >
-                {currentDept?.units.map(unit => (
+                {availableUnits.map(unit => (
                   <option key={unit.id} value={unit.id}>
-                    {unit.code} {unit.name}
+                    {unit.code} {unit.name} {!taskToEdit && availableUnits.length === 1 ? '(สิทธิ์ของคุณ)' : ''}
                   </option>
                 ))}
               </select>

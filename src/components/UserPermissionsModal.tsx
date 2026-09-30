@@ -97,23 +97,40 @@ export const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0 border ${
                       user.role === 'super_admin'
                         ? 'bg-amber-100 text-amber-900 border-amber-300'
+                        : user.role === 'unit_contributor'
+                        ? 'bg-purple-100 text-purple-900 border-purple-300'
                         : 'bg-emerald-100 text-emerald-900 border-emerald-300'
                     }`}
                   >
-                    {user.role === 'super_admin' ? 'Super Admin' : 'ผู้ดูแลกลุ่มงาน'}
+                    {user.role === 'super_admin'
+                      ? 'Super Admin'
+                      : user.role === 'unit_contributor'
+                      ? 'ผู้บันทึกเฉพาะหน่วย'
+                      : 'ผู้ดูแลกลุ่มงาน'}
                   </span>
                 </div>
 
                 <div className="mt-2.5 pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1.5 text-slate-700 font-medium">
                     <Building2 className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                    <span>สิทธิ์กลุ่มงาน:</span>
+                    <span>สิทธิ์กลุ่มงาน/หน่วย:</span>
                     <strong className="text-blue-900">{user.departmentTitle}</strong>
                   </div>
-                  <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                    สามารถเพิ่ม/แก้ไขงานได้
-                  </span>
+                  {user.canAdd && user.canEdit ? (
+                    <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                      สามารถเพิ่ม/แก้ไขงานได้
+                    </span>
+                  ) : user.canAdd && !user.canEdit ? (
+                    <span className="text-[11px] text-amber-800 font-semibold flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-amber-600" />
+                      เพิ่มงานใหม่ได้เท่านั้น (แก้ไข/ลบไม่ได้)
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-slate-500 font-semibold flex items-center gap-1">
+                      อ่านอย่างเดียว
+                    </span>
+                  )}
                 </div>
               </div>
             );

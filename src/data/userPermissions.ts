@@ -1,13 +1,17 @@
 import { MainDepartmentId, TaskItem } from '../types';
 import { DEPARTMENTS } from './departments';
 
-export type UserRole = 'super_admin' | 'department_admin' | 'viewer';
+export type UserRole = 'super_admin' | 'department_admin' | 'unit_contributor' | 'viewer';
 
 export interface UserPermissionConfig {
   email: string;
   name: string;
   role: UserRole;
   allowedDepartmentIds: MainDepartmentId[];
+  allowedUnitIds?: string[]; // กำหนดเจาะจงเฉพาะหน่วยงานย่อย (เช่น ['1.4'] หน่วยอาคารสถานที่และยานพาหนะ)
+  canAdd: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
   departmentTitle: string;
   canManageSheet: boolean;
 }
@@ -20,6 +24,9 @@ export const ASSIGNED_USERS_PERMISSIONS: Record<string, UserPermissionConfig> = 
     name: 'สุพิชญา เรื่องลือ',
     role: 'department_admin',
     allowedDepartmentIds: ['academic'],
+    canAdd: true,
+    canEdit: true,
+    canDelete: true,
     departmentTitle: 'งานบริการการศึกษา',
     canManageSheet: false,
   },
@@ -30,6 +37,9 @@ export const ASSIGNED_USERS_PERMISSIONS: Record<string, UserPermissionConfig> = 
     name: 'นางสาวสุนิษา แสนศรี',
     role: 'department_admin',
     allowedDepartmentIds: ['research'],
+    canAdd: true,
+    canEdit: true,
+    canDelete: true,
     departmentTitle: 'งานวิจัยและพัฒนาคุณภาพการศึกษา',
     canManageSheet: false,
   },
@@ -40,16 +50,36 @@ export const ASSIGNED_USERS_PERMISSIONS: Record<string, UserPermissionConfig> = 
     name: 'นางสาวกันยารัตน์ สมกุล',
     role: 'department_admin',
     allowedDepartmentIds: ['finance'],
+    canAdd: true,
+    canEdit: true,
+    canDelete: true,
     departmentTitle: 'งานการเงินและพัสดุ',
     canManageSheet: false,
   },
 
-  // 4. ผู้ดูแลระบบหลัก (Super Admin) - อนุวัฒน์ รุ่งรุจีรัตน์
+  // 4. นายวิทยากร สังวาลย์วงค์ - สามารถเพิ่มงานใหม่ได้เฉพาะหน่วยอาคารสถานที่ สำหรับการแก้ไขและลบทำไม่ได้
+  'vittayakorns@nu.ac.th': {
+    email: 'vittayakorns@nu.ac.th',
+    name: 'นายวิทยากร สังวาลย์วงค์',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['admin'],
+    allowedUnitIds: ['1.4'], // 1.4 = หน่วยอาคารสถานที่และยานพาหนะ
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานธุรการ (เฉพาะหน่วยอาคารสถานที่)',
+    canManageSheet: false,
+  },
+
+  // 5. ผู้ดูแลระบบหลัก (Super Admin) - อนุวัฒน์ รุ่งรุจีรัตน์
   'anuwatr@nu.ac.th': {
     email: 'anuwatr@nu.ac.th',
     name: 'อนุวัฒน์ รุ่งรุจีรัตน์',
     role: 'super_admin',
     allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
+    canAdd: true,
+    canEdit: true,
+    canDelete: true,
     departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
     canManageSheet: true,
   },
@@ -65,6 +95,9 @@ export const getUserPermission = (email?: string | null): UserPermissionConfig =
       name: 'ผู้เยี่ยมชมทั่วไป',
       role: 'viewer',
       allowedDepartmentIds: [],
+      canAdd: false,
+      canEdit: false,
+      canDelete: false,
       departmentTitle: 'ผู้เข้าชม (อ่านอย่างเดียว)',
       canManageSheet: false,
     };
@@ -83,6 +116,9 @@ export const getUserPermission = (email?: string | null): UserPermissionConfig =
     name: email.split('@')[0],
     role: 'viewer',
     allowedDepartmentIds: [],
+    canAdd: false,
+    canEdit: false,
+    canDelete: false,
     departmentTitle: 'ผู้ใช้งาน มน. (อ่านอย่างเดียว)',
     canManageSheet: false,
   };
@@ -93,7 +129,7 @@ export const getUserPermission = (email?: string | null): UserPermissionConfig =
  */
 export const canUserAddTask = (email?: string | null): boolean => {
   const perm = getUserPermission(email);
-  return perm.role === 'super_admin' || (perm.role === 'department_admin' && perm.allowedDepartmentIds.length > 0);
+  return perm.role === 'super_admin' || (perm.canAdd && perm.allowedDepartmentIds.length > 0);
 };
 
 /**
@@ -102,10 +138,11 @@ export const canUserAddTask = (email?: string | null): boolean => {
 export const canUserEditTask = (task: TaskItem, email?: string | null): boolean => {
   const perm = getUserPermission(email);
   if (perm.role === 'super_admin') return true;
-  if (perm.role === 'department_admin') {
-    return perm.allowedDepartmentIds.includes(task.departmentId);
+  if (!perm.canEdit) return false;
+  if (perm.allowedUnitIds && perm.allowedUnitIds.length > 0) {
+    return perm.allowedDepartmentIds.includes(task.departmentId) && perm.allowedUnitIds.includes(task.unitId);
   }
-  return false;
+  return perm.allowedDepartmentIds.includes(task.departmentId);
 };
 
 /**
@@ -114,10 +151,11 @@ export const canUserEditTask = (task: TaskItem, email?: string | null): boolean 
 export const canUserDeleteTask = (task: TaskItem, email?: string | null): boolean => {
   const perm = getUserPermission(email);
   if (perm.role === 'super_admin') return true;
-  if (perm.role === 'department_admin') {
-    return perm.allowedDepartmentIds.includes(task.departmentId);
+  if (!perm.canDelete) return false;
+  if (perm.allowedUnitIds && perm.allowedUnitIds.length > 0) {
+    return perm.allowedDepartmentIds.includes(task.departmentId) && perm.allowedUnitIds.includes(task.unitId);
   }
-  return false;
+  return perm.allowedDepartmentIds.includes(task.departmentId);
 };
 
 /**
@@ -128,5 +166,15 @@ export const getAllowedDepartmentsForUser = (email?: string | null) => {
   if (perm.role === 'super_admin') {
     return DEPARTMENTS;
   }
-  return DEPARTMENTS.filter(dept => perm.allowedDepartmentIds.includes(dept.id));
+  const filteredDepts = DEPARTMENTS.filter(dept => perm.allowedDepartmentIds.includes(dept.id));
+
+  // หากมีการจำกัดหน่วยงานย่อยเฉพาะ
+  if (perm.allowedUnitIds && perm.allowedUnitIds.length > 0) {
+    return filteredDepts.map(dept => ({
+      ...dept,
+      units: dept.units.filter(u => perm.allowedUnitIds!.includes(u.id)),
+    }));
+  }
+
+  return filteredDepts;
 };
