@@ -67,11 +67,179 @@ export const ASSIGNED_USERS_PERMISSIONS: Record<string, UserPermissionConfig> = 
     canAdd: true,
     canEdit: false,
     canDelete: false,
-    departmentTitle: 'งานธุรการ (เฉพาะหน่วยอาคารสถานที่)',
+    departmentTitle: 'งานธุรการ (หน่วยอาคารสถานที่และยานพาหนะ)',
     canManageSheet: false,
   },
 
-  // 5. ผู้ดูแลระบบหลัก (Super Admin) - อนุวัฒน์ รุ่งรุจีรัตน์
+  // 5. นางสาวธัญญรัตน์ ไชยวงศ์ - หน่วยสารบรรณ / หน่วยบุคคล (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'thanyaratc@nu.ac.th': {
+    email: 'thanyaratc@nu.ac.th',
+    name: 'นางสาวธัญญรัตน์ ไชยวงศ์',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['admin'],
+    allowedUnitIds: ['1.2', '1.3'], // 1.2 หน่วยสารบรรณ, 1.3 หน่วยบุคคล
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานธุรการ (หน่วยสารบรรณ / หน่วยบุคคล)',
+    canManageSheet: false,
+  },
+
+  // 6. นายรภัทร มงคลเขมภัทร์ - หน่วยอาคารสถานที่และยานพาหนะ (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'rapatm@nu.ac.th': {
+    email: 'rapatm@nu.ac.th',
+    name: 'นายรภัทร มงคลเขมภัทร์',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['admin'],
+    allowedUnitIds: ['1.4'], // 1.4 หน่วยอาคารสถานที่และยานพาหนะ
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานธุรการ (หน่วยอาคารสถานที่และยานพาหนะ)',
+    canManageSheet: false,
+  },
+
+  // 7. นางสาวฐิติกัญญารัตน์ บุตรจันทร์จรัส - หน่วยวิชาการระดับปริญญาตรี / หน่วยแผน (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'pawineeb@nu.ac.th': {
+    email: 'pawineeb@nu.ac.th',
+    name: 'นางสาวฐิติกัญญารัตน์ บุตรจันทร์จรัส',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['academic', 'admin'],
+    allowedUnitIds: ['2.1', '1.1'], // 2.1 หน่วยวิชาการระดับปริญญาตรี, 1.1 หน่วยแผน
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'หน่วยวิชาการระดับปริญญาตรี / หน่วยแผน',
+    canManageSheet: false,
+  },
+
+  // 8. นางสาวศศิธร สถาพร - หน่วยวิชาการระดับปริญญาตรี / หน่วยวิชาการระดับบัณฑิตศึกษา (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'sasithorns@nu.ac.th': {
+    email: 'sasithorns@nu.ac.th',
+    name: 'นางสาวศศิธร สถาพร',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['academic'],
+    allowedUnitIds: ['2.1', '2.2'], // 2.1 ปริญญาตรี, 2.2 บัณฑิตศึกษา
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานบริการการศึกษา (ปริญญาตรี / บัณฑิตศึกษา)',
+    canManageSheet: false,
+  },
+
+  // 9. นายมารุต จีนน่วม - หน่วยกิจการนิสิตและศิษย์เก่าสัมพันธ์ / หน่วยประชาสัมพันธ์และสื่อสารองค์กร (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'marutc@nu.ac.th': {
+    email: 'marutc@nu.ac.th',
+    name: 'นายมารุต จีนน่วม',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['academic'],
+    allowedUnitIds: ['2.3', '2.4'], // 2.3 กิจการนิสิตฯ, 2.4 ประชาสัมพันธ์ฯ
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานบริการการศึกษา (กิจการนิสิตฯ / ประชาสัมพันธ์ฯ)',
+    canManageSheet: false,
+  },
+
+  // 10. นายรัฐภูมิ กล่ำจันทร์ - หน่วยวิชาการระดับปริญญาตรี / หน่วยวิชาการระดับบัณฑิตศึกษา (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'ratthapumk@nu.ac.th': {
+    email: 'ratthapumk@nu.ac.th',
+    name: 'นายรัฐภูมิ กล่ำจันทร์',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['academic'],
+    allowedUnitIds: ['2.1', '2.2'], // 2.1 ปริญญาตรี, 2.2 บัณฑิตศึกษา
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานบริการการศึกษา (ปริญญาตรี / บัณฑิตศึกษา)',
+    canManageSheet: false,
+  },
+
+  // 11. นางสาวปัทมาวดี เปรมกาศ - หน่วยกิจการนิสิตและศิษย์เก่าสัมพันธ์ / หน่วยประชาสัมพันธ์และสื่อสารองค์กร (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'pattamawadeep@nu.ac.th': {
+    email: 'pattamawadeep@nu.ac.th',
+    name: 'นางสาวปัทมาวดี เปรมกาศ',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['academic'],
+    allowedUnitIds: ['2.3', '2.4'], // 2.3 กิจการนิสิตฯ, 2.4 ประชาสัมพันธ์ฯ
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานบริการการศึกษา (กิจการนิสิตฯ / ประชาสัมพันธ์ฯ)',
+    canManageSheet: false,
+  },
+
+  // 12. นายนันทวุฒิ เงินจันทร์ - หน่วยเทคโนโลยีสารสนเทศ (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'nantawudthn@nu.ac.th': {
+    email: 'nantawudthn@nu.ac.th',
+    name: 'นายนันทวุฒิ เงินจันทร์',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['research'],
+    allowedUnitIds: ['3.1'], // 3.1 หน่วยเทคโนโลยีสารสนเทศ
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานวิจัยฯ (หน่วยเทคโนโลยีสารสนเทศ)',
+    canManageSheet: false,
+  },
+
+  // 13. นางสาวธัญพิชชา เรืองคำ - หน่วยบริการวิชาการ (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'thanphitchar@nu.ac.th': {
+    email: 'thanphitchar@nu.ac.th',
+    name: 'นางสาวธัญพิชชา เรืองคำ',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['research'],
+    allowedUnitIds: ['3.3'], // 3.3 หน่วยบริการวิชาการ
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานวิจัยฯ (หน่วยบริการวิชาการ)',
+    canManageSheet: false,
+  },
+
+  // 14. นางสาวกุลพรภัสร์ สมรูป - หน่วยการเงิน (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'kunlapronpass@nu.ac.th': {
+    email: 'kunlapronpass@nu.ac.th',
+    name: 'นางสาวกุลพรภัสร์ สมรูป',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['finance'],
+    allowedUnitIds: ['4.1'], // 4.1 หน่วยการเงิน
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานการเงินและพัสดุ (หน่วยการเงิน)',
+    canManageSheet: false,
+  },
+
+  // 15. นางสาวมัลลิกา อินสาย - หน่วยพัสดุ (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'mullikai@nu.ac.th': {
+    email: 'mullikai@nu.ac.th',
+    name: 'นางสาวมัลลิกา อินสาย',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['finance'],
+    allowedUnitIds: ['4.3'], // 4.3 หน่วยพัสดุ
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานการเงินและพัสดุ (หน่วยพัสดุ)',
+    canManageSheet: false,
+  },
+
+  // 16. นางสาวเบญจมาภรณ์ พึ่งแก้ว - หน่วยพัสดุ (เพิ่มงานได้ แก้ไข/ลบไม่ได้)
+  'benjamaponp@nu.ac.th': {
+    email: 'benjamaponp@nu.ac.th',
+    name: 'นางสาวเบญจมาภรณ์ พึ่งแก้ว',
+    role: 'unit_contributor',
+    allowedDepartmentIds: ['finance'],
+    allowedUnitIds: ['4.3'], // 4.3 หน่วยพัสดุ
+    canAdd: true,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: 'งานการเงินและพัสดุ (หน่วยพัสดุ)',
+    canManageSheet: false,
+  },
+
+  // 17. ผู้ดูแลระบบหลัก (Super Admin) - อนุวัฒน์ รุ่งรุจีรัตน์
   'anuwatr@nu.ac.th': {
     email: 'anuwatr@nu.ac.th',
     name: 'อนุวัฒน์ รุ่งรุจีรัตน์',
@@ -170,10 +338,12 @@ export const getAllowedDepartmentsForUser = (email?: string | null) => {
 
   // หากมีการจำกัดหน่วยงานย่อยเฉพาะ
   if (perm.allowedUnitIds && perm.allowedUnitIds.length > 0) {
-    return filteredDepts.map(dept => ({
-      ...dept,
-      units: dept.units.filter(u => perm.allowedUnitIds!.includes(u.id)),
-    }));
+    return filteredDepts
+      .map(dept => ({
+        ...dept,
+        units: dept.units.filter(u => perm.allowedUnitIds!.includes(u.id)),
+      }))
+      .filter(dept => dept.units.length > 0);
   }
 
   return filteredDepts;

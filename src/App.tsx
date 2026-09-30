@@ -493,7 +493,7 @@ export default function App() {
         return;
       }
     } else {
-      if (!canUserAddTask(userInfo?.email) || (perm.role === 'department_admin' && !perm.allowedDepartmentIds.includes(taskData.departmentId))) {
+      if (!canUserAddTask(userInfo?.email) || (perm.role !== 'super_admin' && !perm.allowedDepartmentIds.includes(taskData.departmentId))) {
         showToast(`คุณไม่มีสิทธิ์เพิ่มงานในกลุ่มนี้ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
         return;
       }

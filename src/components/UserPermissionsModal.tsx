@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, ShieldCheck, UserCheck, Lock, CheckCircle2, ShieldAlert, Building2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { X, ShieldCheck, UserCheck, Lock, CheckCircle2, ShieldAlert, Building2, Search } from 'lucide-react';
 import { ASSIGNED_USERS_PERMISSIONS, getUserPermission } from '../data/userPermissions';
 
 interface UserPermissionsModalProps {
@@ -13,10 +13,23 @@ export const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
   onClose,
   currentUserEmail,
 }) => {
-  if (!isOpen) return null;
+  const [searchTerm, setSearchTerm] = useState('');
 
   const currentPerm = getUserPermission(currentUserEmail);
-  const userList = Object.values(ASSIGNED_USERS_PERMISSIONS);
+  const allUsers = useMemo(() => Object.values(ASSIGNED_USERS_PERMISSIONS), []);
+
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm.trim()) return allUsers;
+    const term = searchTerm.toLowerCase();
+    return allUsers.filter(
+      u =>
+        u.name.toLowerCase().includes(term) ||
+        u.email.toLowerCase().includes(term) ||
+        u.departmentTitle.toLowerCase().includes(term)
+    );
+  }, [allUsers, searchTerm]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
@@ -57,6 +70,8 @@ export const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
                 ? 'bg-amber-100 text-amber-900 border-amber-300'
                 : currentPerm.role === 'department_admin'
                 ? 'bg-blue-100 text-blue-900 border-blue-300'
+                : currentPerm.role === 'unit_contributor'
+                ? 'bg-purple-100 text-purple-900 border-purple-300'
                 : 'bg-slate-100 text-slate-700 border-slate-300'
             }`}
           >
@@ -64,13 +79,35 @@ export const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
           </span>
         </div>
 
+        {/* Search bar & count */}
+        <div className="px-5 pt-3.5 pb-2 bg-slate-50/60 border-b border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+          <div className="relative w-full sm:w-72">
+            <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="ค้นหาชื่อ, อีเมล หรือหน่วยงาน..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs text-slate-700 placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <span className="text-[11px] font-medium text-slate-500 self-end sm:self-center">
+            ผู้ได้รับสิทธิ์ทั้งหมด <strong>{allUsers.length}</strong> ท่าน
+          </span>
+        </div>
+
         {/* Permissions Table / Cards */}
-        <div className="p-5 space-y-3 max-h-[60vh] overflow-y-auto">
+        <div className="p-5 space-y-3 max-h-[55vh] overflow-y-auto">
           <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
             รายชื่อผู้ได้รับสิทธิ์ เพิ่ม/แก้ไข เฉพาะกลุ่มงาน:
           </h4>
 
-          {userList.map(user => {
+          {filteredUsers.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-400">
+              ไม่พบบัญชีผู้ใช้ที่ตรงกับคำค้นหา
+            </div>
+          ) : (
+            filteredUsers.map(user => {
             const isSelf = currentUserEmail?.toLowerCase() === user.email.toLowerCase();
             return (
               <div
@@ -134,7 +171,7 @@ export const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
                 </div>
               </div>
             );
-          })}
+          }))}
 
           {/* General policy note */}
           <div className="mt-4 p-3 rounded-xl bg-slate-100/90 border border-slate-200 text-slate-600 text-xs space-y-1">
