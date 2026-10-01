@@ -508,34 +508,61 @@ export default function App() {
     if (isEdit) {
       updatedTasks = tasks.map(t => (t.id === taskData.id ? taskData : t));
       setTasks(updatedTasks);
-      showToast('บันทึกการแก้ไขงานสำเร็จ', 'success');
     } else {
       updatedTasks = [taskData, ...tasks];
       setTasks(updatedTasks);
-      showToast('เพิ่มรายการงานใหม่สำเร็จ', 'success');
     }
 
     // Background sync to Google Sheet if connected
-    const token = await getAccessToken();
-    if (token && syncState.spreadsheetId) {
+    let token = (await getAccessToken()) || userInfo?.accessToken;
+    if (!token) {
       try {
-        if (isEdit && taskData.rowNumber) {
-          await updateTaskInSheet(syncState.spreadsheetId, token, taskData.rowNumber, taskData);
-        } else {
-          const row = await appendTaskToSheet(syncState.spreadsheetId, token, taskData);
-          if (row > 0) {
-            setTasks(prev => prev.map(t => (t.id === taskData.id ? { ...t, rowNumber: row } : t)));
-          }
+        const stored = localStorage.getItem('google_oauth_access_token_v1');
+        if (stored) {
+          token = stored;
+          setCachedToken(stored);
         }
-        setSyncState(prev => ({ ...prev, lastSyncedAt: new Date() }));
-      } catch (sheetErr: any) {
-        // [แก้ไข 1.1] แจ้งเตือนผู้ใช้แบบเห็นได้จริง แทนที่จะเงียบไว้แค่ใน console
-        console.warn('Background sync failed:', sheetErr);
+      } catch (e) {}
+    }
+
+    if (syncState.spreadsheetId) {
+      if (!token) {
         showToast(
-          'บันทึกในเครื่องสำเร็จ แต่ส่งข้อมูลขึ้น Google Sheet ไม่สำเร็จ กรุณากดซิงค์ใหม่อีกครั้ง',
+          'บันทึกในเครื่องสำเร็จ แต่ยังไม่ได้เชื่อมต่อ Google Account จึงยังไม่สามารถซิงค์ขึ้น Google Sheet ได้ กรุณากดเข้าสู่ระบบ Google',
           'error'
         );
+        setIsLoginModalOpen(true);
+      } else {
+        try {
+          setSyncState(prev => ({ ...prev, isSyncing: true, error: null }));
+          if (isEdit && taskData.rowNumber) {
+            await updateTaskInSheet(syncState.spreadsheetId, token, taskData.rowNumber, taskData);
+          } else {
+            const row = await appendTaskToSheet(syncState.spreadsheetId, token, taskData);
+            if (row > 0) {
+              setTasks(prev => prev.map(t => (t.id === taskData.id ? { ...t, rowNumber: row } : t)));
+            }
+          }
+          setSyncState(prev => ({ ...prev, isSyncing: false, lastSyncedAt: new Date(), error: null }));
+          showToast(
+            isEdit ? 'บันทึกการแก้ไขและซิงค์ลง Google Sheet สำเร็จ' : 'เพิ่มรายการงานใหม่และซิงค์ลง Google Sheet สำเร็จ',
+            'success'
+          );
+        } catch (sheetErr: any) {
+          console.warn('Background sync failed:', sheetErr);
+          setSyncState(prev => ({
+            ...prev,
+            isSyncing: false,
+            error: sheetErr?.message || 'ซิงค์ข้อมูลกับ Sheet ไม่สำเร็จ',
+          }));
+          showToast(
+            `บันทึกในเครื่องสำเร็จ แต่ส่งขึ้น Google Sheet ไม่สำเร็จ (${sheetErr?.message || 'กรุณาลองใหม่อีกครั้ง'})`,
+            'error'
+          );
+        }
       }
+    } else {
+      showToast(isEdit ? 'บันทึกการแก้ไขงานสำเร็จ' : 'เพิ่มรายการงานใหม่สำเร็จ', 'success');
     }
   };
 
@@ -565,22 +592,35 @@ export default function App() {
     };
 
     setTasks(prev => prev.map(t => (t.id === task.id ? updatedTask : t)));
-    showToast(`เปลี่ยนสถานะเป็น "${newStatus}" เรียบร้อยแล้ว`, 'success');
 
     // Background update Google Sheet if connected
-    const token = await getAccessToken();
+    let token = (await getAccessToken()) || userInfo?.accessToken;
+    if (!token) {
+      try {
+        const stored = localStorage.getItem('google_oauth_access_token_v1');
+        if (stored) {
+          token = stored;
+          setCachedToken(stored);
+        }
+      } catch (e) {}
+    }
+
     if (token && syncState.spreadsheetId && task.rowNumber) {
       try {
+        setSyncState(prev => ({ ...prev, isSyncing: true }));
         await updateTaskInSheet(syncState.spreadsheetId, token, task.rowNumber, updatedTask);
-        setSyncState(prev => ({ ...prev, lastSyncedAt: new Date() }));
+        setSyncState(prev => ({ ...prev, isSyncing: false, lastSyncedAt: new Date() }));
+        showToast(`เปลี่ยนสถานะเป็น "${newStatus}" และซิงค์ลง Google Sheet แล้ว`, 'success');
       } catch (err: any) {
-        // [แก้ไข 1.2] แจ้งเตือนผู้ใช้แบบเห็นได้จริง แทนที่จะเงียบไว้แค่ใน console
         console.warn('Status update on sheet failed:', err);
+        setSyncState(prev => ({ ...prev, isSyncing: false }));
         showToast(
           'เปลี่ยนสถานะในเครื่องสำเร็จ แต่ยังไม่ได้อัปเดตลง Google Sheet กรุณากดซิงค์ใหม่',
           'error'
         );
       }
+    } else {
+      showToast(`เปลี่ยนสถานะเป็น "${newStatus}" เรียบร้อยแล้ว`, 'success');
     }
   };
 
@@ -606,7 +646,16 @@ export default function App() {
         showToast(`ลบงาน "${task.title}" เรียบร้อยแล้ว`, 'success');
 
         // Update Google Sheet
-        const token = await getAccessToken();
+        let token = (await getAccessToken()) || userInfo?.accessToken;
+        if (!token) {
+          try {
+            const stored = localStorage.getItem('google_oauth_access_token_v1');
+            if (stored) {
+              token = stored;
+              setCachedToken(stored);
+            }
+          } catch (e) {}
+        }
         if (token && syncState.spreadsheetId) {
           try {
             if (task.rowNumber) {

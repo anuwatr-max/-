@@ -268,14 +268,47 @@ export const createSpreadsheet = async (
   return { id: spreadsheetId, url: spreadsheetUrl };
 };
  
+let resolvedSheetTitle: string | null = null;
+
+/**
+ * ค้นหาชื่อแท็บจริงใน Google Sheet (เช่น 'ติดตามงาน2570' หรือแท็บแรกของไฟล์)
+ */
+export const resolveSheetTitle = async (
+  spreadsheetId: string,
+  accessToken: string
+): Promise<string> => {
+  if (resolvedSheetTitle) return resolvedSheetTitle;
+  try {
+    const res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties(sheetId,title)`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const match =
+        data.sheets?.find((s: any) => s.properties?.title === SHEET_NAME) ||
+        data.sheets?.[0];
+      if (match?.properties?.title) {
+        resolvedSheetTitle = match.properties.title;
+        return match.properties.title;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not query sheet properties, using default:', e);
+  }
+  return SHEET_NAME;
+};
+
 // 2. ดึงรายการงานทั้งหมดจาก Sheet
 export const fetchTasksFromSheet = async (
   spreadsheetId: string,
   accessToken: string
 ): Promise<TaskItem[]> => {
-  const range = `'${SHEET_NAME}'!A2:M`;
-  const res = await fetch(
-    // [แก้ไข] ใช้ encodeRange() ครอบ range ก่อนใส่ใน URL — จุดนี้คือจุดที่ทำให้ปุ่ม "รีเฟรชข้อมูลล่าสุด" error
+  const sheetTitle = await resolveSheetTitle(spreadsheetId, accessToken);
+  const range = `'${sheetTitle}'!A2:M`;
+  let res = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeRange(range)}`,
     {
       headers: {
@@ -283,28 +316,43 @@ export const fetchTasksFromSheet = async (
       },
     }
   );
- 
+
+  if (!res.ok && res.status !== 401) {
+    // ลองสำรองด้วย Range แบบไม่ระบุชื่อแท็บ (ดึงจากแท็บแรกโดยตรง)
+    res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A2:M`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+  }
+
   if (!res.ok) {
-    const err = await res.json();
+    if (res.status === 401) {
+      throw new Error('Google Account Session หมดอายุ กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่');
+    }
+    const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message || 'ไม่สามารถโหลดข้อมูลจาก Google Sheet ได้');
   }
- 
+
   const data = await res.json();
   const rows: string[][] = data.values || [];
- 
+
   return rows.map((row, index) => rowToTask(row, index + 2)); // row index starts at 2 (1 is header)
 };
- 
+
 // 3. เพิ่มงานใหม่ลงใน Sheet (Append Row)
 export const appendTaskToSheet = async (
   spreadsheetId: string,
   accessToken: string,
   task: TaskItem
 ): Promise<number> => {
+  const sheetTitle = await resolveSheetTitle(spreadsheetId, accessToken);
   const rowData = taskToRow(task);
-  const range = `'${SHEET_NAME}'!A:M`;
-  const res = await fetch(
-    // [แก้ไข] ใช้ encodeRange() ครอบ range ก่อนใส่ใน URL
+  const range = `'${sheetTitle}'!A:M`;
+  let res = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeRange(
       range
     )}:append?valueInputOption=USER_ENTERED`,
@@ -319,19 +367,39 @@ export const appendTaskToSheet = async (
       }),
     }
   );
- 
+
+  if (!res.ok && res.status !== 401) {
+    // สำรองด้วย Range A:M ไปยังชีตแรกอัตโนมัติ
+    res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A:M:append?valueInputOption=USER_ENTERED`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          values: [rowData],
+        }),
+      }
+    );
+  }
+
   if (!res.ok) {
-    const err = await res.json();
+    if (res.status === 401) {
+      throw new Error('Google Account Session หมดอายุ กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่');
+    }
+    const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message || 'ไม่สามารถเพิ่มข้อมูลลง Google Sheet ได้');
   }
- 
+
   const result = await res.json();
   // Extract row index from updatedRange e.g. "ติดตามงาน2570!A16:M16"
   const rangeStr = result?.updates?.updatedRange || '';
   const match = rangeStr.match(/![A-Z]+(\d+)/);
   return match ? parseInt(match[1], 10) : 0;
 };
- 
+
 // 4. อัปเดตงานใน Sheet (Update Row)
 export const updateTaskInSheet = async (
   spreadsheetId: string,
@@ -339,10 +407,10 @@ export const updateTaskInSheet = async (
   rowNumber: number,
   task: TaskItem
 ): Promise<void> => {
+  const sheetTitle = await resolveSheetTitle(spreadsheetId, accessToken);
   const rowData = taskToRow(task);
-  const range = `'${SHEET_NAME}'!A${rowNumber}:M${rowNumber}`;
-  const res = await fetch(
-    // [แก้ไข] ใช้ encodeRange() ครอบ range ก่อนใส่ใน URL
+  const range = `'${sheetTitle}'!A${rowNumber}:M${rowNumber}`;
+  let res = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeRange(
       range
     )}?valueInputOption=USER_ENTERED`,
@@ -359,9 +427,31 @@ export const updateTaskInSheet = async (
       }),
     }
   );
- 
+
+  if (!res.ok && res.status !== 401) {
+    const fallbackRange = `A${rowNumber}:M${rowNumber}`;
+    res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${fallbackRange}?valueInputOption=USER_ENTERED`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          range: fallbackRange,
+          majorDimension: 'ROWS',
+          values: [rowData],
+        }),
+      }
+    );
+  }
+
   if (!res.ok) {
-    const err = await res.json();
+    if (res.status === 401) {
+      throw new Error('Google Account Session หมดอายุ กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่');
+    }
+    const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message || 'ไม่สามารถแก้ไขข้อมูลใน Google Sheet ได้');
   }
 };

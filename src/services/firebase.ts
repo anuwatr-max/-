@@ -32,8 +32,16 @@ provider.setCustomParameters({
   prompt: 'select_account',
 });
 
+const STORAGE_KEY_ACCESS_TOKEN = 'google_oauth_access_token_v1';
+
 let isSigningIn = false;
-let cachedAccessToken: string | null = null;
+let cachedAccessToken: string | null = (() => {
+  try {
+    return localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN);
+  } catch (e) {
+    return null;
+  }
+})();
 
 // Listen for auth state changes
 export const initAuth = (
@@ -42,14 +50,17 @@ export const initAuth = (
 ) => {
   return onAuthStateChanged(auth, async (user: User | null) => {
     if (user) {
-      if (cachedAccessToken) {
-        if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
-      } else if (!isSigningIn) {
-        // User is logged in to Firebase, but token might need re-fetching or prompt
-        if (onAuthSuccess) onAuthSuccess(user, null);
+      if (!cachedAccessToken) {
+        try {
+          cachedAccessToken = localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN);
+        } catch (e) {}
       }
+      if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
     } else {
       cachedAccessToken = null;
+      try {
+        localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
+      } catch (e) {}
       if (onAuthFailure) onAuthFailure();
     }
   });
@@ -65,6 +76,11 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     }
 
     cachedAccessToken = credential.accessToken;
+    try {
+      localStorage.setItem(STORAGE_KEY_ACCESS_TOKEN, credential.accessToken);
+    } catch (e) {
+      console.warn('Failed to persist token:', e);
+    }
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.error('Sign in error:', error);
@@ -100,9 +116,19 @@ export const getAccessToken = async (): Promise<string | null> => {
 
 export const setCachedToken = (token: string | null) => {
   cachedAccessToken = token;
+  try {
+    if (token) {
+      localStorage.setItem(STORAGE_KEY_ACCESS_TOKEN, token);
+    } else {
+      localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
+    }
+  } catch (e) {}
 };
 
 export const logout = async () => {
   await signOut(auth);
   cachedAccessToken = null;
+  try {
+    localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
+  } catch (e) {}
 };
