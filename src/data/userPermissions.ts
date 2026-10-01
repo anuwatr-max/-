@@ -239,10 +239,10 @@ export const ASSIGNED_USERS_PERMISSIONS: Record<string, UserPermissionConfig> = 
     canManageSheet: false,
   },
 
-  // 17. ผู้ดูแลระบบหลัก (Super Admin) - อนุวัฒน์ รุ่งรุจีรัตน์
+  // 17. ผู้ดูแลระบบหลัก (Super Admin) - อนุวัทย์ เรืองจันทร์
   'anuwatr@nu.ac.th': {
     email: 'anuwatr@nu.ac.th',
-    name: 'อนุวัฒน์ รุ่งรุจีรัตน์',
+    name: 'อนุวัทย์ เรืองจันทร์',
     role: 'super_admin',
     allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
     canAdd: true,
