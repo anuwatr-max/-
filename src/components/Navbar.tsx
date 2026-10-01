@@ -6,11 +6,8 @@ import {
   FileSpreadsheet,
   LogOut,
   RefreshCw,
-  ExternalLink,
   Menu,
   X,
-  Building2,
-  CheckCircle2,
   AlertCircle,
   SlidersHorizontal,
   Clock,
@@ -370,42 +367,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span className="font-semibold text-cyan-200">{formatLastSync(syncState.lastSyncedAt)}</span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      id="navbar-quick-sync-btn"
-                      onClick={onQuickSync}
-                      disabled={syncState.isSyncing}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 border border-blue-400/40 text-white font-semibold text-[11px] transition-all cursor-pointer disabled:opacity-50 shadow-xs"
-                      title="ซิงค์ข้อมูลกับ Google Sheet ตอนนี้"
-                    >
-                      <RefreshCw className={`h-3 w-3 text-cyan-200 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
-                      <span>{syncState.isSyncing ? 'กำลังซิงค์...' : 'ซิงค์ด่วน'}</span>
-                    </button>
-
-                    {syncState.spreadsheetUrl && (
-                      <a
-                        id="navbar-open-sheet-link"
-                        href={syncState.spreadsheetUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600/70 hover:bg-emerald-600 border border-emerald-400/30 text-white font-medium text-[11px] transition-all"
-                        title="เปิดดูไฟล์ Google Sheet บน Google Drive"
-                      >
-                        <ExternalLink className="h-3 w-3 text-emerald-300" />
-                        <span>เปิด Sheet</span>
-                      </a>
-                    )}
-
-                    <button
-                      id="navbar-manage-sheet-btn"
-                      onClick={onOpenSheetSettings}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-slate-200 hover:text-white text-[11px] font-medium transition-colors cursor-pointer shadow-xs"
-                      title="ตั้งค่าและจัดการการเชื่อมต่อ Google Sheet"
-                    >
-                      <SlidersHorizontal className="h-3 w-3 text-cyan-300" />
-                      <span>การจัดการ</span>
-                    </button>
-                  </div>
+                  <button
+                    id="navbar-manage-sheet-btn"
+                    onClick={onOpenSheetSettings}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-slate-200 hover:text-white text-[11px] font-medium transition-colors cursor-pointer shadow-xs"
+                    title="ตั้งค่าและจัดการการเชื่อมต่อ Google Sheet"
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5 text-cyan-300" />
+                    <span>การจัดการ</span>
+                  </button>
                 </>
               ) : (
                 <button
