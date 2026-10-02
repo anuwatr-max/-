@@ -978,8 +978,10 @@ export default function App() {
               <p className="text-slate-500 text-[11px]">
                 คณะโลจิสติกส์และดิจิทัลซัพพลายเชน มหาวิทยาลัยนเรศวร
               </p>
-              <p className="text-slate-400 text-[10px] pt-0.5">
-                เชื่อมต่อการจัดเก็บข้อมูลด้วย Google Sheets API & Google Authentication
+              <p className="text-slate-400 text-[10px] pt-0.5 flex flex-wrap items-center justify-center gap-x-2">
+                <span>เชื่อมต่อการจัดเก็บข้อมูลด้วย Google Sheets API & Google Authentication</span>
+                <span className="hidden sm:inline text-slate-300">•</span>
+                <span>จัดทำโดย นายอนุวัทย์&nbsp;&nbsp;เรืองจันทร์</span>
               </p>
             </div>
           </footer>
