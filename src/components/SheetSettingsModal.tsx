@@ -19,7 +19,7 @@ interface SheetSettingsModalProps {
   syncState: SheetSyncState;
   isAuthenticated: boolean;
   onSignInWithGoogle: () => void;
-  onCreateNewSheet: () => Promise<void>;
+  onCreateNewSheet: (mode?: '12months' | 'single') => Promise<void>;
   onConnectExistingSheet: (sheetId: string) => Promise<void>;
   onSyncAllTasks: () => Promise<void>;
 }
@@ -66,11 +66,15 @@ export const SheetSettingsModal: React.FC<SheetSettingsModalProps> = ({
     }
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (mode: '12months' | 'single' = '12months') => {
     setActionSuccessMsg(null);
     try {
-      await onCreateNewSheet();
-      setActionSuccessMsg('สร้างและเชื่อมต่อ Google Sheet ใหม่สำเร็จแล้ว');
+      await onCreateNewSheet(mode);
+      setActionSuccessMsg(
+        mode === '12months'
+          ? 'สร้างและเชื่อมต่อ Google Sheet แยก 12 แท็บประจำเดือน (ต.ค. - ก.ย.) สำเร็จแล้ว'
+          : 'สร้างและเชื่อมต่อ Google Sheet ใหม่สำเร็จแล้ว'
+      );
     } catch (err) {
       console.error(err);
     }
@@ -80,7 +84,7 @@ export const SheetSettingsModal: React.FC<SheetSettingsModalProps> = ({
     setActionSuccessMsg(null);
     try {
       await onSyncAllTasks();
-      setActionSuccessMsg('ซิงค์ข้อมูลกับ Google Sheet เรียบร้อยแล้ว');
+      setActionSuccessMsg('ซิงค์ข้อมูลกับ Google Sheet เรียบร้อยแล้ว (ครอบคลุมทั้ง 12 เดือน)');
     } catch (err) {
       console.error(err);
     }
@@ -134,6 +138,18 @@ export const SheetSettingsModal: React.FC<SheetSettingsModalProps> = ({
               <span>{syncState.error}</span>
             </div>
           )}
+
+          {/* Banner: ยืนยันการรองรับ 12 เดือนปีงบประมาณ */}
+          <div className="p-3.5 rounded-xl bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 border border-sky-200/90 text-xs text-slate-700 space-y-1.5 shadow-2xs">
+            <div className="flex items-center gap-1.5 font-bold text-blue-900">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span>รองรับรอบปีงบประมาณ 12 เดือน (ตุลาคม 2569 – กันยายน 2570)</span>
+            </div>
+            <p className="text-[11px] text-slate-600 leading-relaxed pl-5.5">
+              ข้อมูลจาก Google Sheet สามารถซิงค์กับระบบได้ครบทั้ง 12 เดือนอัตโนมัติ 
+              รองรับทั้งไฟล์ Google Sheet ที่<b>แยกเป็น 12 แท็บประจำเดือน (ต.ค. – ก.ย.)</b> หรือ<b>รวมข้อมูล 12 เดือนในแผ่นเดียว</b>
+            </p>
+          </div>
 
           {!isAuthenticated ? (
             <div className="p-5 rounded-2xl bg-blue-50/60 border border-blue-200/80 text-center space-y-3">
@@ -194,7 +210,7 @@ export const SheetSettingsModal: React.FC<SheetSettingsModalProps> = ({
                       className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
                     >
                       <RefreshCw className={`h-3.5 w-3.5 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
-                      <span>{syncState.isSyncing ? 'กำลังซิงค์...' : 'ซิงค์ข้อมูลทั้งหมดทับ Sheet'}</span>
+                      <span>{syncState.isSyncing ? 'กำลังซิงค์...' : 'ซิงค์ข้อมูลทั้ง 12 เดือน'}</span>
                     </button>
                   </div>
 
@@ -203,25 +219,50 @@ export const SheetSettingsModal: React.FC<SheetSettingsModalProps> = ({
                       ซิงค์ล่าสุด: {syncState.lastSyncedAt.toLocaleTimeString('th-TH')} น.
                     </p>
                   )}
+
+                  {/* ปุ่มเสริม: สร้างชีตใหม่แบบแยก 12 เดือน */}
+                  <div className="pt-2 border-t border-slate-200/80">
+                    <button
+                      id="sheet-modal-recreate-12m-btn"
+                      onClick={() => handleCreate('12months')}
+                      disabled={syncState.isSyncing}
+                      className="text-xs text-blue-700 hover:text-blue-900 font-medium inline-flex items-center gap-1 hover:underline cursor-pointer"
+                    >
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span>ต้องการสร้างไฟล์ Google Sheet ใหม่แบบแยก 12 แท็บเดือน (ต.ค. - ก.ย.)</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 text-center space-y-3">
                   <p className="text-xs text-slate-600">
                     ยังไม่มีการเชื่อมต่อกับ Google Sheet สำหรับติดตามงานปี 2570
                   </p>
-                  <button
-                    id="sheet-modal-create-sheet-btn"
-                    onClick={handleCreate}
-                    disabled={syncState.isSyncing}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-700 to-cyan-600 hover:from-blue-800 hover:to-cyan-700 text-white font-semibold rounded-xl text-xs shadow-xs transition-colors cursor-pointer inline-flex items-center gap-2"
-                  >
-                    {syncState.isSyncing ? (
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <PlusCircle className="h-4 w-4" />
-                    )}
-                    <span>สร้าง Google Sheet ติดตามงาน 2570 อัตโนมัติ</span>
-                  </button>
+                  
+                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                    <button
+                      id="sheet-modal-create-sheet-12m-btn"
+                      onClick={() => handleCreate('12months')}
+                      disabled={syncState.isSyncing}
+                      className="px-4 py-2.5 bg-gradient-to-r from-blue-700 via-indigo-700 to-cyan-600 hover:from-blue-800 hover:to-cyan-700 text-white font-semibold rounded-xl text-xs shadow-xs transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
+                    >
+                      {syncState.isSyncing ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <PlusCircle className="h-4 w-4" />
+                      )}
+                      <span>สร้างแบบแยก 12 แท็บเดือน (ต.ค. - ก.ย.) [แนะนำ]</span>
+                    </button>
+
+                    <button
+                      id="sheet-modal-create-sheet-single-btn"
+                      onClick={() => handleCreate('single')}
+                      disabled={syncState.isSyncing}
+                      className="px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+                    >
+                      <span>สร้างแบบแผ่นรวม</span>
+                    </button>
+                  </div>
                 </div>
               )}
 

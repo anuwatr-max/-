@@ -356,7 +356,7 @@ export default function App() {
   };
 
   // Create new spreadsheet
-  const handleCreateNewSheet = async () => {
+  const handleCreateNewSheet = async (mode: '12months' | 'single' = '12months') => {
     let token = await getAccessToken();
     if (!token && userInfo?.accessToken) token = userInfo.accessToken;
     if (!token) {
@@ -366,16 +366,24 @@ export default function App() {
 
     setSyncState(prev => ({ ...prev, isSyncing: true, error: null }));
     try {
-      const newSheet = await createSpreadsheet(token, tasks);
+      const newSheet = await createSpreadsheet(token, tasks, mode);
       setSyncState(prev => ({
         ...prev,
         spreadsheetId: newSheet.id,
         spreadsheetUrl: newSheet.url,
+        spreadsheetTitle: mode === '12months'
+          ? 'ระบบติดตามงาน_ปีงบประมาณ_2570_(12เดือน_ต.ค.-ก.ย.)'
+          : 'ระบบติดตามงาน_ปีงบประมาณ_2570',
         isSyncing: false,
         lastSyncedAt: new Date(),
         error: null,
       }));
-      showToast('สร้างและเชื่อมต่อ Google Sheet ใหม่สำเร็จ', 'success');
+      showToast(
+        mode === '12months'
+          ? 'สร้าง Google Sheet แยก 12 แท็บประจำเดือน (ต.ค. - ก.ย.) สำเร็จแล้ว'
+          : 'สร้างและเชื่อมต่อ Google Sheet ใหม่สำเร็จ',
+        'success'
+      );
     } catch (err: any) {
       setSyncState(prev => ({
         ...prev,
