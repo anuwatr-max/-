@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, User, AlignLeft, CheckCircle2, Building2, ShieldAlert, Lock } from 'lucide-react';
+import { X, Save, Calendar, User, AlignLeft, CheckCircle2, Building2, ShieldAlert, Lock, Trash2 } from 'lucide-react';
 import { TaskItem, TaskStatus, MainDepartmentId } from '../types';
 import { DEPARTMENTS, FISCAL_MONTHS, TASK_STATUSES } from '../data/departments';
-import { getAllowedDepartmentsForUser, canUserEditTask, getUserPermission } from '../data/userPermissions';
+import { getAllowedDepartmentsForUser, canUserEditTask, canUserDeleteTask, getUserPermission } from '../data/userPermissions';
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (task: TaskItem) => Promise<void>;
+  onDeleteTask?: (task: TaskItem) => void;
   taskToEdit?: TaskItem | null;
   defaultMonth?: string;
   defaultDueDate?: string;
@@ -18,6 +19,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onDeleteTask,
   taskToEdit,
   defaultMonth = 'มีนาคม 2570',
   defaultDueDate,
@@ -26,6 +28,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const allowedDepts = getAllowedDepartmentsForUser(currentUserEmail);
   const userPerm = getUserPermission(currentUserEmail);
   const isPermittedToEdit = !taskToEdit || canUserEditTask(taskToEdit, currentUserEmail);
+  const isPermittedToDelete = taskToEdit ? canUserDeleteTask(taskToEdit, currentUserEmail) : false;
 
   const [departmentId, setDepartmentId] = useState<MainDepartmentId>('admin');
   const [unitId, setUnitId] = useState<string>('1.1');
@@ -125,6 +128,25 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const availableUnits = !taskToEdit && deptAllowed ? deptAllowed.units : (currentDept?.units || []);
   const currentUnit = currentDept?.units.find(u => u.id === unitId);
 
+  const handleCancel = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setErrors({});
+    onClose();
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        handleCancel();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isPermittedToEdit) {
@@ -186,10 +208,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
       role="dialog"
       aria-modal="true"
+      onClick={handleCancel}
     >
       <div
         id="task-modal-box"
         className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-150"
+        onClick={e => e.stopPropagation()}
       >
         {/* Luxury Midnight Navy Header */}
         <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 px-6 py-4 text-white flex items-center justify-between border-b border-blue-900/40">
@@ -208,8 +232,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           </div>
           <button
             id="task-modal-close-btn"
-            onClick={onClose}
+            type="button"
+            onClick={handleCancel}
             className="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="ปิดหน้าต่าง"
           >
             <X className="h-5 w-5" />
           </button>
@@ -486,29 +512,49 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
-            <button
-              id="task-modal-cancel-btn"
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
-            >
-              ยกเลิก
-            </button>
-            <button
-              id="task-modal-save-btn"
-              type="submit"
-              disabled={isSubmitting || !isPermittedToEdit}
-              className="px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-blue-700 to-cyan-600 hover:from-blue-800 hover:to-cyan-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-2"
-            >
-              {isSubmitting ? (
-                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
-              ) : (
-                <Save className="h-4 w-4" />
+          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              {taskToEdit && onDeleteTask && isPermittedToDelete && (
+                <button
+                  id="task-modal-delete-btn"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDeleteTask(taskToEdit);
+                  }}
+                  className="px-3.5 py-2 text-xs sm:text-sm font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>ลบงานนี้</span>
+                </button>
               )}
-              {taskToEdit ? 'บันทึกการแก้ไข' : 'เพิ่มรายการงาน'}
-            </button>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+              <button
+                id="task-modal-cancel-btn"
+                type="button"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border border-slate-200 rounded-xl transition-all cursor-pointer shadow-2xs"
+              >
+                ยกเลิก
+              </button>
+              <button
+                id="task-modal-save-btn"
+                type="submit"
+                disabled={isSubmitting || !isPermittedToEdit}
+                className="px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-blue-700 to-cyan-600 hover:from-blue-800 hover:to-cyan-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-2"
+              >
+                {isSubmitting ? (
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {taskToEdit ? 'บันทึกการแก้ไข' : 'เพิ่มรายการงาน'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -1025,8 +1025,17 @@ export default function App() {
       {/* Modals */}
       <TaskModal
         isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
+        onClose={() => {
+          setIsTaskModalOpen(false);
+          setTaskToEdit(null);
+          setTaskModalDefaultDate(undefined);
+        }}
         onSave={handleSaveTask}
+        onDeleteTask={task => {
+          setIsTaskModalOpen(false);
+          setTaskToEdit(null);
+          handleDeleteTaskRequest(task);
+        }}
         taskToEdit={taskToEdit}
         defaultDueDate={taskModalDefaultDate}
         currentUserEmail={userInfo?.email}
