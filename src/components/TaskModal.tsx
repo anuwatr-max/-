@@ -250,11 +250,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           {/* Permission Alert if user cannot edit this task */}
           {!isPermittedToEdit && (
-            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 flex items-start gap-2.5 animate-in fade-in">
-              <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-sky-50 border border-sky-300 text-sky-950 flex items-start gap-2.5 animate-in fade-in">
+              <ShieldAlert className="h-5 w-5 text-sky-600 shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-bold text-xs">คุณไม่มีสิทธิ์แก้ไขงานกลุ่มนี้</h4>
-                <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                <p className="text-[11px] text-sky-800 mt-0.5 leading-relaxed">
                   บัญชีของคุณ ({currentUserEmail || 'ผู้เยี่ยมชม'}) ได้รับสิทธิ์เฉพาะ <strong>{userPerm.departmentTitle}</strong> งานนี้เป็นของ <em>{taskToEdit?.departmentName}</em> จึงสามารถเปิดอ่านได้เท่านั้น
                 </p>
               </div>

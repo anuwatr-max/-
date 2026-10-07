@@ -826,21 +826,21 @@ export default function App() {
           <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
             {/* [NEW] Banner แจ้งเตือนเมื่อเปิดใน LINE หรือ In-App Browser */}
             {inApp && !inAppNoticeDismissed && (
-              <div className="mb-4 bg-gradient-to-r from-amber-50 via-amber-100/70 to-orange-50 border border-amber-300 rounded-2xl p-3.5 sm:p-4 text-amber-950 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-in fade-in duration-200">
+              <div className="mb-4 bg-gradient-to-r from-sky-50 via-blue-50/70 to-indigo-50 border border-sky-300 rounded-2xl p-3.5 sm:p-4 text-sky-950 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-in fade-in duration-200">
                 <div className="flex items-start gap-3 flex-1">
-                  <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0 mt-0.5 shadow-xs">
+                  <div className="p-2 rounded-xl bg-sky-500 text-white shrink-0 mt-0.5 shadow-xs">
                     <AlertTriangle className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-xs sm:text-sm font-bold text-amber-900">
+                      <h3 className="text-xs sm:text-sm font-bold text-sky-900">
                         กำลังเปิดผ่านแอป {inAppName || 'LINE'}
                       </h3>
-                      <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 text-[10px] font-bold">
+                      <span className="px-2 py-0.5 rounded-full bg-sky-200 text-sky-900 text-[10px] font-bold">
                         แนะนำเปิดใน Google Chrome
                       </span>
                     </div>
-                    <p className="text-[11px] sm:text-xs text-amber-800 mt-1 leading-relaxed">
+                    <p className="text-[11px] sm:text-xs text-sky-800 mt-1 leading-relaxed">
                       Google ไม่อนุญาตให้ล็อกอินบัญชี <strong>@nu.ac.th</strong> ผ่านเบราว์เซอร์ของแอป (จะเกิดข้อผิดพลาด <em>missing initial state</em>) หากต้องการบันทึกหรือซิงค์ข้อมูล กรุณากดปุ่มเปิดใน Chrome
                     </p>
                   </div>
@@ -860,7 +860,7 @@ export default function App() {
                       const ok = await copyCurrentUrl();
                       if (ok) showToast('คัดลอกลิงก์สำเร็จ นำไปวางใน Google Chrome ได้เลย', 'success');
                     }}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-amber-100/60 border border-amber-300 text-amber-900 text-xs font-semibold shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-sky-100/60 border border-sky-300 text-sky-900 text-xs font-semibold shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
                     title="คัดลอกลิงก์เพื่อไปวางใน Chrome"
                   >
                     <Copy className="h-3.5 w-3.5" />
@@ -869,7 +869,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setInAppNoticeDismissed(true)}
-                    className="p-1.5 rounded-xl text-amber-700 hover:text-amber-950 hover:bg-amber-200/60 transition-colors"
+                    className="p-1.5 rounded-xl text-sky-700 hover:text-sky-950 hover:bg-sky-200/60 transition-colors"
                     title="ปิดการแจ้งเตือนนี้"
                   >
                     <X className="h-4 w-4" />

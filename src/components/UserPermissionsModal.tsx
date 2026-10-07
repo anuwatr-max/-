@@ -67,7 +67,7 @@ export const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
           <span
             className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${
               currentPerm.role === 'super_admin'
-                ? 'bg-amber-100 text-amber-900 border-amber-300'
+                ? 'bg-sky-100 text-sky-900 border-sky-300'
                 : currentPerm.role === 'department_admin'
                 ? 'bg-blue-100 text-blue-900 border-blue-300'
                 : currentPerm.role === 'unit_contributor'
@@ -133,7 +133,7 @@ export const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
                   <span
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0 border ${
                       user.role === 'super_admin'
-                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                        ? 'bg-sky-100 text-sky-900 border-sky-300'
                         : user.role === 'unit_contributor'
                         ? 'bg-purple-100 text-purple-900 border-purple-300'
                         : 'bg-emerald-100 text-emerald-900 border-emerald-300'
@@ -159,8 +159,8 @@ export const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
                       สามารถเพิ่ม/แก้ไขงานได้
                     </span>
                   ) : user.canAdd && !user.canEdit ? (
-                    <span className="text-[11px] text-amber-800 font-semibold flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-amber-600" />
+                    <span className="text-[11px] text-sky-900 font-semibold flex items-center gap-1 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-sky-600" />
                       เพิ่มงานใหม่ได้เท่านั้น (แก้ไข/ลบไม่ได้)
                     </span>
                   ) : (

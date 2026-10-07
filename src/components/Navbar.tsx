@@ -220,7 +220,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <span
                         className={`text-[9px] font-bold px-1.5 py-0.5 rounded border leading-none ${
                           userPerm.role === 'super_admin'
-                            ? 'bg-amber-100 text-amber-900 border-amber-300'
+                            ? 'bg-sky-100 text-sky-900 border-sky-300'
                             : userPerm.role === 'unit_contributor'
                             ? 'bg-purple-100 text-purple-900 border-purple-300'
                             : userPerm.role === 'department_admin'

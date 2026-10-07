@@ -55,7 +55,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <div className="flex items-center gap-3">
             <div
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                isDestructive ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'
+                isDestructive ? 'bg-rose-100 text-rose-600' : 'bg-sky-100 text-sky-600'
               }`}
             >
               <AlertTriangle className="h-6 w-6" />
@@ -93,7 +93,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             className={`px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors cursor-pointer flex items-center gap-2 ${
               isDestructive
                 ? 'bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400'
-                : 'bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400'
+                : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400'
             }`}
           >
             {isLoading && (
