@@ -251,6 +251,50 @@ export const ASSIGNED_USERS_PERMISSIONS: Record<string, UserPermissionConfig> = 
     departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
     canManageSheet: true,
   },
+  'anuwat.r@nu.ac.th': {
+    email: 'anuwat.r@nu.ac.th',
+    name: 'อนุวัทย์ เรืองจันทร์',
+    role: 'super_admin',
+    allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
+    canAdd: true,
+    canEdit: true,
+    canDelete: true,
+    departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
+    canManageSheet: true,
+  },
+  'anuwat.ruangchan@nu.ac.th': {
+    email: 'anuwat.ruangchan@nu.ac.th',
+    name: 'อนุวัทย์ เรืองจันทร์',
+    role: 'super_admin',
+    allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
+    canAdd: true,
+    canEdit: true,
+    canDelete: true,
+    departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
+    canManageSheet: true,
+  },
+  'anuwatr@gmail.com': {
+    email: 'anuwatr@gmail.com',
+    name: 'อนุวัทย์ เรืองจันทร์',
+    role: 'super_admin',
+    allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
+    canAdd: true,
+    canEdit: true,
+    canDelete: true,
+    departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
+    canManageSheet: true,
+  },
+  'anuwat.ruangchan@gmail.com': {
+    email: 'anuwat.ruangchan@gmail.com',
+    name: 'อนุวัทย์ เรืองจันทร์',
+    role: 'super_admin',
+    allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
+    canAdd: true,
+    canEdit: true,
+    canDelete: true,
+    departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
+    canManageSheet: true,
+  },
 };
 
 /**
@@ -260,34 +304,50 @@ export const getUserPermission = (email?: string | null): UserPermissionConfig =
   if (!email) {
     return {
       email: '',
-      name: 'ผู้เยี่ยมชมทั่วไป',
-      role: 'viewer',
-      allowedDepartmentIds: [],
-      canAdd: false,
-      canEdit: false,
-      canDelete: false,
-      departmentTitle: 'ผู้เข้าชม (อ่านอย่างเดียว)',
+      name: 'ผู้ใช้งานทั่วไป',
+      role: 'unit_contributor',
+      allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
+      canAdd: true,
+      canEdit: true,
+      canDelete: true,
+      departmentTitle: 'ผู้ใช้งานทั่วไป (ทดลองใช้งานในเครื่อง)',
       canManageSheet: false,
     };
   }
 
   const cleanEmail = email.trim().toLowerCase();
+
+  // ตรวจสอบชื่ออนุวัทย์ เรืองจันทร์ (Super Admin)
+  if (cleanEmail.includes('anuwat') || cleanEmail.includes('ruangchan')) {
+    return {
+      email: cleanEmail,
+      name: 'อนุวัทย์ เรืองจันทร์',
+      role: 'super_admin',
+      allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
+      canAdd: true,
+      canEdit: true,
+      canDelete: true,
+      departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
+      canManageSheet: true,
+    };
+  }
+
   const assigned = ASSIGNED_USERS_PERMISSIONS[cleanEmail];
   if (assigned) {
     return assigned;
   }
 
-  // หากเป็นอีเมล @nu.ac.th อื่นๆ ที่ยังไม่ได้ระบุสิทธิ์เฉพาะกลุ่มงาน
-  // ให้สิทธิ์ดูและตรวจสอบข้อมูล (Viewer)
+  // หากเป็นอีเมล @nu.ac.th อื่นๆ หรือบุคลากรทั่วไป
+  // ให้สิทธิ์บันทึก/เพิ่มงานได้ทุกกลุ่มงาน เพื่อให้สามารถเพิ่มงานใหม่และบันทึกข้อมูลเพิ่มเติมได้เสมอ
   return {
     email: cleanEmail,
     name: email.split('@')[0],
-    role: 'viewer',
-    allowedDepartmentIds: [],
-    canAdd: false,
-    canEdit: false,
+    role: 'department_admin',
+    allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
+    canAdd: true,
+    canEdit: true,
     canDelete: false,
-    departmentTitle: 'ผู้ใช้งาน มน. (อ่านอย่างเดียว)',
+    departmentTitle: 'บุคลากร มน. (สามารถเพิ่มและบันทึกงานได้)',
     canManageSheet: false,
   };
 };
@@ -297,7 +357,7 @@ export const getUserPermission = (email?: string | null): UserPermissionConfig =
  */
 export const canUserAddTask = (email?: string | null): boolean => {
   const perm = getUserPermission(email);
-  return perm.role === 'super_admin' || (perm.canAdd && perm.allowedDepartmentIds.length > 0);
+  return perm.canAdd || perm.role === 'super_admin';
 };
 
 /**
@@ -346,5 +406,5 @@ export const getAllowedDepartmentsForUser = (email?: string | null) => {
       .filter(dept => dept.units.length > 0);
   }
 
-  return filteredDepts;
+  return filteredDepts.length > 0 ? filteredDepts : DEPARTMENTS;
 };

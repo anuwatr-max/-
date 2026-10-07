@@ -89,6 +89,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setDescription('');
       setPerformanceSummary('');
     }
+    setIsSubmitting(false);
     setErrors({});
   }, [taskToEdit, isOpen, defaultMonth, defaultDueDate, currentUserEmail]);
 
@@ -171,8 +172,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     setIsSubmitting(true);
     try {
       const now = new Date().toISOString();
+      const uniqueSuffix = `${Date.now().toString().slice(-4)}${Math.floor(1000 + Math.random() * 9000)}`;
+      const newId = `TSK-2570-${uniqueSuffix}`;
+
       const taskData: TaskItem = {
-        id: taskToEdit?.id || `TK-${Date.now().toString().slice(-4)}`,
+        id: taskToEdit?.id || newId,
         rowNumber: taskToEdit?.rowNumber,
         title: title.trim(),
         departmentId,
@@ -193,8 +197,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
       await onSave(taskData);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Save error:', err);
+      setErrors({ form: err?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง' });
     } finally {
       setIsSubmitting(false);
     }
@@ -481,39 +486,42 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </div>
           </div>
 
-          {/* รายละเอียดงาน */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              รายละเอียดงาน
-            </label>
-            <textarea
-              id="task-description-input"
-              rows={2}
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="ระบุวัตถุประสงค์ ขอบเขตงาน หรือขั้นตอนการดำเนินงาน..."
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-            />
-          </div>
+          {/* ข้อมูลเพิ่มเติมและรายละเอียดงาน */}
+          <div className="pt-2 border-t border-slate-100 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
+                <span className="font-semibold text-slate-800">รายละเอียดงาน / ข้อมูลเพิ่มเติม</span>
+                <span className="text-[11px] text-slate-400 font-normal">บันทึกเนื้อหา ขอบเขต หรือขั้นตอนงาน</span>
+              </label>
+              <textarea
+                id="task-description-input"
+                rows={3}
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="ระบุวัตถุประสงค์ ขอบเขตงาน ข้อมูลเพิ่มเติม หรือขั้นตอนการดำเนินงาน..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors shadow-2xs bg-white"
+              />
+            </div>
 
-          {/* สรุปผลการดำเนินงาน / หมายเหตุ */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              สรุปผลการดำเนินงาน / ผลสัมฤทธิ์ / หมายเหตุ
-            </label>
-            <textarea
-              id="task-performance-input"
-              rows={2}
-              value={performanceSummary}
-              onChange={e => setPerformanceSummary(e.target.value)}
-              placeholder="เช่น ดำเนินการส่งรายงานเรียบร้อยแล้ว, เอกสารอนุมัติครบถ้วน..."
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-            />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
+                <span className="font-semibold text-slate-800">สรุปผลการดำเนินงาน / ผลสัมฤทธิ์ / หมายเหตุเพิ่มเติม</span>
+                <span className="text-[11px] text-slate-400 font-normal">บันทึกผลงานหรือหมายเหตุ</span>
+              </label>
+              <textarea
+                id="task-performance-input"
+                rows={3}
+                value={performanceSummary}
+                onChange={e => setPerformanceSummary(e.target.value)}
+                placeholder="เช่น ดำเนินการส่งรายงานเรียบร้อยแล้ว, อยู่ระหว่างรอเอกสารอนุมัติ, หมายเหตุเพิ่มเติม..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors shadow-2xs bg-white"
+              />
+            </div>
           </div>
 
           {/* Actions */}
           <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-            <div>
+            <div className="flex items-center gap-2">
               {taskToEdit && onDeleteTask && isPermittedToDelete && (
                 <button
                   id="task-modal-delete-btn"
@@ -535,8 +543,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               <button
                 id="task-modal-cancel-btn"
                 type="button"
-                onClick={handleCancel}
-                disabled={isSubmitting}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsSubmitting(false);
+                  setErrors({});
+                  onClose();
+                }}
                 className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border border-slate-200 rounded-xl transition-all cursor-pointer shadow-2xs"
               >
                 ยกเลิก

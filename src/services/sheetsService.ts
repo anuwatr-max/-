@@ -31,9 +31,21 @@ export const matchFiscalMonth = (title: string): string | null => {
 const DEFAULT_SPREADSHEET_ID = '1DkdJ7zienczCFhUwKYfdGUJBQ_sWi6OgoZDSOZrGMoA';
  
 // [แก้ไข] ฟังก์ชันช่วยสร้าง "range" ที่เข้ารหัสถูกต้อง ปลอดภัยสำหรับใส่ใน URL
-// เพราะชื่อแท็บเป็นภาษาไทย ถ้าไม่เข้ารหัสก่อน Google Sheets API จะอ่านที่อยู่ไม่ออก
-// แล้วโยน error "Unable to parse range" กลับมา
-const encodeRange = (range: string): string => encodeURIComponent(range);
+// ป้องกันปัญหา "Unable to parse range" โดยคงเครื่องหมาย ' ! และ : ไว้
+export const formatSheetRange = (sheetTitle: string, cellRange: string): string => {
+  const safeTitle = sheetTitle.replace(/'/g, "''");
+  return encodeURIComponent(`'${safeTitle}'!${cellRange}`)
+    .replace(/%21/g, '!')
+    .replace(/%3A/g, ':')
+    .replace(/%27/g, "'");
+};
+
+const encodeRange = (range: string): string => {
+  return encodeURIComponent(range)
+    .replace(/%21/g, '!')
+    .replace(/%3A/g, ':')
+    .replace(/%27/g, "'");
+};
  
 export const HEADERS = [
   'รหัสงาน',
@@ -496,13 +508,40 @@ export const appendTaskToSheet = async (
   accessToken: string,
   task: TaskItem
 ): Promise<number> => {
-  const sheetTitle = await resolveSheetTitle(spreadsheetId, accessToken);
+  let tabs: Array<{ sheetId: number; title: string }> = [];
+  try {
+    tabs = await getSpreadsheetTabs(spreadsheetId, accessToken);
+  } catch (e) {
+    tabs = [];
+  }
+
+  // 1. ค้นหาแท็บที่ตรงกับประจำเดือนของงาน (เช่น 'มีนาคม 2570', 'ตุลาคม 2569')
+  let targetTabTitle = '';
+  if (task.month) {
+    const cleanMonth = task.month.trim();
+    const matched = tabs.find(t => {
+      const title = t.title.trim();
+      return (
+        title === cleanMonth ||
+        matchFiscalMonth(title) === cleanMonth ||
+        (cleanMonth.split(' ')[0] && title.includes(cleanMonth.split(' ')[0]))
+      );
+    });
+    if (matched) {
+      targetTabTitle = matched.title;
+    }
+  }
+
+  // 2. หากไม่พบแท็บเดือน ให้ใช้แท็บภาพรวม หรือแท็บหลัก
+  if (!targetTabTitle) {
+    targetTabTitle = await resolveSheetTitle(spreadsheetId, accessToken);
+  }
+
   const rowData = taskToRow(task);
-  const range = `'${sheetTitle}'!A:M`;
+  const primaryRange = formatSheetRange(targetTabTitle, 'A:M');
+
   let res = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeRange(
-      range
-    )}:append?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${primaryRange}:append?valueInputOption=USER_ENTERED`,
     {
       method: 'POST',
       headers: {
@@ -515,8 +554,27 @@ export const appendTaskToSheet = async (
     }
   );
 
+  // สำรองแบบที่ 1: ใช้ encodeURIComponent เฉพาะชื่อชีต
   if (!res.ok && res.status !== 401) {
-    // สำรองด้วย Range A:M ไปยังชีตแรกอัตโนมัติ
+    res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/'${encodeURIComponent(
+        targetTabTitle
+      )}'!A:M:append?valueInputOption=USER_ENTERED`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          values: [rowData],
+        }),
+      }
+    );
+  }
+
+  // สำรองแบบที่ 2: ใช้ A:M ไปยังแท็บแรกอัตโนมัติ
+  if (!res.ok && res.status !== 401) {
     res = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A:M:append?valueInputOption=USER_ENTERED`,
       {
@@ -541,6 +599,29 @@ export const appendTaskToSheet = async (
   }
 
   const result = await res.json();
+
+  // หากมีแท็บภาพรวมแยกต่างหาก (เช่น 'ภาพรวมงาน 2570') และบันทึกเข้าแท็บประจำเดือนไปแล้ว
+  // ให้บันทึกสำเนาลงแท็บภาพรวมด้วยในพื้นหลัง เพื่อให้ทั้งภาพรวมและแท็บเดือนสมบูรณ์พร้อมกัน
+  const overviewTab = tabs.find(t => t.title.includes('ภาพรวม') || t.title === SHEET_NAME);
+  if (overviewTab && overviewTab.title !== targetTabTitle) {
+    fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${formatSheetRange(
+        overviewTab.title,
+        'A:M'
+      )}:append?valueInputOption=USER_ENTERED`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          values: [rowData],
+        }),
+      }
+    ).catch(() => {});
+  }
+
   // Extract row index from updatedRange e.g. "ติดตามงาน2570!A16:M16"
   const rangeStr = result?.updates?.updatedRange || '';
   const match = rangeStr.match(/![A-Z]+(\d+)/);
@@ -554,13 +635,37 @@ export const updateTaskInSheet = async (
   rowNumber: number,
   task: TaskItem
 ): Promise<void> => {
-  const sheetTitle = await resolveSheetTitle(spreadsheetId, accessToken);
+  let tabs: Array<{ sheetId: number; title: string }> = [];
+  try {
+    tabs = await getSpreadsheetTabs(spreadsheetId, accessToken);
+  } catch (e) {
+    tabs = [];
+  }
+
+  let targetTabTitle = '';
+  if (task.month) {
+    const cleanMonth = task.month.trim();
+    const matched = tabs.find(t => {
+      const title = t.title.trim();
+      return (
+        title === cleanMonth ||
+        matchFiscalMonth(title) === cleanMonth ||
+        (cleanMonth.split(' ')[0] && title.includes(cleanMonth.split(' ')[0]))
+      );
+    });
+    if (matched) {
+      targetTabTitle = matched.title;
+    }
+  }
+
+  if (!targetTabTitle) {
+    targetTabTitle = await resolveSheetTitle(spreadsheetId, accessToken);
+  }
+
   const rowData = taskToRow(task);
-  const range = `'${sheetTitle}'!A${rowNumber}:M${rowNumber}`;
+  const primaryRange = formatSheetRange(targetTabTitle, `A${rowNumber}:M${rowNumber}`);
   let res = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeRange(
-      range
-    )}?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${primaryRange}?valueInputOption=USER_ENTERED`,
     {
       method: 'PUT',
       headers: {
@@ -568,7 +673,7 @@ export const updateTaskInSheet = async (
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        range,
+        range: primaryRange,
         majorDimension: 'ROWS',
         values: [rowData],
       }),

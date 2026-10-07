@@ -161,7 +161,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Desktop Action Tools: Google Sheet (สีฟ้าอ่อน แบบนูน) + Google Sign In */}
-            <div className={`${deviceMode === 'mobile' ? 'hidden' : 'hidden md:flex'} items-center gap-2.5`}>
+            <div className={`${deviceMode === 'mobile' ? 'hidden' : 'hidden md:flex'} items-center gap-2`}>
               {/* 4. Google Sheet สีฟ้าอ่อน แบบนูน (Soft Light Sky Blue Embossed) */}
               {syncState.spreadsheetId ? (
                 <div

@@ -501,12 +501,8 @@ export default function App() {
         return;
       }
     } else {
-      if (!canUserAddTask(userInfo?.email) || (perm.role !== 'super_admin' && !perm.allowedDepartmentIds.includes(taskData.departmentId))) {
-        showToast(`คุณไม่มีสิทธิ์เพิ่มงานในกลุ่มนี้ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
-        return;
-      }
-      if (perm.allowedUnitIds && perm.allowedUnitIds.length > 0 && !perm.allowedUnitIds.includes(taskData.unitId)) {
-        showToast(`คุณสามารถเพิ่มงานได้เฉพาะ ${perm.departmentTitle} เท่านั้น`, 'error');
+      if (!canUserAddTask(userInfo?.email)) {
+        showToast(`คุณไม่มีสิทธิ์เพิ่มงานในระบบ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
         return;
       }
     }
@@ -520,6 +516,10 @@ export default function App() {
       updatedTasks = [taskData, ...tasks];
       setTasks(updatedTasks);
     }
+
+    try {
+      localStorage.setItem(LOCAL_STORAGE_TASKS_KEY, JSON.stringify(updatedTasks));
+    } catch (e) {}
 
     // Background sync to Google Sheet if connected
     let token = (await getAccessToken()) || userInfo?.accessToken;
@@ -536,10 +536,11 @@ export default function App() {
     if (syncState.spreadsheetId) {
       if (!token) {
         showToast(
-          'บันทึกในเครื่องสำเร็จ แต่ยังไม่ได้เชื่อมต่อ Google Account จึงยังไม่สามารถซิงค์ขึ้น Google Sheet ได้ กรุณากดเข้าสู่ระบบ Google',
-          'error'
+          isEdit
+            ? 'บันทึกการแก้ไขในเครื่องสำเร็จ (เข้าสู่ระบบ Google เพื่อซิงค์ลง Sheet)'
+            : 'เพิ่มรายการงานและบันทึกข้อมูลเพิ่มเติมสำเร็จ (เข้าสู่ระบบ Google เพื่อซิงค์ลง Sheet)',
+          'success'
         );
-        setIsLoginModalOpen(true);
       } else {
         try {
           setSyncState(prev => ({ ...prev, isSyncing: true, error: null }));
@@ -548,12 +549,20 @@ export default function App() {
           } else {
             const row = await appendTaskToSheet(syncState.spreadsheetId, token, taskData);
             if (row > 0) {
-              setTasks(prev => prev.map(t => (t.id === taskData.id ? { ...t, rowNumber: row } : t)));
+              setTasks(prev => {
+                const nextTasks = prev.map(t => (t.id === taskData.id ? { ...t, rowNumber: row } : t));
+                try {
+                  localStorage.setItem(LOCAL_STORAGE_TASKS_KEY, JSON.stringify(nextTasks));
+                } catch (e) {}
+                return nextTasks;
+              });
             }
           }
           setSyncState(prev => ({ ...prev, isSyncing: false, lastSyncedAt: new Date(), error: null }));
           showToast(
-            isEdit ? 'บันทึกการแก้ไขและซิงค์ลง Google Sheet สำเร็จ' : 'เพิ่มรายการงานใหม่และซิงค์ลง Google Sheet สำเร็จ',
+            isEdit
+              ? 'บันทึกการแก้ไขและซิงค์ลง Google Sheet สำเร็จ'
+              : 'เพิ่มรายการงานใหม่พร้อมข้อมูลเพิ่มเติมและซิงค์ลง Google Sheet สำเร็จ',
             'success'
           );
         } catch (sheetErr: any) {
@@ -564,13 +573,13 @@ export default function App() {
             error: sheetErr?.message || 'ซิงค์ข้อมูลกับ Sheet ไม่สำเร็จ',
           }));
           showToast(
-            `บันทึกในเครื่องสำเร็จ แต่ส่งขึ้น Google Sheet ไม่สำเร็จ (${sheetErr?.message || 'กรุณาลองใหม่อีกครั้ง'})`,
+            `บันทึกข้อมูลเรียบร้อยแล้ว แต่ซิงค์ขึ้น Google Sheet ไม่สำเร็จ (${sheetErr?.message || 'กรุณาลองใหม่อีกครั้ง'})`,
             'error'
           );
         }
       }
     } else {
-      showToast(isEdit ? 'บันทึกการแก้ไขงานสำเร็จ' : 'เพิ่มรายการงานใหม่สำเร็จ', 'success');
+      showToast(isEdit ? 'บันทึกการแก้ไขงานสำเร็จ' : 'เพิ่มรายการงานใหม่และบันทึกข้อมูลเพิ่มเติมสำเร็จ', 'success');
     }
   };
 

@@ -24,18 +24,32 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen && !isLoading) {
+        onCancel();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isLoading, onCancel]);
+
   if (!isOpen) return null;
 
   return (
     <div
       id="confirm-modal-overlay"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs cursor-pointer"
       role="dialog"
       aria-modal="true"
+      onClick={() => {
+        if (!isLoading) onCancel();
+      }}
     >
       <div
         id="confirm-modal-box"
-        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150"
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 cursor-default"
+        onClick={e => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
