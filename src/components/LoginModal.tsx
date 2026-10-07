@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import {
   AlertCircle,
   X,
-  Crown,
   Mail,
   ArrowRight,
-  LogIn,
   CheckCircle2,
 } from 'lucide-react';
 import { ASSIGNED_USERS_PERMISSIONS } from '../data/userPermissions';
@@ -33,13 +31,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   if (!isOpen) return null;
 
-  // 1. ผู้ดูแลระบบหลัก (Super Admin) - เข้าสู่ระบบด้วยบัญชีนี้ทันที
-  const handleSuperAdminLogin = () => {
-    if (!onStaffSignIn) return;
-    onStaffSignIn('anuwatr@nu.ac.th', 'นายอนุวัทย์ เรืองจันทร์');
-  };
-
-  // 2. คณะทำงานอื่นๆ - พิมพ์ email : nu.ac.th เข้าระบบ
+  // คณะทำงาน / บุคลากร - พิมพ์ email : nu.ac.th เข้าระบบ
   const handleStaffEmailLogin = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setInputError(null);
@@ -50,7 +42,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       return;
     }
 
-    // หากพิมพ์เฉพาะชื่อ username (เช่น 'suphitchayar') เติม @nu.ac.th ให้อัตโนมัติ
+    // หากพิมพ์เฉพาะชื่อ username ให้เติม @nu.ac.th ให้อัตโนมัติ
     if (!raw.includes('@')) {
       raw = `${raw}@nu.ac.th`;
     }
@@ -86,7 +78,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200/80 text-slate-900 animate-in zoom-in-95 duration-200 relative max-h-[92vh] overflow-y-auto">
+      <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200/80 text-slate-900 animate-in zoom-in-95 duration-200 relative max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
           type="button"
@@ -135,123 +127,74 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
         )}
 
-        <div className="space-y-4">
-          {/* SECTION 1: ผู้ดูแลระบบหลัก (Super Admin) - 1-Click Login (เปลี่ยนสีส้มเป็นสีฟ้า) */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-sky-50 via-blue-50/80 to-indigo-50/70 border-2 border-sky-300 shadow-sm text-left relative overflow-hidden">
-            <div className="absolute top-2.5 right-2.5 p-1.5 bg-sky-200/70 rounded-full text-sky-700">
-              <Crown className="h-4 w-4" />
+        {/* เข้าสู่ระบบสำหรับบุคลากร / คณะทำงาน */}
+        <form
+          onSubmit={handleStaffEmailLogin}
+          className="p-5 rounded-2xl bg-slate-50/90 border border-slate-200 text-left space-y-3.5 shadow-2xs"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-xl bg-sky-100 text-sky-700 shrink-0">
+              <Mail className="h-4 w-4" />
             </div>
-
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-sky-500 text-white font-bold text-[10px] tracking-wide uppercase shadow-2xs">
-                ผู้ดูแลระบบหลัก
-              </span>
-              <span className="text-xs font-bold text-sky-900">
-                Super Admin
-              </span>
-            </div>
-
-            <div className="mb-3.5 space-y-0.5">
-              <p className="text-sm sm:text-base font-bold text-slate-900">
-                นายอนุวัทย์ เรืองจันทร์
-              </p>
-              <p className="text-xs text-sky-800 font-mono font-medium">
-                anuwatr@nu.ac.th
-              </p>
-              <p className="text-[11px] text-slate-600 pt-0.5">
-                สิทธิ์การใช้งาน: ดูแลจัดการทุกกลุ่มงานและบันทึกข้อมูลทุกส่วน
+            <div>
+              <h3 className="text-xs sm:text-sm font-bold text-slate-800">
+                พิมพ์ email : nu.ac.th
+              </h3>
+              <p className="text-[11px] text-sky-700 font-medium">
+                เข้าสู่ระบบตามสิทธิ์ของท่าน
               </p>
             </div>
-
-            <button
-              id="super-admin-direct-login-btn"
-              type="button"
-              disabled={isLoading}
-              onClick={handleSuperAdminLogin}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 hover:from-sky-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-sky-600/25 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-60"
-            >
-              <LogIn className="h-4 w-4 shrink-0" />
-              <span>เข้าสู่ระบบด้วยบัญชีนี้ทันที</span>
-            </button>
           </div>
 
-          {/* DIVIDER: หรือ */}
-          <div className="relative flex items-center justify-center my-1">
-            <div className="border-t border-slate-200 w-full" />
-            <span className="bg-white px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider shrink-0">
-              หรือ
-            </span>
-            <div className="border-t border-slate-200 w-full" />
-          </div>
-
-          {/* SECTION 2: สำหรับคณะทำงานอื่นๆ ให้พิมพ์ email : nu.ac.th เข้าระบบ */}
-          <form
-            onSubmit={handleStaffEmailLogin}
-            className="p-4 sm:p-5 rounded-2xl bg-slate-50/90 border border-slate-200 text-left space-y-3"
-          >
-            <div className="flex items-center gap-2">
-              <div className="p-1 rounded-lg bg-sky-100 text-sky-700">
-                <Mail className="h-3.5 w-3.5" />
-              </div>
-              <div>
-                <h3 className="text-xs sm:text-sm font-bold text-slate-800">
-                  สำหรับคณะทำงานอื่นๆ
-                </h3>
-                <p className="text-[11px] text-sky-700 font-medium">
-                  ให้พิมพ์ email : nu.ac.th เข้าระบบ
-                </p>
-              </div>
+          <div className="space-y-1.5">
+            <div className="relative">
+              <input
+                id="committee-email-input"
+                type="text"
+                autoFocus
+                value={staffEmailInput}
+                onChange={e => {
+                  setStaffEmailInput(e.target.value);
+                  if (inputError) setInputError(null);
+                }}
+                placeholder="พิมพ์ email : nu.ac.th"
+                className={`w-full px-3.5 py-2.5 bg-white border rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 shadow-2xs ${
+                  inputError ? 'border-rose-400 bg-rose-50/30' : 'border-slate-300'
+                }`}
+              />
             </div>
 
-            <div className="space-y-1.5">
-              <div className="relative">
-                <input
-                  id="committee-email-input"
-                  type="text"
-                  value={staffEmailInput}
-                  onChange={e => {
-                    setStaffEmailInput(e.target.value);
-                    if (inputError) setInputError(null);
-                  }}
-                  placeholder="พิมพ์ email : nu.ac.th เช่น suphitchayar@nu.ac.th"
-                  className={`w-full px-3.5 py-2.5 bg-white border rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 shadow-2xs ${
-                    inputError ? 'border-rose-400 bg-rose-50/30' : 'border-slate-300'
-                  }`}
-                />
-              </div>
+            {inputError && (
+              <p className="text-[11px] text-rose-600 font-medium">{inputError}</p>
+            )}
 
-              {inputError && (
-                <p className="text-[11px] text-rose-600 font-medium">{inputError}</p>
-              )}
-
-              {/* Realtime Match Preview */}
-              {matchedCommitteeMember && (
-                <div className="p-2.5 bg-sky-50/90 rounded-xl border border-sky-200 text-[11px] text-sky-950 flex items-center justify-between animate-in fade-in duration-150">
-                  <div>
-                    <span className="font-bold text-sky-900">{matchedCommitteeMember.name}</span>
-                    <span className="text-slate-600 block text-[10px]">
-                      {matchedCommitteeMember.departmentTitle}
-                    </span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full bg-sky-200 text-sky-900 font-bold text-[10px] flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3 text-sky-700" />
-                    ยืนยันพบข้อมูล
+            {/* Realtime Match Preview */}
+            {matchedCommitteeMember && (
+              <div className="p-2.5 bg-sky-50/90 rounded-xl border border-sky-200 text-[11px] text-sky-950 flex items-center justify-between animate-in fade-in duration-150">
+                <div>
+                  <span className="font-bold text-sky-900">{matchedCommitteeMember.name}</span>
+                  <span className="text-slate-600 block text-[10px]">
+                    {matchedCommitteeMember.departmentTitle}
                   </span>
                 </div>
-              )}
-            </div>
+                <span className="px-2 py-0.5 rounded-full bg-sky-200 text-sky-900 font-bold text-[10px] flex items-center gap-1 shrink-0">
+                  <CheckCircle2 className="h-3 w-3 text-sky-700" />
+                  ยืนยันพบข้อมูล
+                </span>
+              </div>
+            )}
+          </div>
 
-            <button
-              id="committee-email-submit-btn"
-              type="submit"
-              disabled={isLoading || !staffEmailInput.trim()}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-sky-600 via-blue-700 to-indigo-700 hover:from-sky-700 hover:to-indigo-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-800/20 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50"
-            >
-              <span>เข้าสู่ระบบด้วยอีเมล @nu.ac.th</span>
-              <ArrowRight className="h-4 w-4 shrink-0" />
-            </button>
-          </form>
-        </div>
+          <button
+            id="committee-email-submit-btn"
+            type="submit"
+            disabled={isLoading || !staffEmailInput.trim()}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-sky-600 via-blue-700 to-indigo-700 hover:from-sky-700 hover:to-indigo-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-800/20 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50"
+          >
+            <span>เข้าสู่ระบบด้วยอีเมล @nu.ac.th</span>
+            <ArrowRight className="h-4 w-4 shrink-0" />
+          </button>
+        </form>
 
         {/* Footer / Guest View */}
         <div className="pt-3 border-t border-slate-100 mt-4 text-center">
