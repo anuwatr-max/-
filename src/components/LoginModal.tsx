@@ -136,18 +136,43 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
         {/* Error message */}
         {errorMessage && (
-          <div className="mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5 animate-in slide-in-from-top-1 duration-150 text-left">
+          <div className="mb-4 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5 animate-in slide-in-from-top-1 duration-150 text-left">
             <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-            <div className="flex-1">
+            <div className="flex-1 space-y-2">
               <p className="font-bold text-rose-900">การเข้าสู่ระบบไม่สำเร็จ</p>
-              <p className="text-[11px] text-rose-700 mt-0.5 leading-relaxed">{errorMessage}</p>
-              <button
-                type="button"
-                onClick={onClearError}
-                className="mt-1 text-[10px] font-semibold text-rose-600 hover:text-rose-800 underline cursor-pointer"
-              >
-                ลองใหม่อีกครั้ง
-              </button>
+              
+              {errorMessage.includes('unauthorized-domain') ? (
+                <div className="space-y-1.5 text-[11px] text-rose-800">
+                  <p>
+                    เกิดจากโดเมนของแอปนี้ <strong>({typeof window !== 'undefined' ? window.location.hostname : 'run.app'})</strong> ยังไม่ได้เพิ่มใน <em>Authorized domains</em> ของ Firebase Authentication
+                  </p>
+                  <p className="text-slate-600">
+                    💡 ระบบได้เปิดระบบ <strong>Google OAuth สำรอง</strong> ให้ท่านแล้ว สามารถกดปุ่มด้านล่างนี้เพื่อเข้าสู่ระบบด้วยบัญชี @nu.ac.th ได้ทันที
+                  </p>
+                </div>
+              ) : (
+                <p className="text-[11px] text-rose-700 leading-relaxed">{errorMessage}</p>
+              )}
+
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClearError();
+                    onSignIn();
+                  }}
+                  className="px-3 py-1.5 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-[11px] font-semibold cursor-pointer shadow-xs transition-colors"
+                >
+                  ลองเข้าสู่ระบบอีกครั้ง
+                </button>
+                <button
+                  type="button"
+                  onClick={onClearError}
+                  className="text-[11px] text-rose-600 hover:text-rose-800 underline cursor-pointer"
+                >
+                  ปิดข้อความแจ้งเตือน
+                </button>
+              </div>
             </div>
           </div>
         )}

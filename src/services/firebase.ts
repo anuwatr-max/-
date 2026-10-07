@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
   signInWithPopup,
+  signInWithCredential,
   GoogleAuthProvider,
   onAuthStateChanged,
   signOut,
@@ -33,8 +34,10 @@ provider.setCustomParameters({
 });
 
 const STORAGE_KEY_ACCESS_TOKEN = 'google_oauth_access_token_v1';
+const STORAGE_KEY_USER_PROFILE = 'google_user_profile_v1';
 
 let isSigningIn = false;
+let activeAuthSuccessCallback: ((user: any, token: string | null) => void) | null = null;
 let cachedAccessToken: string | null = (() => {
   try {
     return localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN);
@@ -43,11 +46,147 @@ let cachedAccessToken: string | null = (() => {
   }
 })();
 
+/**
+ * Helper โหลด Google Identity Services script หากยังไม่พร้อม
+ */
+export const loadGsiScript = (): Promise<void> => {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if ((window as any).google?.accounts?.oauth2) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error('ไม่สามารถโหลด Google Identity Services ได้')));
+      if ((window as any).google?.accounts?.oauth2) {
+        resolve();
+        return;
+      }
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('ไม่สามารถโหลด Google Identity Services ได้'));
+    document.head.appendChild(script);
+  });
+};
+
+/**
+ * เข้าสู่ระบบด้วย Google Identity Services (Direct OAuth Token Client)
+ * ทำงานได้ทันทีแม้โดเมนจะยังไม่ได้ระบุใน Authorized Domains ของ Firebase Authentication
+ */
+export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; accessToken: string }> => {
+  await loadGsiScript();
+  const google = (window as any).google;
+  if (!google?.accounts?.oauth2) {
+    throw new Error('ระบบ Google Identity Services ยังไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง');
+  }
+
+  const clientId = firebaseConfig.oAuthClientId;
+  if (!clientId) {
+    throw new Error('ไม่พบ Google OAuth Client ID ในการตั้งค่าระบบ');
+  }
+
+  return new Promise((resolve, reject) => {
+    let hasReturned = false;
+
+    try {
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file email profile openid',
+        prompt: 'select_account',
+        callback: async (tokenResponse: any) => {
+          if (hasReturned) return;
+          hasReturned = true;
+
+          if (tokenResponse.error) {
+            reject(new Error(tokenResponse.error_description || tokenResponse.error || 'การเข้าสู่ระบบถูกยกเลิก'));
+            return;
+          }
+
+          const accessToken = tokenResponse.access_token;
+          if (!accessToken) {
+            reject(new Error('ไม่พบ Access Token จากการเข้าสู่ระบบ Google'));
+            return;
+          }
+
+          try {
+            // ดึงข้อมูลโปรไฟล์ผู้ใช้จาก Google UserInfo API
+            const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            const profile = res.ok ? await res.json() : {};
+
+            const userObj = {
+              uid: profile.sub || `gsi-${Date.now()}`,
+              displayName: profile.name || profile.email?.split('@')[0] || 'ผู้ใช้งาน มน.',
+              email: profile.email || '',
+              photoURL: profile.picture || null,
+              accessToken,
+            };
+
+            cachedAccessToken = accessToken;
+            setCachedToken(accessToken);
+            try {
+              localStorage.setItem(STORAGE_KEY_USER_PROFILE, JSON.stringify(userObj));
+            } catch (e) {}
+
+            // พยายามเชื่อมโยง Credential เข้ากับ Firebase
+            try {
+              const credential = GoogleAuthProvider.credential(null, accessToken);
+              await signInWithCredential(auth, credential);
+            } catch (fbErr) {
+              console.warn('Firebase credential sign-in note:', fbErr);
+            }
+
+            if (activeAuthSuccessCallback) {
+              activeAuthSuccessCallback(userObj as any, accessToken);
+            }
+
+            resolve({ user: userObj, accessToken });
+          } catch (fetchErr: any) {
+            reject(new Error(fetchErr?.message || 'ไม่สามารถดึงข้อมูลโปรไฟล์ผู้ใช้งานได้'));
+          }
+        },
+        error_callback: (err: any) => {
+          if (hasReturned) return;
+          hasReturned = true;
+          reject(new Error(err?.message || 'การเปิดหน้าต่างเข้าสู่ระบบล้มเหลว กรุณาอนุญาตป๊อปอัป'));
+        },
+      });
+
+      tokenClient.requestAccessToken({ prompt: 'select_account' });
+    } catch (clientErr: any) {
+      if (hasReturned) return;
+      hasReturned = true;
+      reject(clientErr);
+    }
+  });
+};
+
 // Listen for auth state changes
 export const initAuth = (
-  onAuthSuccess?: (user: User, token: string | null) => void,
+  onAuthSuccess?: (user: any, token: string | null) => void,
   onAuthFailure?: () => void
 ) => {
+  activeAuthSuccessCallback = onAuthSuccess || null;
+
+  // ตรวจสอบโปรไฟล์เดิมที่เคยเข้าสู่ระบบไว้ผ่าน Google Identity Services
+  try {
+    const savedProfile = localStorage.getItem(STORAGE_KEY_USER_PROFILE);
+    const savedToken = localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN);
+    if (savedProfile && savedToken) {
+      const parsed = JSON.parse(savedProfile);
+      cachedAccessToken = savedToken;
+      if (onAuthSuccess) {
+        onAuthSuccess(parsed, savedToken);
+      }
+    }
+  } catch (e) {}
+
   return onAuthStateChanged(auth, async (user: User | null) => {
     if (user) {
       if (!cachedAccessToken) {
@@ -57,16 +196,20 @@ export const initAuth = (
       }
       if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
     } else {
-      cachedAccessToken = null;
-      try {
-        localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
-      } catch (e) {}
-      if (onAuthFailure) onAuthFailure();
+      // ตรวจสอบว่ามีข้อมูลจาก Google Identity Services หรือไม่ ก่อนเคลียร์
+      const savedProfile = localStorage.getItem(STORAGE_KEY_USER_PROFILE);
+      if (!savedProfile) {
+        cachedAccessToken = null;
+        try {
+          localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
+        } catch (e) {}
+        if (onAuthFailure) onAuthFailure();
+      }
     }
   });
 };
 
-export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
+export const googleSignIn = async (): Promise<{ user: any; accessToken: string } | null> => {
   try {
     isSigningIn = true;
     const result = await signInWithPopup(auth, provider);
@@ -76,15 +219,22 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     }
 
     cachedAccessToken = credential.accessToken;
-    try {
-      localStorage.setItem(STORAGE_KEY_ACCESS_TOKEN, credential.accessToken);
-    } catch (e) {
-      console.warn('Failed to persist token:', e);
-    }
+    setCachedToken(credential.accessToken);
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
-    console.error('Sign in error:', error);
+    console.warn('Firebase sign-in popup error:', error);
     const msg = String(error?.message || '');
+
+    // ตรวจพบปัญหา auth/unauthorized-domain (โดเมนไม่ได้อยู่ใน Authorized Domains ของ Firebase)
+    // ให้สลับไปใช้ Google Identity Services (Direct OAuth) อัตโนมัติทันที!
+    if (
+      error?.code === 'auth/unauthorized-domain' ||
+      msg.includes('unauthorized-domain')
+    ) {
+      console.info('Switching to Google Identity Services direct OAuth due to unauthorized-domain...');
+      return await signInWithGoogleIdentityServices();
+    }
+
     if (
       msg.includes('missing initial state') ||
       msg.includes('sessionStorage') ||
@@ -93,7 +243,7 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
       throw new Error('ไม่สามารถเข้าสู่ระบบในหน้านี้ได้ เนื่องจากเบราว์เซอร์ของแอป (เช่น LINE) ไม่อนุญาต กรุณากดปุ่ม 3 จุด (...) แล้วเลือก "เปิดในเบราว์เซอร์อื่น" หรือเปิดด้วย Google Chrome');
     }
     if (error?.code === 'auth/network-request-failed' || msg.includes('network-request-failed')) {
-      throw new Error('การเชื่อมต่อกับเซิร์ฟเวอร์ Google Authentication ล้มเหลว (Network Request Failed) สาเหตุส่วนใหญ่เกิดจากการเปิดผ่านแอป LINE/Facebook, สัญญาณอินเทอร์เน็ตไม่เสถียร หรือมี AdBlocker บล็อก แนะนำให้คัดลอกลิงก์ไปเปิดใน Google Chrome หรือ Safari โดยตรง');
+      throw new Error('การเชื่อมต่อกับเซิร์ฟเวอร์ Google Authentication ล้มเหลว แนะนำให้คัดลอกลิงก์ไปเปิดใน Google Chrome หรือ Safari โดยตรง');
     }
     if (error?.code === 'auth/popup-blocked') {
       throw new Error('เบราว์เซอร์บนมือถือบล็อกหน้าต่างป๊อปอัป กรุณาเปิดด้วย Google Chrome หรือ Safari เพื่อเข้าสู่ระบบ');
@@ -126,9 +276,12 @@ export const setCachedToken = (token: string | null) => {
 };
 
 export const logout = async () => {
-  await signOut(auth);
+  try {
+    await signOut(auth);
+  } catch (e) {}
   cachedAccessToken = null;
   try {
     localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEY_USER_PROFILE);
   } catch (e) {}
 };
