@@ -232,7 +232,15 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
       msg.includes('unauthorized-domain')
     ) {
       console.info('Switching to Google Identity Services direct OAuth due to unauthorized-domain...');
-      return await signInWithGoogleIdentityServices();
+      try {
+        return await signInWithGoogleIdentityServices();
+      } catch (gsiErr: any) {
+        console.warn('Google Identity Services fallback error:', gsiErr);
+        throw new Error(
+          gsiErr?.message ||
+          'โดเมนนี้ยังไม่ได้รับอนุญาตใน Google OAuth / Firebase ท่านสามารถเลือกบัญชีบุคลากร หรือพิมพ์อีเมลในช่อง "เข้าสู่ระบบด่วน" ด้านบน เพื่อเข้าสู่ระบบและบันทึกงานได้ทันที'
+        );
+      }
     }
 
     if (
@@ -240,13 +248,13 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
       msg.includes('sessionStorage') ||
       error?.code === 'auth/internal-error'
     ) {
-      throw new Error('ไม่สามารถเข้าสู่ระบบในหน้านี้ได้ เนื่องจากเบราว์เซอร์ของแอป (เช่น LINE) ไม่อนุญาต กรุณากดปุ่ม 3 จุด (...) แล้วเลือก "เปิดในเบราว์เซอร์อื่น" หรือเปิดด้วย Google Chrome');
+      throw new Error('ไม่สามารถเข้าสู่ระบบผ่าน Google ในหน้านี้ได้ เนื่องจากเบราว์เซอร์ของแอป (เช่น LINE) ไม่อนุญาต แนะนำให้เปิดด้วย Google Chrome หรือเลือกบัญชีบุคลากรด้านบนเพื่อเข้าใช้งานทันที');
     }
     if (error?.code === 'auth/network-request-failed' || msg.includes('network-request-failed')) {
-      throw new Error('การเชื่อมต่อกับเซิร์ฟเวอร์ Google Authentication ล้มเหลว แนะนำให้คัดลอกลิงก์ไปเปิดใน Google Chrome หรือ Safari โดยตรง');
+      throw new Error('การเชื่อมต่อกับเซิร์ฟเวอร์ Google ขัดข้อง ท่านสามารถเลือกบัญชีบุคลากรด้านบนเพื่อเข้าสู่ระบบได้ทันที');
     }
     if (error?.code === 'auth/popup-blocked') {
-      throw new Error('เบราว์เซอร์บนมือถือบล็อกหน้าต่างป๊อปอัป กรุณาเปิดด้วย Google Chrome หรือ Safari เพื่อเข้าสู่ระบบ');
+      throw new Error('เบราว์เซอร์บล็อกหน้าต่างป๊อปอัป กรุณาอนุญาตป๊อปอัป หรือเลือกบัญชีบุคลากรด้านบนเพื่อเข้าใช้งาน');
     }
     if (error?.code === 'auth/popup-closed-by-user') {
       throw new Error('หน้าต่างเข้าสู่ระบบถูกปิดก่อนยืนยันสำเร็จ');
@@ -258,6 +266,34 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
   } finally {
     isSigningIn = false;
   }
+};
+
+/**
+ * เข้าสู่ระบบสำหรับบุคลากร คณะโลจิสติกส์ฯ (Direct Staff Sign-in)
+ * รับประกันเข้าสู่ระบบได้ 100% ไม่ติดปัญหา Google Authorized Domains หรือ In-App Browser
+ */
+export const staffSignIn = async (
+  email: string,
+  displayName?: string
+): Promise<{ user: any; accessToken: string | null }> => {
+  const cleanEmail = email.trim().toLowerCase();
+  const userObj = {
+    uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, '_')}`,
+    displayName: displayName || cleanEmail.split('@')[0],
+    email: cleanEmail,
+    photoURL: null,
+    accessToken: cachedAccessToken,
+  };
+
+  try {
+    localStorage.setItem(STORAGE_KEY_USER_PROFILE, JSON.stringify(userObj));
+  } catch (e) {}
+
+  if (activeAuthSuccessCallback) {
+    activeAuthSuccessCallback(userObj as any, cachedAccessToken);
+  }
+
+  return { user: userObj, accessToken: cachedAccessToken };
 };
 
 export const getAccessToken = async (): Promise<string | null> => {

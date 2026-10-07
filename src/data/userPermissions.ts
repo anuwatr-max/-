@@ -297,6 +297,136 @@ export const ASSIGNED_USERS_PERMISSIONS: Record<string, UserPermissionConfig> = 
   },
 };
 
+export interface CommitteeMemberOption {
+  email: string;
+  name: string;
+  role: UserRole;
+  roleLabel: string;
+  departmentTitle: string;
+}
+
+export const COMMITTEE_MEMBERS_LIST: CommitteeMemberOption[] = [
+  {
+    email: 'anuwatr@nu.ac.th',
+    name: 'อนุวัทย์ เรืองจันทร์ (ผู้ดูแลระบบหลัก)',
+    role: 'super_admin',
+    roleLabel: 'Super Admin (ดูแลระบบทั้งหมด)',
+    departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
+  },
+  {
+    email: 'suphitchayar@nu.ac.th',
+    name: 'สุพิชญา เรื่องลือ',
+    role: 'department_admin',
+    roleLabel: 'หัวหน้างาน (เพิ่ม/แก้ไข/ลบ)',
+    departmentTitle: 'งานบริการการศึกษา',
+  },
+  {
+    email: 'sunisasan@nu.ac.th',
+    name: 'นางสาวสุนิษา แสนศรี',
+    role: 'department_admin',
+    roleLabel: 'หัวหน้างาน (เพิ่ม/แก้ไข/ลบ)',
+    departmentTitle: 'งานวิจัยและพัฒนาคุณภาพการศึกษา',
+  },
+  {
+    email: 'kanyaratso@nu.ac.th',
+    name: 'นางสาวกันยารัตน์ สมกุล',
+    role: 'department_admin',
+    roleLabel: 'หัวหน้างาน (เพิ่ม/แก้ไข/ลบ)',
+    departmentTitle: 'งานการเงินและพัสดุ',
+  },
+  {
+    email: 'vittayakorns@nu.ac.th',
+    name: 'นายวิทยากร สังวาลย์วงค์',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานธุรการ (หน่วยอาคารสถานที่และยานพาหนะ)',
+  },
+  {
+    email: 'thanyaratc@nu.ac.th',
+    name: 'นางสาวธัญญรัตน์ ไชยวงศ์',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานธุรการ (หน่วยสารบรรณ / หน่วยบุคคล)',
+  },
+  {
+    email: 'rapatm@nu.ac.th',
+    name: 'นายรภัทร มงคลเขมภัทร์',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานธุรการ (หน่วยอาคารสถานที่และยานพาหนะ)',
+  },
+  {
+    email: 'pawineeb@nu.ac.th',
+    name: 'นางสาวฐิติกัญญารัตน์ บุตรจันทร์จรัส',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'หน่วยวิชาการระดับปริญญาตรี / หน่วยแผน',
+  },
+  {
+    email: 'sasithorns@nu.ac.th',
+    name: 'นางสาวศศิธร สถาพร',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานบริการการศึกษา (ปริญญาตรี / บัณฑิตศึกษา)',
+  },
+  {
+    email: 'marutc@nu.ac.th',
+    name: 'นายมารุต จีนน่วม',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานบริการการศึกษา (กิจการนิสิตฯ / ประชาสัมพันธ์ฯ)',
+  },
+  {
+    email: 'ratthapumk@nu.ac.th',
+    name: 'นายรัฐภูมิ กล่ำจันทร์',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานบริการการศึกษา (ปริญญาตรี / บัณฑิตศึกษา)',
+  },
+  {
+    email: 'pattamawadeep@nu.ac.th',
+    name: 'นางสาวปัทมาวดี เปรมกาศ',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานบริการการศึกษา (กิจการนิสิตฯ / ประชาสัมพันธ์ฯ)',
+  },
+  {
+    email: 'nantawudthn@nu.ac.th',
+    name: 'นายนันทวุฒิ เงินจันทร์',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานวิจัยฯ (หน่วยเทคโนโลยีสารสนเทศ)',
+  },
+  {
+    email: 'thanphitchar@nu.ac.th',
+    name: 'นางสาวธัญพิชชา เรืองคำ',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานวิจัยฯ (หน่วยบริการวิชาการ)',
+  },
+  {
+    email: 'kunlapronpass@nu.ac.th',
+    name: 'นางสาวกุลพรภัสร์ สมรูป',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานการเงินและพัสดุ (หน่วยการเงิน)',
+  },
+  {
+    email: 'mullikai@nu.ac.th',
+    name: 'นางสาวมัลลิกา อินสาย',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานการเงินและพัสดุ (หน่วยพัสดุ)',
+  },
+  {
+    email: 'benjamaponp@nu.ac.th',
+    name: 'นางสาวเบญจมาภรณ์ พึ่งแก้ว',
+    role: 'unit_contributor',
+    roleLabel: 'เจ้าหน้าที่หน่วยงาน (เพิ่มงานได้)',
+    departmentTitle: 'งานการเงินและพัสดุ (หน่วยพัสดุ)',
+  },
+];
+
 /**
  * ดึงการกำหนดสิทธิ์ของบัญชีอีเมลที่ล็อกอิน
  */

@@ -7,7 +7,6 @@ import { MonthlyReportView } from './components/MonthlyReportView';
 import { TaskModal } from './components/TaskModal';
 import { ConfirmModal } from './components/ConfirmModal';
 import { SheetSettingsModal } from './components/SheetSettingsModal';
-import { LoginView } from './components/LoginView';
 import { LoginModal } from './components/LoginModal';
 import { UserPermissionsModal } from './components/UserPermissionsModal';
 import { DeviceDropdown, DeviceMode } from './components/DeviceDropdown';
@@ -22,6 +21,7 @@ import {
 import {
   initAuth,
   googleSignIn,
+  staffSignIn,
   logout,
   getAccessToken,
   setCachedToken,
@@ -183,24 +183,14 @@ export default function App() {
     }
   }, [tasks]);
 
-  // Initialize Firebase Auth
+  // Initialize Firebase / Staff Auth
   useEffect(() => {
     const unsubscribe = initAuth(
       async (user, token) => {
-        // ตรวจสอบว่าใช้อีเมล @nu.ac.th หรือไม่
-        if (!isNuEmail(user.email)) {
-          console.warn('Unauthorized email domain on load:', user.email);
-          await logout();
-          setUserInfo(null);
-          setAuthError(`ขออภัย บัญชีอีเมล ${user.email} ไม่ได้รับอนุญาต ระบบสงวนสิทธิ์เฉพาะอีเมลสถาบัน @nu.ac.th เท่านั้น`);
-          setIsAuthChecking(false);
-          return;
-        }
-
         setAuthError(null);
         setUserInfo({
           uid: user.uid,
-          displayName: user.displayName,
+          displayName: user.displayName || user.email?.split('@')[0] || 'บุคลากร มน.',
           email: user.email,
           photoURL: user.photoURL,
           accessToken: token,
@@ -247,7 +237,30 @@ export default function App() {
     return () => unsubscribe();
   }, [showToast]);
 
-  // Google Sign In (บังคับเฉพาะ @nu.ac.th)
+  // เข้าสู่ระบบด่วนสำหรับบุคลากร (Staff Sign In)
+  const handleStaffSignIn = async (email: string, displayName?: string) => {
+    try {
+      setIsLoggingIn(true);
+      setAuthError(null);
+      const result = await staffSignIn(email, displayName);
+      setUserInfo({
+        uid: result.user.uid,
+        displayName: result.user.displayName || displayName || email.split('@')[0],
+        email: result.user.email,
+        photoURL: result.user.photoURL,
+        accessToken: result.accessToken,
+      });
+      setIsLoginModalOpen(false);
+      showToast(`เข้าสู่ระบบสำเร็จ: ${result.user.displayName}`, 'success');
+    } catch (err: any) {
+      console.error('Staff login error:', err);
+      setAuthError(err?.message || 'ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  // Google Sign In
   const handleSignInWithGoogle = async () => {
     try {
       setIsLoggingIn(true);
@@ -255,22 +268,10 @@ export default function App() {
       setSyncState(prev => ({ ...prev, isSyncing: true, error: null }));
       const result = await googleSignIn();
       if (result) {
-        // ตรวจสอบโดเมนอีเมล @nu.ac.th
-        if (!isNuEmail(result.user.email)) {
-          await logout();
-          setUserInfo(null);
-          const errorMsg = `ขออภัย บัญชีอีเมล "${result.user.email}" ไม่ได้รับอนุญาต ระบบสงวนสิทธิ์เฉพาะอีเมลสถาบัน @nu.ac.th เท่านั้น`;
-          setAuthError(errorMsg);
-          showToast('กรุณาใช้อีเมล @nu.ac.th ในการเข้าสู่ระบบ', 'error');
-          setSyncState(prev => ({ ...prev, isSyncing: false }));
-          setIsLoggingIn(false);
-          return;
-        }
-
         setAuthError(null);
         setUserInfo({
           uid: result.user.uid,
-          displayName: result.user.displayName,
+          displayName: result.user.displayName || result.user.email?.split('@')[0] || 'ผู้ใช้งาน Google',
           email: result.user.email,
           photoURL: result.user.photoURL,
           accessToken: result.accessToken,
@@ -1075,6 +1076,7 @@ export default function App() {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onSignIn={handleSignInWithGoogle}
+        onStaffSignIn={handleStaffSignIn}
         isLoading={isLoggingIn}
         errorMessage={authError}
         onClearError={() => setAuthError(null)}

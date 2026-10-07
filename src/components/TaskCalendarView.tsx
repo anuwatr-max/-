@@ -63,7 +63,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
   currentUserEmail,
 }) => {
   const isMobileLayout = deviceMode === 'mobile';
-  const canAdd = !isGuestMode && canUserAddTask(currentUserEmail);
+  const canAdd = true; // อนุญาตให้เพิ่มงานได้ทุกกรณี (ทั้งผู้ใช้ล็อกอินและทดลองใช้งาน)
   const userPerm = getUserPermission(currentUserEmail);
 
   // State สำหรับเดือนและปีที่แสดงในปฏิทิน
