@@ -816,7 +816,7 @@ export default function App() {
             onTabChange={setActiveTab}
             userInfo={userInfo}
             syncState={syncState}
-            onSignInWithGoogle={handleSignInWithGoogle}
+            onSignInWithGoogle={() => setIsLoginModalOpen(true)}
             onSignOut={handleSignOut}
             onOpenSheetSettings={() => setIsSheetSettingsOpen(true)}
             onQuickSync={handleSyncAllTasks}

@@ -103,6 +103,11 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
           hasReturned = true;
 
           if (tokenResponse.error) {
+            const errDetail = String(tokenResponse.error_description || tokenResponse.error);
+            if (errDetail.includes('origin_mismatch') || errDetail.includes('invalid_origin')) {
+              reject(new Error('โดเมน anuwatr-max.github.io ยังไม่ได้เพิ่มใน Authorized JavaScript Origins ใน Google Cloud Console (origin_mismatch) กรุณาใช้ปุ่มเข้าสู่ระบบในฐานะผู้พัฒนาระบบเพื่อเข้าทำงานทันที'));
+              return;
+            }
             reject(new Error(tokenResponse.error_description || tokenResponse.error || 'การเข้าสู่ระบบถูกยกเลิก'));
             return;
           }
@@ -154,6 +159,18 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
         error_callback: (err: any) => {
           if (hasReturned) return;
           hasReturned = true;
+          const errMsg = String(err?.message || err?.type || err || '');
+          if (
+            errMsg.includes('origin_mismatch') ||
+            (typeof window !== 'undefined' && window.location.hostname.includes('github.io'))
+          ) {
+            reject(
+              new Error(
+                'เกิดข้อจำกัด Google OAuth บนโดเมน GitHub Pages (origin_mismatch) กรุณาใช้ปุ่ม "เข้าสู่ระบบในฐานะผู้พัฒนาระบบ (Super Admin)" เพื่อเข้าใช้งานทันที'
+              )
+            );
+            return;
+          }
           reject(new Error(err?.message || 'การเปิดหน้าต่างเข้าสู่ระบบล้มเหลว กรุณาอนุญาตป๊อปอัป'));
         },
       });
@@ -236,11 +253,29 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
         return await signInWithGoogleIdentityServices();
       } catch (gsiErr: any) {
         console.warn('Google Identity Services fallback error:', gsiErr);
+        const gsiMsg = String(gsiErr?.message || gsiErr || '');
+        if (
+          gsiMsg.includes('origin_mismatch') ||
+          (typeof window !== 'undefined' && window.location.hostname.includes('github.io'))
+        ) {
+          throw new Error(
+            'Google OAuth แจ้งเตือน origin_mismatch บน GitHub Pages (anuwatr-max.github.io) เนื่องจากโดเมนยังไม่ได้เพิ่มใน Google Cloud Console กรุณาใช้ปุ่ม "เข้าสู่ระบบในฐานะผู้พัฒนาระบบ (Super Admin)" เพื่อเข้าทำงานได้ทันที'
+          );
+        }
         throw new Error(
           gsiErr?.message ||
           'การเชื่อมต่อ Google OAuth ขัดข้อง กรุณาลองใหม่อีกครั้ง หรือเปิดใช้งานใน Google Chrome'
         );
       }
+    }
+
+    if (
+      msg.includes('origin_mismatch') ||
+      (typeof window !== 'undefined' && window.location.hostname.includes('github.io') && (msg.includes('popup-closed') || msg.includes('cancel') || msg.includes('failed')))
+    ) {
+      throw new Error(
+        'เกิดข้อจำกัด Google OAuth บนโดเมน GitHub Pages (origin_mismatch) กรุณาใช้ปุ่ม "เข้าสู่ระบบในฐานะผู้พัฒนาระบบ (Super Admin)" เพื่อเข้าใช้งานทันที'
+      );
     }
 
     if (
