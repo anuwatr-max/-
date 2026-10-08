@@ -337,6 +337,9 @@ export default function App() {
         ? 'ยกเลิกการเข้าสู่ระบบ Google'
         : (err?.message || 'การเข้าสู่ระบบ Google ขัดข้อง กรุณาลองใหม่อีกครั้ง');
       setAuthError(msg);
+      if (!isPopupClosed) {
+        setIsLoginModalOpen(true);
+      }
       showToast(msg, 'error');
       setSyncState(prev => ({ ...prev, isSyncing: false }));
     } finally {
@@ -813,7 +816,7 @@ export default function App() {
             onTabChange={setActiveTab}
             userInfo={userInfo}
             syncState={syncState}
-            onSignInWithGoogle={() => setIsLoginModalOpen(true)}
+            onSignInWithGoogle={handleSignInWithGoogle}
             onSignOut={handleSignOut}
             onOpenSheetSettings={() => setIsSheetSettingsOpen(true)}
             onQuickSync={handleSyncAllTasks}

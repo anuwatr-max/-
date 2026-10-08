@@ -238,7 +238,7 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
         console.warn('Google Identity Services fallback error:', gsiErr);
         throw new Error(
           gsiErr?.message ||
-          'โดเมนนี้ยังไม่ได้รับอนุญาตใน Google OAuth / Firebase ท่านสามารถเลือกบัญชีบุคลากร หรือพิมพ์อีเมลในช่อง "เข้าสู่ระบบด่วน" ด้านบน เพื่อเข้าสู่ระบบและบันทึกงานได้ทันที'
+          'การเชื่อมต่อ Google OAuth ขัดข้อง กรุณาลองใหม่อีกครั้ง หรือเปิดใช้งานใน Google Chrome'
         );
       }
     }
@@ -248,13 +248,13 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
       msg.includes('sessionStorage') ||
       error?.code === 'auth/internal-error'
     ) {
-      throw new Error('ไม่สามารถเข้าสู่ระบบผ่าน Google ในหน้านี้ได้ เนื่องจากเบราว์เซอร์ของแอป (เช่น LINE) ไม่อนุญาต แนะนำให้เปิดด้วย Google Chrome หรือเลือกบัญชีบุคลากรด้านบนเพื่อเข้าใช้งานทันที');
+      throw new Error('ไม่สามารถเข้าสู่ระบบผ่าน Google ในหน้านี้ได้ เนื่องจากเบราว์เซอร์ของแอป (เช่น LINE) ไม่อนุญาต แนะนำให้กดปุ่ม "เปิดใน Chrome" ด้านบนเพื่อเข้าใช้งาน');
     }
     if (error?.code === 'auth/network-request-failed' || msg.includes('network-request-failed')) {
-      throw new Error('การเชื่อมต่อกับเซิร์ฟเวอร์ Google ขัดข้อง ท่านสามารถเลือกบัญชีบุคลากรด้านบนเพื่อเข้าสู่ระบบได้ทันที');
+      throw new Error('การเชื่อมต่อกับเซิร์ฟเวอร์ Google ขัดข้อง กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง');
     }
     if (error?.code === 'auth/popup-blocked') {
-      throw new Error('เบราว์เซอร์บล็อกหน้าต่างป๊อปอัป กรุณาอนุญาตป๊อปอัป หรือเลือกบัญชีบุคลากรด้านบนเพื่อเข้าใช้งาน');
+      throw new Error('เบราว์เซอร์บล็อกหน้าต่างป๊อปอัป กรุณาอนุญาตป๊อปอัปในเบราว์เซอร์เพื่อเข้าสู่ระบบ Google');
     }
     if (error?.code === 'auth/popup-closed-by-user') {
       throw new Error('หน้าต่างเข้าสู่ระบบถูกปิดก่อนยืนยันสำเร็จ');
