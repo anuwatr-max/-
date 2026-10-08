@@ -187,6 +187,13 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = initAuth(
       async (user, token) => {
+        if (user?.email && !isNuEmail(user.email)) {
+          await logout();
+          setUserInfo(null);
+          setIsAuthChecking(false);
+          return;
+        }
+
         setAuthError(null);
         setUserInfo({
           uid: user.uid,
@@ -268,6 +275,17 @@ export default function App() {
       setSyncState(prev => ({ ...prev, isSyncing: true, error: null }));
       const result = await googleSignIn();
       if (result) {
+        // ตรวจสอบว่าใช้อีเมลมหาวิทยาลัยนเรศวร (@nu.ac.th) เท่านั้น
+        if (result.user?.email && !isNuEmail(result.user.email)) {
+          await logout();
+          const err = `อีเมล ${result.user.email} ไม่ได้รับอนุญาต ระบบรองรับเฉพาะบัญชี Google ของมหาวิทยาลัยนเรศวร (@nu.ac.th) เท่านั้น`;
+          setAuthError(err);
+          showToast(err, 'error');
+          setIsLoginModalOpen(true);
+          setSyncState(prev => ({ ...prev, isSyncing: false }));
+          return;
+        }
+
         setAuthError(null);
         setUserInfo({
           uid: result.user.uid,
@@ -881,38 +899,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Banner แจ้งเตือนสถานะเมื่อยังไม่ได้เข้าสู่ระบบ (โหมดผู้เยี่ยมชม) */}
-            {!userInfo && (
-              <div className="mb-4 bg-white rounded-2xl p-3.5 sm:p-4 border border-blue-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center shrink-0 text-blue-700 shadow-2xs">
-                    <ShieldCheck className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-xs sm:text-sm font-bold text-slate-800">
-                        เปิดดูในโหมดผู้เยี่ยมชม (Guest View)
-                      </h3>
-                      <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold">
-                        พร้อมใช้งานทันที
-                      </span>
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 leading-relaxed">
-                      ท่านสามารถดูรายงาน สถิติ ติดตามงาน และค้นหาข้อมูลได้ทันที หากต้องการบันทึกหรือซิงค์ข้อมูลกับ Google Sheets กรุณาเข้าสู่ระบบด้วยอีเมล <strong>@nu.ac.th</strong>
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsLoginModalOpen(true)}
-                  className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold shadow-xs hover:shadow-sm transition-all active:scale-[0.98] cursor-pointer"
-                >
-                  <LogIn className="h-3.5 w-3.5" />
-                  <span>เข้าสู่ระบบ @nu.ac.th</span>
-                </button>
-              </div>
-            )}
-
             {/* ปุ่มรีเฟรชข้อมูลล่าสุด - แสดงเฉพาะหน้า รายงานผลการดำเนินงาน (dashboard) เท่านั้น */}
             {syncState.spreadsheetId && activeTab === 'dashboard' && (
               <div className="mb-4 flex justify-end">
@@ -934,6 +920,11 @@ export default function App() {
                 onSelectDepartmentFilter={handleSelectDeptFromDashboard}
                 onSelectStatusFilter={handleSelectStatusFromDashboard}
                 onOpenNewTaskModal={() => {
+                  if (!userInfo) {
+                    showToast('กรุณาเข้าสู่ระบบด้วยอีเมล @nu.ac.th ก่อนเพิ่มงานใหม่', 'error');
+                    setIsLoginModalOpen(true);
+                    return;
+                  }
                   setTaskToEdit(null);
                   setTaskModalDefaultDate(undefined);
                   setIsTaskModalOpen(true);
@@ -950,6 +941,11 @@ export default function App() {
                 initialStatusFilter={initialFilterStatus}
                 initialDeptFilter={initialFilterDept}
                 onAddTask={() => {
+                  if (!userInfo) {
+                    showToast('กรุณาเข้าสู่ระบบด้วยอีเมล @nu.ac.th ก่อนเพิ่มงานใหม่', 'error');
+                    setIsLoginModalOpen(true);
+                    return;
+                  }
                   setTaskToEdit(null);
                   setTaskModalDefaultDate(undefined);
                   setIsTaskModalOpen(true);
@@ -971,6 +967,11 @@ export default function App() {
               <TaskCalendarView
                 tasks={tasks}
                 onAddTask={(defaultDate?: string) => {
+                  if (!userInfo) {
+                    showToast('กรุณาเข้าสู่ระบบด้วยอีเมล @nu.ac.th ก่อนเพิ่มงานใหม่', 'error');
+                    setIsLoginModalOpen(true);
+                    return;
+                  }
                   setTaskToEdit(null);
                   setTaskModalDefaultDate(defaultDate);
                   setIsTaskModalOpen(true);

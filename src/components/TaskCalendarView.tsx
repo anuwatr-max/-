@@ -63,7 +63,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
   currentUserEmail,
 }) => {
   const isMobileLayout = deviceMode === 'mobile';
-  const canAdd = true; // อนุญาตให้เพิ่มงานได้ทุกกรณี (ทั้งผู้ใช้ล็อกอินและทดลองใช้งาน)
+  const canAdd = !isGuestMode && canUserAddTask(currentUserEmail);
   const userPerm = getUserPermission(currentUserEmail);
 
   // State สำหรับเดือนและปีที่แสดงในปฏิทิน
@@ -1085,8 +1085,8 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
 
               {/* Guest Mode Notice */}
               {isGuestMode && (
-                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-[11px]">
-                  เปิดดูในโหมดผู้เยี่ยมชม (กรุณาเข้าสู่ระบบเพื่อแก้ไขหรือเปลี่ยนสถานะงาน)
+                <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-xl text-sky-900 text-[11px]">
+                  เปิดดูในโหมดผู้เยี่ยมชม (กรุณาเข้าสู่ระบบด้วยอีเมล @nu.ac.th เพื่อแก้ไขหรือเปลี่ยนสถานะงาน)
                 </div>
               )}
             </div>

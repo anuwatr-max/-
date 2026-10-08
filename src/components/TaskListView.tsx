@@ -52,7 +52,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
   currentUserEmail,
 }) => {
   const isMobileLayout = deviceMode === 'mobile';
-  const canAdd = true; // อนุญาตให้เพิ่มงานได้ทุกกรณี (ทั้งผู้ใช้ล็อกอินและทดลองใช้งาน)
+  const canAdd = !isGuestMode && canUserAddTask(currentUserEmail);
   const userPerm = getUserPermission(currentUserEmail);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState<string>(initialDeptFilter);
@@ -510,17 +510,19 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
 
                       {/* ปุ่มจัดการ - แสดงตามสิทธิ์ของผู้ใช้งาน */}
                       <td className="py-3 px-4 text-center">
-                        {canEdit || canDelete || isGuestMode ? (
+                        {canEdit || canDelete ? (
                           <div className="flex items-center justify-center gap-1">
-                            <button
-                              id={`task-edit-btn-${task.id}`}
-                              onClick={() => onEditTask(task)}
-                              title={isGuestMode ? "ดูรายละเอียด / แก้ไขข้อมูลงาน" : "แก้ไขข้อมูลงาน"}
-                              className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <Edit2 className="h-3.5 w-3.5" />
-                            </button>
-                            {(!isGuestMode && canDelete) || isGuestMode ? (
+                            {canEdit && (
+                              <button
+                                id={`task-edit-btn-${task.id}`}
+                                onClick={() => onEditTask(task)}
+                                title="แก้ไขข้อมูลงาน"
+                                className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                            {canDelete && (
                               <button
                                 id={`task-delete-btn-${task.id}`}
                                 onClick={() => onDeleteTask(task)}
@@ -529,10 +531,10 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
-                            ) : null}
+                            )}
                           </div>
                         ) : (
-                          <span className="text-[10px] text-slate-400 font-medium px-2 py-0.5 rounded-md bg-slate-100" title={`สิทธิ์เฉพาะเจ้าหน้าที่ ${task.departmentName}`}>
+                          <span className="text-[10px] text-slate-400 font-medium px-2 py-0.5 rounded-md bg-slate-100" title={isGuestMode ? "เข้าสู่ระบบเพื่อแก้ไขหรือลบงาน" : `สิทธิ์เฉพาะเจ้าหน้าที่ ${task.departmentName}`}>
                             อ่านอย่างเดียว
                           </span>
                         )}

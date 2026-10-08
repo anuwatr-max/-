@@ -1,15 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   AlertCircle,
   X,
   Loader2,
-  ShieldCheck,
   CheckCircle2,
-  UserCheck,
-  Mail,
-  ArrowRight,
-  ExternalLink,
-  Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface LoginModalProps {
@@ -26,53 +21,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
   onClose,
   onSignIn,
-  onStaffSignIn,
   isLoading,
   errorMessage,
   onClearError,
 }) => {
-  const [staffEmail, setStaffEmail] = useState('');
-  const [emailValidationError, setEmailValidationError] = useState<string | null>(null);
-  const [showEmailLogin, setShowEmailLogin] = useState(false);
-
   if (!isOpen) return null;
-
-  const handleDeveloperDirectLogin = () => {
-    onClearError();
-    if (onStaffSignIn) {
-      onStaffSignIn('anuwatr@nu.ac.th', 'อนุวัทย์ เรืองจันทร์');
-    }
-  };
-
-  const handleStaffEmailSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setEmailValidationError(null);
-
-    const clean = staffEmail.trim().toLowerCase();
-    if (!clean) {
-      setEmailValidationError('กรุณาระบุอีเมลบุคลากร');
-      return;
-    }
-
-    if (!clean.endsWith('@nu.ac.th')) {
-      setEmailValidationError('กรุณาใช้อีเมลของมหาวิทยาลัยนเรศวร (@nu.ac.th) เท่านั้น');
-      return;
-    }
-
-    if (onStaffSignIn) {
-      onClearError();
-      onStaffSignIn(clean);
-    }
-  };
-
-  // ตรวจสอบว่าเกิดข้อผิดพลาดเกี่ยวกับ origin_mismatch หรือ GitHub Pages หรือไม่
-  const isOriginMismatchError =
-    errorMessage &&
-    (errorMessage.includes('origin_mismatch') ||
-      errorMessage.includes('unauthorized-domain') ||
-      errorMessage.includes('400') ||
-      errorMessage.includes('GitHub') ||
-      errorMessage.includes('github.io'));
 
   return (
     <div
@@ -81,7 +34,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-lg bg-white rounded-3xl p-5 sm:p-7 shadow-2xl border border-slate-200/90 text-slate-900 animate-in zoom-in-95 duration-200 relative max-h-[92vh] overflow-y-auto">
+      <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200/90 text-slate-900 animate-in zoom-in-95 duration-200 relative">
         {/* Close Button */}
         <button
           type="button"
@@ -112,97 +65,51 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
         </div>
 
-        {/* Error message (if any) */}
+        {/* Error message / Notice Banner */}
         {errorMessage && (
-          <div className="mb-5 p-4 rounded-2xl bg-sky-50/80 border-2 border-sky-300 text-xs text-slate-800 space-y-2.5 text-left animate-in fade-in duration-150">
-            <div className="flex items-start gap-2.5">
-              <AlertCircle className="h-5 w-5 text-sky-700 shrink-0 mt-0.5" />
+          <div className="mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-2 text-left animate-in fade-in duration-150 shadow-xs">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
               <div className="flex-1 space-y-1">
-                <p className="font-bold text-sky-950 text-sm">
-                  {isOriginMismatchError
-                    ? 'แจ้งเตือน: ข้อจำกัด Google OAuth บน GitHub Pages'
-                    : 'แจ้งเตือนการเข้าสู่ระบบ'}
+                <p className="font-bold text-rose-950 text-xs">
+                  เกิดข้อผิดพลาดในการเข้าสู่ระบบ
                 </p>
-                <p className="text-[11px] text-slate-700 leading-relaxed">{errorMessage}</p>
+                <p className="text-[11px] text-rose-800 leading-relaxed">
+                  {errorMessage}
+                </p>
               </div>
-            </div>
-
-            {/* Quick 1-Click login for developer right in error banner */}
-            <div className="pt-2 border-t border-sky-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={handleDeveloperDirectLogin}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                <span>เข้าสู่ระบบทันที (ผู้พัฒนาระบบ / Super Admin)</span>
-              </button>
               <button
                 type="button"
                 onClick={onClearError}
-                className="text-[11px] text-slate-500 hover:text-slate-800 underline text-center cursor-pointer"
+                className="text-rose-400 hover:text-rose-700 p-0.5 cursor-pointer"
+                title="ปิดการแจ้งเตือน"
               >
-                ปิดข้อความเตือน
+                <X className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
         )}
 
-        {/* SECTION 1: ผู้พัฒนาระบบหลัก (Super Admin) - 100% Reliable Access on GitHub Pages */}
-        <div className="mb-4 p-4 rounded-2xl bg-gradient-to-br from-sky-50 via-blue-50/70 to-indigo-50/50 border-2 border-sky-300/80 shadow-xs text-left relative overflow-hidden group">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-sky-600 text-white shadow-xs">
-                <ShieldCheck className="h-4 w-4" />
-              </span>
-              <div>
-                <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  สำหรับผู้พัฒนาระบบ (Super Admin)
-                  <span className="text-[10px] bg-sky-200/80 text-sky-900 font-semibold px-2 py-0.5 rounded-full">
-                    สิทธิ์สูงสุด
-                  </span>
-                </h3>
-                <p className="text-[11px] text-slate-600">
-                  อนุวัทย์ เรืองจันทร์ • <span className="font-semibold text-sky-800">anuwatr@nu.ac.th</span>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-[11px] text-slate-600 mb-3 leading-relaxed">
-            รองรับการเข้าสู่ระบบ 100% บนทุกโดเมน รวมถึง GitHub Pages (https://anuwatr-max.github.io) โดยไม่ติดปัญหา Google OAuth origin_mismatch
-          </p>
-
-          <button
-            id="developer-direct-login-btn"
-            type="button"
-            disabled={isLoading}
-            onClick={handleDeveloperDirectLogin}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-sky-600 via-blue-700 to-indigo-700 hover:from-sky-700 hover:via-blue-800 hover:to-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-sm hover:shadow-md transition-all active:scale-[0.99] cursor-pointer"
-          >
-            <Sparkles className="h-4 w-4 text-sky-200" />
-            <span>เข้าสู่ระบบด้วยบัญชีผู้พัฒนาทันที (Super Admin)</span>
-            <ArrowRight className="h-4 w-4 ml-1 opacity-80" />
-          </button>
-        </div>
-
-        {/* SECTION 2: Google Account Sign-In */}
-        <div className="space-y-3 mb-4">
+        {/* Google Account Sign-In Button (ONLY) */}
+        <div className="space-y-3 mb-5">
           <button
             id="modal-google-signin-btn"
             type="button"
             disabled={isLoading}
-            onClick={onSignIn}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white hover:bg-slate-50 text-slate-800 border-2 border-slate-200 hover:border-sky-500 font-semibold text-xs sm:text-sm rounded-2xl shadow-xs hover:shadow-sm transition-all active:scale-[0.99] disabled:opacity-60 disabled:pointer-events-none cursor-pointer group"
+            onClick={() => {
+              onClearError();
+              onSignIn();
+            }}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white hover:bg-slate-50 text-slate-800 border-2 border-slate-200 hover:border-sky-500 font-semibold text-sm rounded-2xl shadow-xs hover:shadow-md transition-all active:scale-[0.99] disabled:opacity-60 disabled:pointer-events-none cursor-pointer group ring-1 ring-slate-100"
           >
             {isLoading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin text-sky-600 shrink-0" />
-                <span className="text-slate-600 text-xs">กำลังเชื่อมต่อบัญชี Google...</span>
+                <Loader2 className="h-5 w-5 animate-spin text-sky-600 shrink-0" />
+                <span className="text-slate-600 text-sm">กำลังเชื่อมต่อบัญชี Google...</span>
               </>
             ) : (
               <>
-                <svg className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 group-hover:scale-105 transition-transform" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 shrink-0 group-hover:scale-105 transition-transform" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -225,75 +132,21 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             )}
           </button>
 
-          <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-left text-[11px] text-slate-600 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-sky-600 shrink-0" />
-            <span>ซิงค์ข้อมูลกับ Google Sheets และ Google Drive แบบ Real-time ตามสิทธิ์คำสั่งแต่งตั้ง</span>
+          <div className="space-y-2 pt-1">
+            <div className="bg-sky-50/80 border border-sky-200/80 rounded-xl p-2.5 text-left text-xs text-sky-900 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-sky-600 shrink-0" />
+              <span>เฉพาะบัญชีอีเมลมหาวิทยาลัยนเรศวร (<strong>@nu.ac.th</strong>) เท่านั้น</span>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-left text-[11px] text-slate-600 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-slate-500 shrink-0" />
+              <span>ซิงค์ข้อมูลกับ Google Sheets แบบ Real-time ตามสิทธิ์คำสั่งแต่งตั้ง</span>
+            </div>
           </div>
         </div>
 
-        {/* SECTION 3: คณะทำงานอื่นๆ เข้าสู่ระบบด้วยอีเมล @nu.ac.th */}
-        <div className="border-t border-slate-200/80 pt-3 mb-4 text-left">
-          {!showEmailLogin ? (
-            <button
-              type="button"
-              onClick={() => setShowEmailLogin(true)}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-sky-800 hover:text-sky-950 hover:bg-sky-50/60 font-semibold transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-sky-600" />
-                <span>สำหรับคณะทำงานท่านอื่น (พิมพ์อีเมล @nu.ac.th)</span>
-              </div>
-              <span className="text-[11px] underline">กดเพื่อเปิด</span>
-            </button>
-          ) : (
-            <form onSubmit={handleStaffEmailSubmit} className="space-y-2.5 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
-              <div className="flex items-center justify-between">
-                <label htmlFor="staff-email-field" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <UserCheck className="h-4 w-4 text-sky-700" />
-                  <span>พิมพ์อีเมลบุคลากรเข้าระบบ:</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowEmailLogin(false)}
-                  className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  ซ่อน
-                </button>
-              </div>
-
-              <div className="space-y-1">
-                <div className="relative">
-                  <input
-                    id="staff-email-field"
-                    type="email"
-                    value={staffEmail}
-                    onChange={e => {
-                      setStaffEmail(e.target.value);
-                      setEmailValidationError(null);
-                    }}
-                    placeholder="name@nu.ac.th"
-                    className="w-full px-3.5 py-2 pl-9 bg-white border border-slate-300 focus:border-sky-600 focus:ring-1 focus:ring-sky-600 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all"
-                  />
-                  <Mail className="h-4 w-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-                </div>
-                {emailValidationError && (
-                  <p className="text-[10px] text-rose-600 font-medium pl-1">{emailValidationError}</p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-2 px-3 bg-sky-700 hover:bg-sky-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-              >
-                เข้าสู่ระบบด้วยอีเมลนี้
-              </button>
-            </form>
-          )}
-        </div>
-
         {/* Footer / Guest View */}
-        <div className="pt-2 border-t border-slate-100 text-center">
+        <div className="pt-3 border-t border-slate-100 text-center">
           <button
             type="button"
             onClick={onClose}

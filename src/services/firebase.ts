@@ -74,6 +74,29 @@ export const loadGsiScript = (): Promise<void> => {
   });
 };
 
+const STORAGE_KEY_CUSTOM_CLIENT_ID = 'custom_google_oauth_client_id';
+
+export const getCustomGoogleClientId = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(STORAGE_KEY_CUSTOM_CLIENT_ID);
+  } catch (e) {
+    return null;
+  }
+};
+
+export const setCustomGoogleClientId = (clientId: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const clean = clientId.trim();
+    if (clean) {
+      localStorage.setItem(STORAGE_KEY_CUSTOM_CLIENT_ID, clean);
+    } else {
+      localStorage.removeItem(STORAGE_KEY_CUSTOM_CLIENT_ID);
+    }
+  } catch (e) {}
+};
+
 /**
  * เข้าสู่ระบบด้วย Google Identity Services (Direct OAuth Token Client)
  * ทำงานได้ทันทีแม้โดเมนจะยังไม่ได้ระบุใน Authorized Domains ของ Firebase Authentication
@@ -85,7 +108,7 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
     throw new Error('ระบบ Google Identity Services ยังไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง');
   }
 
-  const clientId = firebaseConfig.oAuthClientId;
+  const clientId = getCustomGoogleClientId() || firebaseConfig.oAuthClientId;
   if (!clientId) {
     throw new Error('ไม่พบ Google OAuth Client ID ในการตั้งค่าระบบ');
   }
@@ -105,7 +128,7 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
           if (tokenResponse.error) {
             const errDetail = String(tokenResponse.error_description || tokenResponse.error);
             if (errDetail.includes('origin_mismatch') || errDetail.includes('invalid_origin')) {
-              reject(new Error('โดเมน anuwatr-max.github.io ยังไม่ได้เพิ่มใน Authorized JavaScript Origins ใน Google Cloud Console (origin_mismatch) กรุณาใช้ปุ่มเข้าสู่ระบบในฐานะผู้พัฒนาระบบเพื่อเข้าทำงานทันที'));
+              reject(new Error('Google OAuth แจ้งเตือน Error 400: origin_mismatch เนื่องจากโดเมนนี้ยังไม่ได้เพิ่มใน Authorized JavaScript Origins ของ Google Cloud Console'));
               return;
             }
             reject(new Error(tokenResponse.error_description || tokenResponse.error || 'การเข้าสู่ระบบถูกยกเลิก'));
@@ -166,7 +189,7 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
           ) {
             reject(
               new Error(
-                'เกิดข้อจำกัด Google OAuth บนโดเมน GitHub Pages (origin_mismatch) กรุณาใช้ปุ่ม "เข้าสู่ระบบในฐานะผู้พัฒนาระบบ (Super Admin)" เพื่อเข้าใช้งานทันที'
+                'เกิดข้อจำกัด Google OAuth บนโดเมนนี้ (Error 400: origin_mismatch) กรุณาเพิ่มโดเมนใน Authorized JavaScript Origins ใน Google Cloud Console'
               )
             );
             return;
@@ -259,7 +282,7 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
           (typeof window !== 'undefined' && window.location.hostname.includes('github.io'))
         ) {
           throw new Error(
-            'Google OAuth แจ้งเตือน origin_mismatch บน GitHub Pages (anuwatr-max.github.io) เนื่องจากโดเมนยังไม่ได้เพิ่มใน Google Cloud Console กรุณาใช้ปุ่ม "เข้าสู่ระบบในฐานะผู้พัฒนาระบบ (Super Admin)" เพื่อเข้าทำงานได้ทันที'
+            'Google OAuth แจ้งเตือน Error 400: origin_mismatch เนื่องจากโดเมนนี้ยังไม่ได้เพิ่มใน Authorized JavaScript Origins ใน Google Cloud Console'
           );
         }
         throw new Error(
@@ -274,7 +297,7 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
       (typeof window !== 'undefined' && window.location.hostname.includes('github.io') && (msg.includes('popup-closed') || msg.includes('cancel') || msg.includes('failed')))
     ) {
       throw new Error(
-        'เกิดข้อจำกัด Google OAuth บนโดเมน GitHub Pages (origin_mismatch) กรุณาใช้ปุ่ม "เข้าสู่ระบบในฐานะผู้พัฒนาระบบ (Super Admin)" เพื่อเข้าใช้งานทันที'
+        'เกิดข้อจำกัด Google OAuth บนโดเมนนี้ (Error 400: origin_mismatch) กรุณาเพิ่มโดเมนใน Authorized JavaScript Origins ใน Google Cloud Console'
       );
     }
 
