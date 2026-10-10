@@ -681,11 +681,7 @@ export default function App() {
         }
         if (token && syncState.spreadsheetId) {
           try {
-            if (task.rowNumber) {
-              await deleteTaskFromSheet(syncState.spreadsheetId, token, task.rowNumber);
-            } else {
-              await fullSyncToSheet(syncState.spreadsheetId, token, remainingTasks);
-            }
+           await deleteTaskFromSheet(syncState.spreadsheetId, token, task);
             setSyncState(prev => ({ ...prev, lastSyncedAt: new Date() }));
           } catch (sheetErr: any) {
             // [แก้ไข 1.3] แจ้งเตือนผู้ใช้แบบเห็นได้จริง ถ้าลองซิงค์ซ้ำแล้วยังไม่สำเร็จ
