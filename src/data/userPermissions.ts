@@ -16,6 +16,13 @@ export interface UserPermissionConfig {
   canManageSheet: boolean;
 }
 
+/**
+ * สิทธิ์ของบัญชี @nu.ac.th ที่ "ไม่อยู่ในรายชื่อด้านล่าง"
+ * true  = เพิ่ม/แก้ไขงานได้ทุกกลุ่มงาน (ลบไม่ได้) ตามพฤติกรรมเดิม
+ * false = ดูอย่างเดียว (ต้องเพิ่มชื่อในรายชื่อก่อนจึงจะแก้ไขได้)
+ */
+const UNLISTED_NU_USER_CAN_ADD_EDIT = false;
+
 // ตารางกำหนดสิทธิ์ผู้ใช้งานตามบัญชี Google Account (@nu.ac.th)
 export const ASSIGNED_USERS_PERMISSIONS: Record<string, UserPermissionConfig> = {
   // 1. สุพิชญา เรื่องลือ - สามารถเพิ่ม แก้ไข เฉพาะในงานบริการการศึกษาได้
@@ -251,50 +258,6 @@ export const ASSIGNED_USERS_PERMISSIONS: Record<string, UserPermissionConfig> = 
     departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
     canManageSheet: true,
   },
-  'anuwat.r@nu.ac.th': {
-    email: 'anuwat.r@nu.ac.th',
-    name: 'อนุวัทย์ เรืองจันทร์',
-    role: 'super_admin',
-    allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
-    canAdd: true,
-    canEdit: true,
-    canDelete: true,
-    departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
-    canManageSheet: true,
-  },
-  'anuwat.ruangchan@nu.ac.th': {
-    email: 'anuwat.ruangchan@nu.ac.th',
-    name: 'อนุวัทย์ เรืองจันทร์',
-    role: 'super_admin',
-    allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
-    canAdd: true,
-    canEdit: true,
-    canDelete: true,
-    departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
-    canManageSheet: true,
-  },
-  'anuwatr@gmail.com': {
-    email: 'anuwatr@gmail.com',
-    name: 'อนุวัทย์ เรืองจันทร์',
-    role: 'super_admin',
-    allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
-    canAdd: true,
-    canEdit: true,
-    canDelete: true,
-    departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
-    canManageSheet: true,
-  },
-  'anuwat.ruangchan@gmail.com': {
-    email: 'anuwat.ruangchan@gmail.com',
-    name: 'อนุวัทย์ เรืองจันทร์',
-    role: 'super_admin',
-    allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
-    canAdd: true,
-    canEdit: true,
-    canDelete: true,
-    departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
-    canManageSheet: true,
-  },
 };
 
 export interface CommitteeMemberOption {
@@ -429,49 +392,49 @@ export const COMMITTEE_MEMBERS_LIST: CommitteeMemberOption[] = [
 
 /**
  * ดึงการกำหนดสิทธิ์ของบัญชีอีเมลที่ล็อกอิน
+ * - ไม่มีอีเมล (ยังไม่ล็อกอิน): ดูอย่างเดียว
+ * - อยู่ในรายชื่อ: ใช้สิทธิ์ตามรายชื่อ (ตรวจแบบตรงตัวเท่านั้น)
+ * - @nu.ac.th ที่ไม่อยู่ในรายชื่อ: ตามค่า UNLISTED_NU_USER_CAN_ADD_EDIT
+ * - อีเมลโดเมนอื่น: ดูอย่างเดียว
  */
 export const getUserPermission = (email?: string | null): UserPermissionConfig => {
+  const viewerOnly = (cleanEmail: string, title: string): UserPermissionConfig => ({
+    email: cleanEmail,
+    name: cleanEmail ? cleanEmail.split('@')[0] : 'ผู้ใช้งานทั่วไป',
+    role: 'viewer',
+    allowedDepartmentIds: [],
+    canAdd: false,
+    canEdit: false,
+    canDelete: false,
+    departmentTitle: title,
+    canManageSheet: false,
+  });
+
   if (!email) {
-    return {
-      email: '',
-      name: 'ผู้ใช้งานทั่วไป',
-      role: 'unit_contributor',
-      allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
-      canAdd: true,
-      canEdit: true,
-      canDelete: true,
-      departmentTitle: 'ผู้ใช้งานทั่วไป (ทดลองใช้งานในเครื่อง)',
-      canManageSheet: false,
-    };
+    return viewerOnly('', 'ยังไม่ได้เข้าสู่ระบบ (ดูข้อมูลอย่างเดียว)');
   }
 
   const cleanEmail = email.trim().toLowerCase();
 
-  // ตรวจสอบชื่ออนุวัทย์ เรืองจันทร์ (Super Admin)
-  if (cleanEmail.includes('anuwat') || cleanEmail.includes('ruangchan')) {
-    return {
-      email: cleanEmail,
-      name: 'อนุวัทย์ เรืองจันทร์',
-      role: 'super_admin',
-      allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
-      canAdd: true,
-      canEdit: true,
-      canDelete: true,
-      departmentTitle: 'ผู้ดูแลระบบหลัก (ทุกกลุ่มงาน)',
-      canManageSheet: true,
-    };
-  }
-
+  // ตรวจแบบตรงตัวกับรายชื่อเท่านั้น (ไม่ใช้การเดาจากชื่ออีเมล)
   const assigned = ASSIGNED_USERS_PERMISSIONS[cleanEmail];
   if (assigned) {
     return assigned;
   }
 
-  // หากเป็นอีเมล @nu.ac.th อื่นๆ หรือบุคลากรทั่วไป
-  // ให้สิทธิ์บันทึก/เพิ่มงานได้ทุกกลุ่มงาน เพื่อให้สามารถเพิ่มงานใหม่และบันทึกข้อมูลเพิ่มเติมได้เสมอ
+  // อีเมลที่ไม่ใช่ @nu.ac.th ไม่ได้รับสิทธิ์แก้ไขใด ๆ
+  if (!cleanEmail.endsWith('@nu.ac.th')) {
+    return viewerOnly(cleanEmail, 'บัญชีนี้ไม่ได้รับอนุญาต (ดูข้อมูลอย่างเดียว)');
+  }
+
+  // บุคลากร @nu.ac.th ที่ไม่อยู่ในรายชื่อ
+  if (!UNLISTED_NU_USER_CAN_ADD_EDIT) {
+    return viewerOnly(cleanEmail, 'บุคลากร มน. (ดูข้อมูลอย่างเดียว)');
+  }
+
   return {
     email: cleanEmail,
-    name: email.split('@')[0],
+    name: cleanEmail.split('@')[0],
     role: 'department_admin',
     allowedDepartmentIds: ['admin', 'academic', 'research', 'finance'],
     canAdd: true,
