@@ -11,10 +11,10 @@ import {
   User,
 } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
-
+ 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
-
+ 
 // Use local persistence so users stay logged in across page reloads on mobile
 try {
   setPersistence(auth, browserLocalPersistence).catch(err => {
@@ -23,19 +23,30 @@ try {
 } catch (e) {
   console.warn('Set auth persistence exception:', e);
 }
-
+ 
+const ALLOWED_EMAIL_DOMAIN = '@nu.ac.th';
+const ALLOWED_HOSTED_DOMAIN = 'nu.ac.th';
+ 
+/**
+ * ตรวจว่าอีเมลเป็นบัญชี @nu.ac.th หรือไม่
+ */
+const isAllowedEmail = (email?: string | null): boolean =>
+  !!email && email.trim().toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN);
+ 
 const provider = new GoogleAuthProvider();
 // Workspace scopes requested
 provider.addScope('https://www.googleapis.com/auth/spreadsheets');
 provider.addScope('https://www.googleapis.com/auth/drive.file');
-// Allow user to select their @nu.ac.th account
+// Allow user to select their @nu.ac.th account (hd เป็นเพียงตัวช่วยแนะนำบัญชี ไม่ใช่การบังคับ)
 provider.setCustomParameters({
   prompt: 'select_account',
+  hd: ALLOWED_HOSTED_DOMAIN,
 });
-
+ 
 const STORAGE_KEY_ACCESS_TOKEN = 'google_oauth_access_token_v1';
+// คีย์เก่า: ไม่เก็บ/ไม่เชื่อถือโปรไฟล์ใน localStorage อีกต่อไป ใช้เฉพาะลบทิ้ง
 const STORAGE_KEY_USER_PROFILE = 'google_user_profile_v1';
-
+ 
 let isSigningIn = false;
 let activeAuthSuccessCallback: ((user: any, token: string | null) => void) | null = null;
 let cachedAccessToken: string | null = (() => {
@@ -45,14 +56,32 @@ let cachedAccessToken: string | null = (() => {
     return null;
   }
 })();
-
+ 
+/**
+ * ตรวจ access token กับ Google จริง (ไม่เชื่อค่าที่เก็บไว้ในเครื่อง)
+ * คืนค่าโปรไฟล์เมื่อ token ใช้ได้ และ null เมื่อหมดอายุหรือไม่ถูกต้อง
+ */
+const verifyGoogleToken = async (token: string): Promise<any | null> => {
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const profile = await res.json();
+    if (!profile?.email || profile.email_verified === false) return null;
+    return profile;
+  } catch (e) {
+    return null;
+  }
+};
+ 
 /**
  * Helper โหลด Google Identity Services script หากยังไม่พร้อม
  */
 export const loadGsiScript = (): Promise<void> => {
   if (typeof window === 'undefined') return Promise.resolve();
   if ((window as any).google?.accounts?.oauth2) return Promise.resolve();
-
+ 
   return new Promise((resolve, reject) => {
     const existing = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
     if (existing) {
@@ -63,7 +92,7 @@ export const loadGsiScript = (): Promise<void> => {
         return;
       }
     }
-
+ 
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
@@ -73,9 +102,9 @@ export const loadGsiScript = (): Promise<void> => {
     document.head.appendChild(script);
   });
 };
-
+ 
 const STORAGE_KEY_CUSTOM_CLIENT_ID = 'custom_google_oauth_client_id';
-
+ 
 export const getCustomGoogleClientId = (): string | null => {
   if (typeof window === 'undefined') return null;
   try {
@@ -84,7 +113,7 @@ export const getCustomGoogleClientId = (): string | null => {
     return null;
   }
 };
-
+ 
 export const setCustomGoogleClientId = (clientId: string): void => {
   if (typeof window === 'undefined') return;
   try {
@@ -96,7 +125,7 @@ export const setCustomGoogleClientId = (clientId: string): void => {
     }
   } catch (e) {}
 };
-
+ 
 /**
  * เข้าสู่ระบบด้วย Google Identity Services (Direct OAuth Token Client)
  * ทำงานได้ทันทีแม้โดเมนจะยังไม่ได้ระบุใน Authorized Domains ของ Firebase Authentication
@@ -107,24 +136,25 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
   if (!google?.accounts?.oauth2) {
     throw new Error('ระบบ Google Identity Services ยังไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง');
   }
-
-  const clientId = getCustomGoogleClientId() || firebaseConfig.oAuthClientId;
+ 
+  const clientId = getCustomGoogleClientId() || (firebaseConfig as any).oAuthClientId;
   if (!clientId) {
     throw new Error('ไม่พบ Google OAuth Client ID ในการตั้งค่าระบบ');
   }
-
+ 
   return new Promise((resolve, reject) => {
     let hasReturned = false;
-
+ 
     try {
       const tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file email profile openid',
         prompt: 'select_account',
+        hd: ALLOWED_HOSTED_DOMAIN,
         callback: async (tokenResponse: any) => {
           if (hasReturned) return;
           hasReturned = true;
-
+ 
           if (tokenResponse.error) {
             const errDetail = String(tokenResponse.error_description || tokenResponse.error);
             if (errDetail.includes('origin_mismatch') || errDetail.includes('invalid_origin')) {
@@ -134,34 +164,37 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
             reject(new Error(tokenResponse.error_description || tokenResponse.error || 'การเข้าสู่ระบบถูกยกเลิก'));
             return;
           }
-
+ 
           const accessToken = tokenResponse.access_token;
           if (!accessToken) {
             reject(new Error('ไม่พบ Access Token จากการเข้าสู่ระบบ Google'));
             return;
           }
-
+ 
           try {
             // ดึงข้อมูลโปรไฟล์ผู้ใช้จาก Google UserInfo API
             const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
               headers: { Authorization: `Bearer ${accessToken}` },
             });
             const profile = res.ok ? await res.json() : {};
-
+ 
+            // ตรวจโดเมนอีเมลก่อนเก็บ token หรืออนุญาตให้เข้าใช้งาน
+            if (!isAllowedEmail(profile.email) || profile.email_verified === false) {
+              reject(new Error('กรุณาเข้าสู่ระบบด้วยบัญชี @nu.ac.th เท่านั้น'));
+              return;
+            }
+ 
             const userObj = {
               uid: profile.sub || `gsi-${Date.now()}`,
               displayName: profile.name || profile.email?.split('@')[0] || 'ผู้ใช้งาน มน.',
-              email: profile.email || '',
+              email: String(profile.email).trim().toLowerCase(),
               photoURL: profile.picture || null,
               accessToken,
             };
-
+ 
             cachedAccessToken = accessToken;
             setCachedToken(accessToken);
-            try {
-              localStorage.setItem(STORAGE_KEY_USER_PROFILE, JSON.stringify(userObj));
-            } catch (e) {}
-
+ 
             // พยายามเชื่อมโยง Credential เข้ากับ Firebase
             try {
               const credential = GoogleAuthProvider.credential(null, accessToken);
@@ -169,11 +202,11 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
             } catch (fbErr) {
               console.warn('Firebase credential sign-in note:', fbErr);
             }
-
+ 
             if (activeAuthSuccessCallback) {
               activeAuthSuccessCallback(userObj as any, accessToken);
             }
-
+ 
             resolve({ user: userObj, accessToken });
           } catch (fetchErr: any) {
             reject(new Error(fetchErr?.message || 'ไม่สามารถดึงข้อมูลโปรไฟล์ผู้ใช้งานได้'));
@@ -197,7 +230,7 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
           reject(new Error(err?.message || 'การเปิดหน้าต่างเข้าสู่ระบบล้มเหลว กรุณาอนุญาตป๊อปอัป'));
         },
       });
-
+ 
       tokenClient.requestAccessToken({ prompt: 'select_account' });
     } catch (clientErr: any) {
       if (hasReturned) return;
@@ -206,29 +239,54 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
     }
   });
 };
-
+ 
 // Listen for auth state changes
 export const initAuth = (
   onAuthSuccess?: (user: any, token: string | null) => void,
   onAuthFailure?: () => void
 ) => {
   activeAuthSuccessCallback = onAuthSuccess || null;
-
-  // ตรวจสอบโปรไฟล์เดิมที่เคยเข้าสู่ระบบไว้ผ่าน Google Identity Services
+ 
+  // ลบโปรไฟล์แบบเก่าที่เคยเก็บไว้ใน localStorage (ไม่เชื่อถือค่านี้อีกต่อไป)
   try {
-    const savedProfile = localStorage.getItem(STORAGE_KEY_USER_PROFILE);
-    const savedToken = localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN);
-    if (savedProfile && savedToken) {
-      const parsed = JSON.parse(savedProfile);
-      cachedAccessToken = savedToken;
-      if (onAuthSuccess) {
-        onAuthSuccess(parsed, savedToken);
-      }
-    }
+    localStorage.removeItem(STORAGE_KEY_USER_PROFILE);
   } catch (e) {}
-
+ 
+  // กู้คืนการเข้าสู่ระบบ: ต้องตรวจ token กับ Google จริงทุกครั้ง
+  (async () => {
+    try {
+      const savedToken = localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN);
+      if (!savedToken) return;
+ 
+      const profile = await verifyGoogleToken(savedToken);
+      if (profile && isAllowedEmail(profile.email)) {
+        cachedAccessToken = savedToken;
+        const userObj = {
+          uid: profile.sub,
+          displayName: profile.name || profile.email.split('@')[0],
+          email: String(profile.email).trim().toLowerCase(),
+          photoURL: profile.picture || null,
+          accessToken: savedToken,
+        };
+        if (onAuthSuccess) onAuthSuccess(userObj, savedToken);
+      } else {
+        // token หมดอายุ หรือไม่ใช่บัญชีที่อนุญาต
+        cachedAccessToken = null;
+        try {
+          localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
+        } catch (e) {}
+        if (onAuthFailure) onAuthFailure();
+      }
+    } catch (e) {}
+  })();
+ 
   return onAuthStateChanged(auth, async (user: User | null) => {
     if (user) {
+      if (!isAllowedEmail(user.email)) {
+        await logout();
+        if (onAuthFailure) onAuthFailure();
+        return;
+      }
       if (!cachedAccessToken) {
         try {
           cachedAccessToken = localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN);
@@ -236,19 +294,19 @@ export const initAuth = (
       }
       if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
     } else {
-      // ตรวจสอบว่ามีข้อมูลจาก Google Identity Services หรือไม่ ก่อนเคลียร์
-      const savedProfile = localStorage.getItem(STORAGE_KEY_USER_PROFILE);
-      if (!savedProfile) {
+      // ถ้ายังมี token ค้างอยู่ ให้บล็อกกู้คืนด้านบนเป็นผู้ตัดสิน
+      let savedToken: string | null = null;
+      try {
+        savedToken = localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN);
+      } catch (e) {}
+      if (!savedToken) {
         cachedAccessToken = null;
-        try {
-          localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
-        } catch (e) {}
         if (onAuthFailure) onAuthFailure();
       }
     }
   });
 };
-
+ 
 export const googleSignIn = async (): Promise<{ user: any; accessToken: string } | null> => {
   try {
     isSigningIn = true;
@@ -257,16 +315,22 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
     if (!credential?.accessToken) {
       throw new Error('ไม่พบ Access Token จาก Google Authentication');
     }
-
+ 
+    // อนุญาตเฉพาะบัญชี @nu.ac.th
+    if (!isAllowedEmail(result.user.email)) {
+      await logout();
+      throw new Error('กรุณาเข้าสู่ระบบด้วยบัญชี @nu.ac.th เท่านั้น');
+    }
+ 
     cachedAccessToken = credential.accessToken;
     setCachedToken(credential.accessToken);
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.warn('Firebase sign-in popup error:', error);
     const msg = String(error?.message || '');
-
+ 
     // ตรวจพบปัญหา auth/unauthorized-domain (โดเมนไม่ได้อยู่ใน Authorized Domains ของ Firebase)
-    // ให้สลับไปใช้ Google Identity Services (Direct OAuth) อัตโนมัติทันที!
+    // ให้สลับไปใช้ Google Identity Services (Direct OAuth) อัตโนมัติทันที
     if (
       error?.code === 'auth/unauthorized-domain' ||
       msg.includes('unauthorized-domain')
@@ -291,7 +355,7 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
         );
       }
     }
-
+ 
     if (
       msg.includes('origin_mismatch') ||
       (typeof window !== 'undefined' && window.location.hostname.includes('github.io') && (msg.includes('popup-closed') || msg.includes('cancel') || msg.includes('failed')))
@@ -300,7 +364,7 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
         'เกิดข้อจำกัด Google OAuth บนโดเมนนี้ (Error 400: origin_mismatch) กรุณาเพิ่มโดเมนใน Authorized JavaScript Origins ใน Google Cloud Console'
       );
     }
-
+ 
     if (
       msg.includes('missing initial state') ||
       msg.includes('sessionStorage') ||
@@ -325,39 +389,11 @@ export const googleSignIn = async (): Promise<{ user: any; accessToken: string }
     isSigningIn = false;
   }
 };
-
-/**
- * เข้าสู่ระบบสำหรับบุคลากร คณะโลจิสติกส์ฯ (Direct Staff Sign-in)
- * รับประกันเข้าสู่ระบบได้ 100% ไม่ติดปัญหา Google Authorized Domains หรือ In-App Browser
- */
-export const staffSignIn = async (
-  email: string,
-  displayName?: string
-): Promise<{ user: any; accessToken: string | null }> => {
-  const cleanEmail = email.trim().toLowerCase();
-  const userObj = {
-    uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, '_')}`,
-    displayName: displayName || cleanEmail.split('@')[0],
-    email: cleanEmail,
-    photoURL: null,
-    accessToken: cachedAccessToken,
-  };
-
-  try {
-    localStorage.setItem(STORAGE_KEY_USER_PROFILE, JSON.stringify(userObj));
-  } catch (e) {}
-
-  if (activeAuthSuccessCallback) {
-    activeAuthSuccessCallback(userObj as any, cachedAccessToken);
-  }
-
-  return { user: userObj, accessToken: cachedAccessToken };
-};
-
+ 
 export const getAccessToken = async (): Promise<string | null> => {
   return cachedAccessToken;
 };
-
+ 
 export const setCachedToken = (token: string | null) => {
   cachedAccessToken = token;
   try {
@@ -368,7 +404,7 @@ export const setCachedToken = (token: string | null) => {
     }
   } catch (e) {}
 };
-
+ 
 export const logout = async () => {
   try {
     await signOut(auth);
