@@ -708,48 +708,93 @@ export const updateTaskInSheet = async (
   }
 };
  
+// ===== วางทับส่วน "5. ลบแถวใน Sheet (Delete Row)" ใน src/services/sheetsService.ts =====
+// เลือกตั้งแต่บรรทัดคอมเมนต์ "// 5. ลบแถวใน Sheet (Delete Row)" จนถึง "};" ปิดฟังก์ชัน deleteTaskFromSheet
+// (ก่อนถึงคอมเมนต์ "// 6. บันทึกข้อมูลงานทั้งหมดทับลงใน Sheet") แล้ววางโค้ดด้านล่างแทน
+// ไม่ต้อง import เพิ่ม เพราะใช้ฟังก์ชันและค่าคงที่ที่มีอยู่ในไฟล์เดิมทั้งหมด
+ 
 // 5. ลบแถวใน Sheet (Delete Row)
+// ค้นหาแถวจาก "รหัสงาน" (คอลัมน์ A) ในทุกแท็บที่เก็บข้อมูลงาน แล้วลบทุกสำเนา (แท็บรายเดือน + แท็บภาพรวม)
+// ไม่ใช้เลขแถวที่จำไว้ เพราะเลขแถวเปลี่ยนเมื่อมีการลบ/เพิ่มแถว หรือมีผู้ใช้อื่นแก้ไขพร้อมกัน
 export const deleteTaskFromSheet = async (
   spreadsheetId: string,
   accessToken: string,
-  rowNumber: number
+  task: TaskItem
 ): Promise<void> => {
-  // Get sheetId for SHEET_NAME
-  const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+  const taskId = (task.id || '').trim();
+  if (!taskId) {
+    throw new Error('ไม่พบรหัสงาน จึงไม่สามารถลบออกจาก Google Sheet ได้');
+  }
+ 
+  const tabs = await getSpreadsheetTabs(spreadsheetId, accessToken);
+ 
+  // แท็บที่เก็บข้อมูลงาน: แท็บรายเดือน, แท็บภาพรวม และแท็บเดี่ยว (ติดตามงาน2570)
+  let targetTabs = tabs.filter(
+    t => matchFiscalMonth(t.title) !== null || t.title.includes('ภาพรวม') || t.title === SHEET_NAME
+  );
+  if (targetTabs.length === 0 && tabs.length > 0) {
+    targetTabs = [tabs[0]];
+  }
+ 
+  // อ่านเฉพาะคอลัมน์ A (รหัสงาน) ของทุกแท็บในคำขอเดียว
+  const queryParam = targetTabs.map(t => `ranges=${formatSheetRange(t.title, 'A:A')}`).join('&');
+  const idRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet?${queryParam}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!idRes.ok) {
+    if (idRes.status === 401) {
+      throw new Error('Google Account Session หมดอายุ กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่');
+    }
+    const err = await idRes.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'ไม่สามารถค้นหางานใน Google Sheet ได้');
+  }
+  const idData = await idRes.json();
+  const valueRanges: any[] = idData.valueRanges || [];
+ 
+  // หาแถวที่รหัสงานตรงกันในแต่ละแท็บ (ข้ามแถวที่ 1 ซึ่งเป็นหัวตาราง)
+  const requests: any[] = [];
+  valueRanges.forEach((vr: any, idx: number) => {
+    const rows: string[][] = vr.values || [];
+    const foundIndex = rows.findIndex(
+      (r, i) => i > 0 && String(r?.[0] ?? '').trim() === taskId
+    );
+    if (foundIndex >= 0) {
+      // foundIndex เป็นดัชนีแบบเริ่มที่ 0 ของแถวใน Sheet พอดี (แถวที่ 1 = ดัชนี 0)
+      requests.push({
+        deleteDimension: {
+          range: {
+            sheetId: targetTabs[idx].sheetId,
+            dimension: 'ROWS',
+            startIndex: foundIndex,
+            endIndex: foundIndex + 1,
+          },
+        },
+      });
+    }
   });
-  if (!metaRes.ok) throw new Error('ไม่สามารถตรวจสอบโครงสร้าง Sheet ได้');
-  const meta = await metaRes.json();
-  const sheet = meta.sheets?.find((s: any) => s.properties?.title === SHEET_NAME) || meta.sheets?.[0];
-  const sheetId = sheet?.properties?.sheetId ?? 0;
  
-  // 0-indexed: rowNumber 2 in sheet means index 1
-  const zeroIndex = rowNumber - 1;
+  // ไม่พบงานนี้ในทุกแท็บ: ถือว่าถูกลบไปแล้ว (เช่น มีผู้ใช้อื่นลบก่อน) ไม่ต้องทำอะไรเพิ่ม
+  if (requests.length === 0) {
+    console.warn(`ไม่พบรหัสงาน ${taskId} ใน Google Sheet (อาจถูกลบไปแล้ว)`);
+    return;
+  }
  
+  // ลบทุกสำเนาในคำขอเดียว (สำเร็จทั้งหมดหรือไม่เปลี่ยนแปลงเลย)
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      requests: [
-        {
-          deleteDimension: {
-            range: {
-              sheetId,
-              dimension: 'ROWS',
-              startIndex: zeroIndex,
-              endIndex: zeroIndex + 1,
-            },
-          },
-        },
-      ],
-    }),
+    body: JSON.stringify({ requests }),
   });
  
   if (!res.ok) {
-    const err = await res.json();
+    if (res.status === 401) {
+      throw new Error('Google Account Session หมดอายุ กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่');
+    }
+    const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message || 'ไม่สามารถลบแถวออกจาก Google Sheet ได้');
   }
 };
