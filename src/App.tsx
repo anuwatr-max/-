@@ -11,7 +11,7 @@ import { LoginModal } from './components/LoginModal';
 import { UserPermissionsModal } from './components/UserPermissionsModal';
 import { DeviceDropdown, DeviceMode } from './components/DeviceDropdown';
 import { TaskItem, TaskStatus, UserAuthInfo, SheetSyncState } from './types';
-import { INITIAL_SAMPLE_TASKS } from './data/sampleTasks';
+
 import {
   canUserAddTask,
   canUserEditTask,
@@ -58,6 +58,11 @@ import {
 
 const LOCAL_STORAGE_TASKS_KEY = 'nuls_tracking_tasks_2570';
 
+// รหัสงานตัวอย่างปลอม...
+const LEGACY_SAMPLE_TASK_IDS = new Set(
+  Array.from({ length: 14 }, (_, i) => `TSK-2570-${String(i + 1).padStart(3, '0')}`)
+);
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
@@ -100,18 +105,21 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Tasks state (initial load from localStorage or fallback to sample tasks)
+  // Tasks state: โหลดจากแคชในเครื่อง (ถ้ามี) และจะถูกแทนที่ด้วยข้อมูลจริงจาก Google Sheet หลังเข้าสู่ระบบ
   const [tasks, setTasks] = useState<TaskItem[]>(() => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_TASKS_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          // ตัดงานตัวอย่างปลอมที่อาจค้างอยู่ในแคชออก
+          return parsed.filter((t: TaskItem) => !LEGACY_SAMPLE_TASK_IDS.has(t.id));
+        }
       }
     } catch (e) {
       console.error('Failed to load local tasks:', e);
     }
-    return INITIAL_SAMPLE_TASKS;
+    return [];
   });
 
   // User Auth State
