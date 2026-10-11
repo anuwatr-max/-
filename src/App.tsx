@@ -35,6 +35,7 @@ import {
   deleteTaskFromSheet,
   fullSyncToSheet,
 } from './services/sheetsService';
+  enforceCentralSpreadsheetId,
 import {
   CheckCircle2,
   AlertCircle,
@@ -181,9 +182,22 @@ export default function App() {
     setToastMessage({ text, type });
     setTimeout(() => {
       setToastMessage(null);
-    }, 4000);
+    }, 4000);    
   }, []);
-
+  
+  // ผู้ใช้ที่ไม่ใช่ Super Admin ต้องใช้ Sheet กลางเท่านั้น: ล้าง Sheet ID ที่เคยเชื่อมเองไว้ในเบราว์เซอร์
+  const applyCentralSheetForUser = (email?: string | null) => {
+    if (getUserPermission(email).canManageSheet) return;
+    if (!enforceCentralSpreadsheetId()) return;
+    const centralId = getSavedSpreadsheetId();
+    setSyncState(prev => ({
+      ...prev,
+      spreadsheetId: centralId,
+      spreadsheetUrl: centralId ? `https://docs.google.com/spreadsheets/d/${centralId}` : null,
+    }));
+    console.info('รีเซ็ตการเชื่อมต่อ Google Sheet กลับเป็น Sheet กลางของคณะ');
+  };
+  
   // Save tasks to localStorage whenever tasks change
   useEffect(() => {
     try {
@@ -213,6 +227,9 @@ export default function App() {
           accessToken: token,
         });
 
+        // ผู้ใช้ที่ไม่ใช่ Super Admin: ใช้ Sheet กลางเสมอ (ล้าง Sheet ID ที่เคยเชื่อมเองไว้)
+        applyCentralSheetForUser(user.email);
+        
         if (token) {
           setCachedToken(token);
           // If sheet already exists, attempt to pull latest tasks from Sheet
@@ -283,7 +300,8 @@ export default function App() {
         });
         setIsLoginModalOpen(false);
         showToast(`ยินดีต้อนรับ: ${result.user.displayName || result.user.email}`, 'success');
-
+         // ผู้ใช้ที่ไม่ใช่ Super Admin: ใช้ Sheet กลางเสมอ (ล้าง Sheet ID ที่เคยเชื่อมเองไว้)
+        applyCentralSheetForUser(result.user.email);
         // Check if spreadsheet exists, if not prompt to create one
         let sheetId = getSavedSpreadsheetId();
         if (!sheetId) {
