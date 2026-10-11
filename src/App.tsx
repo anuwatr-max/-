@@ -550,8 +550,8 @@ export default function App() {
       } else {
         try {
           setSyncState(prev => ({ ...prev, isSyncing: true, error: null }));
-          if (isEdit && taskData.rowNumber) {
-            await updateTaskInSheet(syncState.spreadsheetId, token, taskData.rowNumber, taskData);
+          if (isEdit) {
+            await updateTaskInSheet(syncState.spreadsheetId, token, taskData);
           } else {
             const row = await appendTaskToSheet(syncState.spreadsheetId, token, taskData);
             if (row > 0) {
@@ -628,10 +628,10 @@ export default function App() {
       } catch (e) {}
     }
 
-    if (token && syncState.spreadsheetId && task.rowNumber) {
+    if (token && syncState.spreadsheetId) {
       try {
         setSyncState(prev => ({ ...prev, isSyncing: true }));
-        await updateTaskInSheet(syncState.spreadsheetId, token, task.rowNumber, updatedTask);
+        await updateTaskInSheet(syncState.spreadsheetId, token, updatedTask);
         setSyncState(prev => ({ ...prev, isSyncing: false, lastSyncedAt: new Date() }));
         showToast(`เปลี่ยนสถานะเป็น "${newStatus}" และซิงค์ลง Google Sheet แล้ว`, 'success');
       } catch (err: any) {
