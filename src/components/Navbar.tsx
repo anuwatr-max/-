@@ -50,6 +50,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const userPerm = getUserPermission(userInfo?.email);
+  // เฉพาะผู้ดูแลระบบหลัก (Super Admin) ที่เห็นปุ่มตั้งค่า/จัดการ Google Sheet
+  const canManageSheet = userPerm.canManageSheet;
 
   const navItems: {
     id: ActiveTab;
@@ -169,24 +171,28 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-sky-200 text-sky-950 font-bold border-t border-t-white border-x border-sky-200 border-b-[2.5px] border-b-sky-400 shadow-sm shadow-sky-900/10 ring-1 ring-inset ring-white text-xs active:translate-y-0.5 transition-all select-none"
                 >
                   <FileSpreadsheet className="h-4 w-4 text-sky-700 shrink-0 drop-shadow-xs" />
-                  <button
-                    onClick={onOpenSheetSettings}
-                    className="font-bold text-sky-950 hover:text-sky-800 cursor-pointer text-xs"
-                    title="คลิกเพื่อจัดการ Google Sheet"
-                  >
-                    Google Sheet
-                  </button>
+                  {canManageSheet ? (
+                    <button
+                      onClick={onOpenSheetSettings}
+                      className="font-bold text-sky-950 hover:text-sky-800 cursor-pointer text-xs"
+                      title="คลิกเพื่อจัดการ Google Sheet"
+                    >
+                      Google Sheet
+                    </button>
+                  ) : (
+                    <span className="font-bold text-sky-950 text-xs">Google Sheet</span>
+                  )}
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" title="เชื่อมต่ออยู่" />
                   <button
                     onClick={onQuickSync}
                     disabled={syncState.isSyncing}
-                    title="ซิงค์ข้อมูลกับ Google Sheet"
+                    title={canManageSheet ? 'ซิงค์ข้อมูลทั้งหมดลง Google Sheet' : 'ดึงข้อมูลล่าสุดจาก Google Sheet'}
                     className="p-1 hover:bg-sky-200/80 rounded-md text-sky-800 transition-colors cursor-pointer ml-0.5"
                   >
                     <RefreshCw className={`h-3 w-3 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
                   </button>
                 </div>
-              ) : (
+              ) : canManageSheet ? (
                 <button
                   id="navbar-sheet-button"
                   onClick={onOpenSheetSettings}
@@ -195,7 +201,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <FileSpreadsheet className="h-4 w-4 text-sky-700 drop-shadow-xs" />
                   <span>Google Sheet</span>
                 </button>
-              )}
+              ) : null}
 
               {/* Google Sign In Button or User Avatar */}
               {userInfo ? (
@@ -367,25 +373,29 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span className="font-semibold text-cyan-200">{formatLastSync(syncState.lastSyncedAt)}</span>
                   </div>
 
-                  <button
-                    id="navbar-manage-sheet-btn"
-                    onClick={onOpenSheetSettings}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-slate-200 hover:text-white text-[11px] font-medium transition-colors cursor-pointer shadow-xs"
-                    title="ตั้งค่าและจัดการการเชื่อมต่อ Google Sheet"
-                  >
-                    <SlidersHorizontal className="h-3.5 w-3.5 text-cyan-300" />
-                    <span>การจัดการ</span>
-                  </button>
+                  {canManageSheet && (
+                    <button
+                      id="navbar-manage-sheet-btn"
+                      onClick={onOpenSheetSettings}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-slate-200 hover:text-white text-[11px] font-medium transition-colors cursor-pointer shadow-xs"
+                      title="ตั้งค่าและจัดการการเชื่อมต่อ Google Sheet"
+                    >
+                      <SlidersHorizontal className="h-3.5 w-3.5 text-cyan-300" />
+                      <span>การจัดการ</span>
+                    </button>
+                  )}
                 </>
               ) : (
-                <button
-                  id="navbar-connect-sheet-btn"
-                  onClick={onOpenSheetSettings}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-semibold text-xs transition-all shadow-xs cursor-pointer"
-                >
-                  <FileSpreadsheet className="h-3.5 w-3.5" />
-                  <span>สร้างหรือเชื่อมต่อ Google Sheet ทันที</span>
-                </button>
+                canManageSheet && (
+                  <button
+                    id="navbar-connect-sheet-btn"
+                    onClick={onOpenSheetSettings}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-semibold text-xs transition-all shadow-xs cursor-pointer"
+                  >
+                    <FileSpreadsheet className="h-3.5 w-3.5" />
+                    <span>สร้างหรือเชื่อมต่อ Google Sheet ทันที</span>
+                  </button>
+                )
               )}
             </div>
           </div>
@@ -418,30 +428,39 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <div className="pt-2 border-t border-slate-100 space-y-2">
             {syncState.spreadsheetId ? (
-              <button
-                onClick={() => {
-                  onOpenSheetSettings();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-sky-200 text-sky-950 text-xs font-bold border-t border-t-white border-x border-sky-200 border-b-[2.5px] border-b-sky-400 shadow-sm ring-1 ring-inset ring-white cursor-pointer active:translate-y-0.5 select-none"
-              >
-                <div className="flex items-center gap-2 truncate">
+              canManageSheet ? (
+                <button
+                  onClick={() => {
+                    onOpenSheetSettings();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-sky-200 text-sky-950 text-xs font-bold border-t border-t-white border-x border-sky-200 border-b-[2.5px] border-b-sky-400 shadow-sm ring-1 ring-inset ring-white cursor-pointer active:translate-y-0.5 select-none"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <FileSpreadsheet className="h-4 w-4 text-sky-700 shrink-0 drop-shadow-xs" />
+                    <span className="truncate">Google Sheet: {cleanSheetTitle(syncState.spreadsheetTitle) || 'เชื่อมต่อแล้ว'}</span>
+                  </div>
+                  <span className="text-[11px] underline shrink-0 text-sky-900 ml-2 font-semibold">การจัดการ</span>
+                </button>
+              ) : (
+                <div className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-sky-200 text-sky-950 text-xs font-bold border-t border-t-white border-x border-sky-200 border-b-[2.5px] border-b-sky-400 shadow-sm ring-1 ring-inset ring-white select-none">
                   <FileSpreadsheet className="h-4 w-4 text-sky-700 shrink-0 drop-shadow-xs" />
                   <span className="truncate">Google Sheet: {cleanSheetTitle(syncState.spreadsheetTitle) || 'เชื่อมต่อแล้ว'}</span>
                 </div>
-                <span className="text-[11px] underline shrink-0 text-sky-900 ml-2 font-semibold">การจัดการ</span>
-              </button>
+              )
             ) : (
-              <button
-                onClick={() => {
-                  onOpenSheetSettings();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-sky-200 hover:from-sky-200 hover:to-sky-300 text-sky-950 text-xs font-bold border-t border-t-white border-x border-sky-200 border-b-[2.5px] border-b-sky-400 shadow-sm ring-1 ring-inset ring-white cursor-pointer active:translate-y-0.5 select-none"
-              >
-                <FileSpreadsheet className="h-4 w-4 text-sky-700 drop-shadow-xs" />
-                <span>Google Sheet (เชื่อมต่อ Sheet)</span>
-              </button>
+              canManageSheet && (
+                <button
+                  onClick={() => {
+                    onOpenSheetSettings();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-sky-200 hover:from-sky-200 hover:to-sky-300 text-sky-950 text-xs font-bold border-t border-t-white border-x border-sky-200 border-b-[2.5px] border-b-sky-400 shadow-sm ring-1 ring-inset ring-white cursor-pointer active:translate-y-0.5 select-none"
+                >
+                  <FileSpreadsheet className="h-4 w-4 text-sky-700 drop-shadow-xs" />
+                  <span>Google Sheet (เชื่อมต่อ Sheet)</span>
+                </button>
+              )
             )}
 
             {userInfo ? (
