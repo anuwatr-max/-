@@ -364,8 +364,22 @@ export default function App() {
     }
   };
 
+  // หน้าตั้งค่า Google Sheet: เฉพาะผู้ดูแลระบบหลักเท่านั้น
+  const handleOpenSheetSettings = () => {
+    if (!canManageSheet) {
+      showToast('เฉพาะผู้ดูแลระบบหลักที่เปิดหน้าตั้งค่า Google Sheet ได้', 'error');
+      return;
+    }
+    setIsSheetSettingsOpen(true);
+  };
+  
   // Create new spreadsheet
   const handleCreateNewSheet = async (mode: '12months' | 'single' = '12months') => {
+    if (!canManageSheet) {
+      const msg = 'เฉพาะผู้ดูแลระบบหลักที่สร้างไฟล์ Google Sheet ใหม่ได้';
+      showToast(msg, 'error');
+      throw new Error(msg);
+    } 
     let token = await getAccessToken();
     if (!token && userInfo?.accessToken) token = userInfo.accessToken;
     if (!token) {
@@ -405,6 +419,11 @@ export default function App() {
 
   // Connect existing spreadsheet
   const handleConnectExistingSheet = async (id: string) => {
+    if (!canManageSheet) {
+      const msg = 'เฉพาะผู้ดูแลระบบหลักที่เชื่อมต่อ Google Sheet ID อื่นได้';
+      showToast(msg, 'error');
+      throw new Error(msg);
+    }
     let token = await getAccessToken();
     if (!token && userInfo?.accessToken) token = userInfo.accessToken;
     if (!token) {
@@ -818,7 +837,7 @@ export default function App() {
             syncState={syncState}
             onSignInWithGoogle={() => setIsLoginModalOpen(true)}
             onSignOut={handleSignOut}
-            onOpenSheetSettings={() => setIsSheetSettingsOpen(true)}
+            onOpenSheetSettings={handleOpenSheetSettings}
             onQuickSync={canManageSheet ? handleSyncAllTasks : handleRefreshFromSheet}
             deviceMode={deviceMode}
             onChangeDeviceMode={setDeviceMode}
@@ -1048,7 +1067,7 @@ export default function App() {
       />
 
       <SheetSettingsModal
-        isOpen={isSheetSettingsOpen}
+        isOpen={isSheetSettingsOpen && canManageSheet}
         onClose={() => setIsSheetSettingsOpen(false)}
         syncState={syncState}
         isAuthenticated={!!userInfo}
