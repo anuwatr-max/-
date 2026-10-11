@@ -629,89 +629,158 @@ export const appendTaskToSheet = async (
 };
 
 // 4. อัปเดตงานใน Sheet (Update Row)
+// ค้นหาแถวจาก "รหัสงาน" (คอลัมน์ A) แล้วอัปเดตทั้งแท็บเดือนและแท็บภาพรวมในคราวเดียว
+// - ไม่ใช้เลขแถวที่จำไว้ เพราะเลขแถวเปลี่ยนเมื่อมีการลบ/เพิ่มแถว หรือมีผู้ใช้อื่นแก้ไขพร้อมกัน
+// - ถ้างานย้ายไปเดือนอื่น: เพิ่มแถวในแท็บเดือนใหม่ แล้วลบแถวเดิมในแท็บเดือนเก่า
+// - ถ้าไม่พบงานในแท็บใด: เพิ่มเป็นแถวใหม่ในแท็บนั้น (ไม่เขียนทับแถวของงานอื่น)
 export const updateTaskInSheet = async (
   spreadsheetId: string,
   accessToken: string,
-  rowNumber: number,
   task: TaskItem
 ): Promise<void> => {
-  let tabs: Array<{ sheetId: number; title: string }> = [];
-  try {
-    tabs = await getSpreadsheetTabs(spreadsheetId, accessToken);
-  } catch (e) {
-    tabs = [];
+  const taskId = (task.id || '').trim();
+  if (!taskId) {
+    throw new Error('ไม่พบรหัสงาน จึงไม่สามารถบันทึกการแก้ไขลง Google Sheet ได้');
   }
 
-  let targetTabTitle = '';
-  if (task.month) {
-    const cleanMonth = task.month.trim();
-    const matched = tabs.find(t => {
-      const title = t.title.trim();
-      return (
-        title === cleanMonth ||
-        matchFiscalMonth(title) === cleanMonth ||
-        (cleanMonth.split(' ')[0] && title.includes(cleanMonth.split(' ')[0]))
-      );
-    });
-    if (matched) {
-      targetTabTitle = matched.title;
-    }
-  }
+  const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`;
+  const authHeaders = { Authorization: `Bearer ${accessToken}` };
+  const jsonHeaders = { ...authHeaders, 'Content-Type': 'application/json' };
+  const esc = (title: string) => title.replace(/'/g, "''");
 
-  if (!targetTabTitle) {
-    targetTabTitle = await resolveSheetTitle(spreadsheetId, accessToken);
-  }
-
-  const rowData = taskToRow(task);
-  const primaryRange = formatSheetRange(targetTabTitle, `A${rowNumber}:M${rowNumber}`);
-  let res = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${primaryRange}?valueInputOption=USER_ENTERED`,
-    {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        range: primaryRange,
-        majorDimension: 'ROWS',
-        values: [rowData],
-      }),
-    }
-  );
-
-  if (!res.ok && res.status !== 401) {
-    const fallbackRange = `A${rowNumber}:M${rowNumber}`;
-    res = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${fallbackRange}?valueInputOption=USER_ENTERED`,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          range: fallbackRange,
-          majorDimension: 'ROWS',
-          values: [rowData],
-        }),
-      }
-    );
-  }
-
-  if (!res.ok) {
+  const failWith = async (res: Response, fallbackMsg: string): Promise<never> => {
     if (res.status === 401) {
       throw new Error('Google Account Session หมดอายุ กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่');
     }
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || 'ไม่สามารถแก้ไขข้อมูลใน Google Sheet ได้');
+    throw new Error(err?.error?.message || fallbackMsg);
+  };
+
+  const tabs = await getSpreadsheetTabs(spreadsheetId, accessToken);
+  const monthlyTabs = tabs.filter(t => matchFiscalMonth(t.title) !== null);
+  // แท็บภาพรวม (หรือแท็บเดี่ยว "ติดตามงาน2570"); ถ้าไม่มีแท็บเดือนเลย ให้ใช้แท็บแรก
+  const overviewTab =
+    tabs.find(t => t.title.includes('ภาพรวม') || t.title === SHEET_NAME) ||
+    (monthlyTabs.length === 0 ? tabs[0] : undefined);
+
+  // แท็บเดือนที่ตรงกับประจำเดือนของงาน
+  const cleanMonth = (task.month || '').trim();
+  const monthTab = cleanMonth
+    ? monthlyTabs.find(
+        t => t.title.trim() === cleanMonth || matchFiscalMonth(t.title) === cleanMonth
+      )
+    : undefined;
+
+  // แท็บที่ต้องค้นหารหัสงาน
+  const scanTabs = [...monthlyTabs];
+  if (overviewTab && !scanTabs.some(t => t.sheetId === overviewTab.sheetId)) {
+    scanTabs.push(overviewTab);
+  }
+  if (scanTabs.length === 0) {
+    throw new Error('ไม่พบแท็บข้อมูลงานใน Google Sheet');
+  }
+
+  // อ่านเฉพาะคอลัมน์ A (รหัสงาน) ของทุกแท็บในคำขอเดียว
+  const queryParam = scanTabs.map(t => `ranges=${formatSheetRange(t.title, 'A:A')}`).join('&');
+  const idRes = await fetch(`${baseUrl}/values:batchGet?${queryParam}`, { headers: authHeaders });
+  if (!idRes.ok) await failWith(idRes, 'ไม่สามารถค้นหางานใน Google Sheet ได้');
+  const idData = await idRes.json();
+  const valueRanges: any[] = idData.valueRanges || [];
+
+  // เลขแถว (เริ่มที่ 1) ของงานนี้ในแต่ละแท็บ (ข้ามแถวที่ 1 ซึ่งเป็นหัวตาราง)
+  const rowBySheetId = new Map<number, number>();
+  valueRanges.forEach((vr: any, idx: number) => {
+    const rows: string[][] = vr.values || [];
+    const foundIndex = rows.findIndex(
+      (r, i) => i > 0 && String(r?.[0] ?? '').trim() === taskId
+    );
+    if (foundIndex >= 0) {
+      rowBySheetId.set(scanTabs[idx].sheetId, foundIndex + 1);
+    }
+  });
+
+  const rowData = taskToRow(task);
+  const updates: Array<{ range: string; majorDimension: string; values: any[][] }> = [];
+  const appendTabs: Array<{ sheetId: number; title: string }> = [];
+  const deleteRequests: any[] = [];
+
+  const updateRow = (tab: { sheetId: number; title: string }, row: number) => {
+    updates.push({
+      range: `'${esc(tab.title)}'!A${row}:M${row}`,
+      majorDimension: 'ROWS',
+      values: [rowData],
+    });
+  };
+
+  const writeOrAppend = (tab: { sheetId: number; title: string }) => {
+    const row = rowBySheetId.get(tab.sheetId);
+    if (row) {
+      updateRow(tab, row);
+    } else {
+      appendTabs.push(tab);
+    }
+  };
+
+  if (monthTab) {
+    writeOrAppend(monthTab);
+    // ถ้างานย้ายเดือน: ลบแถวเดิมในแท็บเดือนอื่น
+    monthlyTabs.forEach(t => {
+      if (t.sheetId === monthTab.sheetId) return;
+      const row = rowBySheetId.get(t.sheetId);
+      if (row) {
+        deleteRequests.push({
+          deleteDimension: {
+            range: { sheetId: t.sheetId, dimension: 'ROWS', startIndex: row - 1, endIndex: row },
+          },
+        });
+      }
+    });
+  } else {
+    // ไม่ทราบแท็บเดือน: อัปเดตแถวเดิมตรงที่พบ (ไม่ย้ายแท็บ)
+    monthlyTabs.forEach(t => {
+      const row = rowBySheetId.get(t.sheetId);
+      if (row) updateRow(t, row);
+    });
+  }
+
+  // สำเนาในแท็บภาพรวม
+  if (overviewTab) {
+    writeOrAppend(overviewTab);
+  }
+
+  // 1) อัปเดตแถวที่พบ (ทุกแท็บในคำขอเดียว)
+  if (updates.length > 0) {
+    const res = await fetch(`${baseUrl}/values:batchUpdate`, {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data: updates }),
+    });
+    if (!res.ok) await failWith(res, 'ไม่สามารถแก้ไขข้อมูลใน Google Sheet ได้');
+  }
+
+  // 2) เพิ่มแถวใหม่ในแท็บที่ยังไม่มีงานนี้
+  for (const tab of appendTabs) {
+    const res = await fetch(
+      `${baseUrl}/values/${formatSheetRange(tab.title, 'A:M')}:append?valueInputOption=USER_ENTERED`,
+      {
+        method: 'POST',
+        headers: jsonHeaders,
+        body: JSON.stringify({ values: [rowData] }),
+      }
+    );
+    if (!res.ok) await failWith(res, 'ไม่สามารถเพิ่มข้อมูลลง Google Sheet ได้');
+  }
+
+  // 3) ลบแถวเดิมในแท็บเดือนเก่า (ทำหลังสุด เพื่อไม่ให้งานหายถ้าขั้นก่อนหน้าล้มเหลว)
+  if (deleteRequests.length > 0) {
+    const res = await fetch(`${baseUrl}:batchUpdate`, {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify({ requests: deleteRequests }),
+    });
+    if (!res.ok) await failWith(res, 'ไม่สามารถย้ายงานไปแท็บเดือนใหม่ได้');
   }
 };
- 
-// ===== วางทับส่วน "5. ลบแถวใน Sheet (Delete Row)" ใน src/services/sheetsService.ts =====
-// เลือกตั้งแต่บรรทัดคอมเมนต์ "// 5. ลบแถวใน Sheet (Delete Row)" จนถึง "};" ปิดฟังก์ชัน deleteTaskFromSheet
-// (ก่อนถึงคอมเมนต์ "// 6. บันทึกข้อมูลงานทั้งหมดทับลงใน Sheet") แล้ววางโค้ดด้านล่างแทน
-// ไม่ต้อง import เพิ่ม เพราะใช้ฟังก์ชันและค่าคงที่ที่มีอยู่ในไฟล์เดิมทั้งหมด
  
 // 5. ลบแถวใน Sheet (Delete Row)
 // ค้นหาแถวจาก "รหัสงาน" (คอลัมน์ A) ในทุกแท็บที่เก็บข้อมูลงาน แล้วลบทุกสำเนา (แท็บรายเดือน + แท็บภาพรวม)
