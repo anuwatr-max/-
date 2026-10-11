@@ -75,6 +75,21 @@ export const saveSpreadsheetId = (id: string): void => {
 };
  
 export const clearSavedSpreadsheetId = (): void => {
+ 
+ /**
+ * สำหรับผู้ใช้ที่ไม่ใช่ Super Admin: ล้าง Sheet ID ที่เคยเชื่อมเองไว้ในเบราว์เซอร์ เพื่อให้ใช้ Sheet กลางเสมอ
+ * คืนค่า true ถ้ามีการล้างค่า (คือเคยเชื่อมกับ Sheet อื่นไว้)
+ */
+export const enforceCentralSpreadsheetId = (): boolean => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_SPREADSHEET_ID);
+    if (saved && saved !== DEFAULT_SPREADSHEET_ID) {
+      localStorage.removeItem(STORAGE_KEY_SPREADSHEET_ID);
+      return true;
+    }
+  } catch (e) {}
+  return false;
+};
   localStorage.removeItem(STORAGE_KEY_SPREADSHEET_ID);
 };
 
