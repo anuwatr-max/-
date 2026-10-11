@@ -58,7 +58,7 @@ import {
 
 const LOCAL_STORAGE_TASKS_KEY = 'nuls_tracking_tasks_2570';
 
-// รหัสงานตัวอย่างปลอม...
+// รหัสงานตัวอย่างปลอมจากเวอร์ชันก่อนหน้า (TSK-2570-001 ถึง 014) ใช้ล้างออกจากแคชในเครื่อง
 const LEGACY_SAMPLE_TASK_IDS = new Set(
   Array.from({ length: 14 }, (_, i) => `TSK-2570-${String(i + 1).padStart(3, '0')}`)
 );
@@ -133,6 +133,9 @@ export default function App() {
     if (!email) return false;
     return email.trim().toLowerCase().endsWith('@nu.ac.th');
   };
+
+  // เฉพาะผู้ดูแลระบบหลัก (Super Admin) ที่ซิงค์ข้อมูลทั้งหมดลง Google Sheet ได้
+  const canManageSheet = getUserPermission(userInfo?.email).canManageSheet;
 
   // Google Sheet Sync State
   const [syncState, setSyncState] = useState<SheetSyncState>({
@@ -310,8 +313,8 @@ export default function App() {
             const sheetTasks = await fetchTasksFromSheet(sheetId, result.accessToken);
             if (sheetTasks.length > 0) {
               setTasks(sheetTasks);
-            } else {
-              // Write existing local tasks to empty sheet
+            } else if (getUserPermission(result.user.email).canManageSheet && tasks.length > 0) {
+              // เฉพาะผู้ดูแลระบบหลัก: เขียนข้อมูลในเครื่องลง Sheet ที่ยังว่าง
               await fullSyncToSheet(sheetId, result.accessToken, tasks);
             }
             setSyncState(prev => ({
@@ -435,8 +438,13 @@ export default function App() {
     }
   };
 
-  // Full sync tasks to sheet
+  // Full sync tasks to sheet (เฉพาะผู้ดูแลระบบหลัก เพราะล้างข้อมูลเดิมแล้วเขียนทับทั้ง Sheet)
   const handleSyncAllTasks = async () => {
+    if (!canManageSheet) {
+      showToast('เฉพาะผู้ดูแลระบบหลักที่ซิงค์ข้อมูลทั้งหมดลง Google Sheet ได้ (ระบบบันทึกงานลง Sheet ให้อัตโนมัติอยู่แล้ว)', 'error');
+      return;
+    }
+
     let token = await getAccessToken();
     if (!token && userInfo?.accessToken) token = userInfo.accessToken;
     if (!token || !syncState.spreadsheetId) {
@@ -638,7 +646,7 @@ export default function App() {
         console.warn('Status update on sheet failed:', err);
         setSyncState(prev => ({ ...prev, isSyncing: false }));
         showToast(
-          'เปลี่ยนสถานะในเครื่องสำเร็จ แต่ยังไม่ได้อัปเดตลง Google Sheet กรุณากดซิงค์ใหม่',
+          'เปลี่ยนสถานะในเครื่องสำเร็จ แต่ยังไม่ได้อัปเดตลง Google Sheet กรุณาลองใหม่อีกครั้ง',
           'error'
         );
       }
@@ -681,21 +689,15 @@ export default function App() {
         }
         if (token && syncState.spreadsheetId) {
           try {
-           await deleteTaskFromSheet(syncState.spreadsheetId, token, task);
+            await deleteTaskFromSheet(syncState.spreadsheetId, token, task);
             setSyncState(prev => ({ ...prev, lastSyncedAt: new Date() }));
           } catch (sheetErr: any) {
-            // [แก้ไข 1.3] แจ้งเตือนผู้ใช้แบบเห็นได้จริง ถ้าลองซิงค์ซ้ำแล้วยังไม่สำเร็จ
-            console.warn('Delete on sheet failed, performing full sync:', sheetErr);
-            try {
-              if (syncState.spreadsheetId) {
-                await fullSyncToSheet(syncState.spreadsheetId, token, remainingTasks);
-              }
-            } catch (retryErr) {
-              showToast(
-                'ลบในเครื่องสำเร็จ แต่ลบใน Google Sheet ไม่สำเร็จ กรุณากดซิงค์ใหม่',
-                'error'
-              );
-            }
+            // ไม่เขียนทับทั้ง Sheet เมื่อลบล้มเหลว เพื่อไม่ให้ข้อมูลของผู้ใช้อื่นหาย
+            console.warn('Delete on sheet failed:', sheetErr);
+            showToast(
+              `ลบในเครื่องสำเร็จ แต่ลบใน Google Sheet ไม่สำเร็จ งานอาจกลับมาแสดงเมื่อรีเฟรช (${sheetErr?.message || 'กรุณาลองใหม่อีกครั้ง'})`,
+              'error'
+            );
           }
         }
       },
@@ -817,7 +819,7 @@ export default function App() {
             onSignInWithGoogle={() => setIsLoginModalOpen(true)}
             onSignOut={handleSignOut}
             onOpenSheetSettings={() => setIsSheetSettingsOpen(true)}
-            onQuickSync={handleSyncAllTasks}
+            onQuickSync={canManageSheet ? handleSyncAllTasks : handleRefreshFromSheet}
             deviceMode={deviceMode}
             onChangeDeviceMode={setDeviceMode}
             onOpenPermissionsModal={() => setIsPermissionsModalOpen(true)}
