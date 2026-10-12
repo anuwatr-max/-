@@ -34,8 +34,8 @@ import {
   updateTaskInSheet,
   deleteTaskFromSheet,
   fullSyncToSheet,
-} from './services/sheetsService';
   enforceCentralSpreadsheetId,
+} from './services/sheetsService'; 
 import {
   CheckCircle2,
   AlertCircle,
