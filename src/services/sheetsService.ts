@@ -28,7 +28,7 @@ export const matchFiscalMonth = (title: string): string | null => {
 // [เพิ่มใหม่] รหัส Google Sheet ที่ใช้เป็น "ศูนย์กลาง" ของระบบ
 // ทุกคนที่เปิดแอปนี้จะเชื่อมกับ Sheet ไฟล์เดียวกันนี้โดยอัตโนมัติ
 // ไม่ต้องพิมพ์/เชื่อมต่อรหัส Sheet เองทีละคนอีกต่อไป
-const DEFAULT_SPREADSHEET_ID = '1DkdJ7zienczCFhUwKYfdGUJBQ_sWi6OgoZDSOZrGMoA';
+const DEFAULT_SPREADSHEET_ID = '1p0fOVgVV8YanwdGajiUn-Pkj1HfA7E2Lbjctl5kSkwM';
  
 // [แก้ไข] ฟังก์ชันช่วยสร้าง "range" ที่เข้ารหัสถูกต้อง ปลอดภัยสำหรับใส่ใน URL
 // ป้องกันปัญหา "Unable to parse range" โดยคงเครื่องหมาย ' ! และ : ไว้
