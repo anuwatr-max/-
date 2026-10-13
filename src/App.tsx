@@ -14,6 +14,7 @@ import { TaskItem, TaskStatus, UserAuthInfo, SheetSyncState } from './types';
 
 import {
   canUserAddTask,
+  canUserAddTaskInUnit,
   canUserEditTask,
   canUserDeleteTask,
   getUserPermission,
@@ -544,10 +545,14 @@ export default function App() {
   const handleSaveTask = async (taskData: TaskItem) => {
     const isEdit = tasks.some(t => t.id === taskData.id);
 
-    // ตรวจสอบสิทธิ์ผู้ใช้งานตามบัญชี Google
+  // ตรวจสอบสิทธิ์ผู้ใช้งานตามบัญชี Google
     const perm = getUserPermission(userInfo?.email);
     if (isEdit) {
-      if (!canUserEditTask(taskData, userInfo?.email)) {
+      const originalTask = tasks.find(t => t.id === taskData.id);
+      if (
+        !canUserEditTask(taskData, userInfo?.email) ||
+        (originalTask && !canUserEditTask(originalTask, userInfo?.email))
+      ) {
         showToast(`คุณไม่มีสิทธิ์แก้ไขงานกลุ่มนี้ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
         return;
       }
@@ -556,7 +561,11 @@ export default function App() {
         showToast(`คุณไม่มีสิทธิ์เพิ่มงานในระบบ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
         return;
       }
-    }
+      if (!canUserAddTaskInUnit(taskData, userInfo?.email)) {
+        showToast(`คุณเพิ่มงานได้เฉพาะหน่วยของตนเอง (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
+        return;
+      }
+    } 
 
     let updatedTasks: TaskItem[];
 
