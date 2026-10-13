@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -53,6 +53,14 @@ const THAI_DAY_NAMES = [
   { short: 'อา.', full: 'อาทิตย์' },
 ];
 
+// แปลงวันที่เป็น YYYY-MM-DD ตามเวลาท้องถิ่นของเครื่อง (ไม่ใช้ UTC)
+const toLocalDateString = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
   tasks,
   onAddTask,
@@ -66,6 +74,23 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
   const canAdd = !isGuestMode && canUserAddTask(currentUserEmail);
   const userPerm = getUserPermission(currentUserEmail);
 
+  
+  // วันนี้ตามเวลาท้องถิ่น (อัปเดตอัตโนมัติเมื่อข้ามเที่ยงคืนหรือเมื่อกลับมาที่แท็บ)
+  const [todayStr, setTodayStr] = useState<string>(() => toLocalDateString(new Date()));
+  useEffect(() => {
+    const update = () =>
+      setTodayStr(prev => {
+        const now = toLocalDateString(new Date());
+        return prev === now ? prev : now;
+      });
+    const timer = setInterval(update, 60 * 1000);
+    document.addEventListener('visibilitychange', update);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', update);
+    };
+  }, []);
+  
   // State สำหรับเดือนและปีที่แสดงในปฏิทิน
   // ค่าเริ่มต้น: ดึงจากเดือนปัจจุบันจริง หรือถ้าอยู่ในช่วงปีงบประมาณ 2570
   const [currentDate, setCurrentDate] = useState<Date>(() => {
@@ -101,8 +126,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
   const handleGoToday = () => {
     const today = new Date();
     setCurrentDate(today);
-    const todayStr = today.toISOString().split('T')[0];
-    setSelectedDayString(todayStr);
+    setSelectedDayString(toLocalDateString(today));
   };
 
   // กระโดดไปยังเดือนงบประมาณที่เลือก
@@ -172,8 +196,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
       dateObj: Date;
     }[] = [];
 
-    const todayStr = new Date().toISOString().split('T')[0];
-
+    
     // เติมวันจากเดือนก่อนหน้า
     for (let i = startDayOfWeek - 1; i >= 0; i--) {
       const dayNum = prevMonthLastDay - i;
@@ -225,7 +248,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
     }
 
     return days;
-  }, [currentYear, currentMonth]);
+  }, [currentYear, currentMonth, todayStr]);
 
   // แมป Tasks เข้ากับแต่ละวันที่ (ตาม dueDate เป็นหลัก หรือ startDate)
   const tasksByDate = useMemo(() => {
@@ -847,7 +870,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
           ) : (
             <div className="space-y-6">
               {agendaGroupedTasks.map(group => {
-                const isToday = new Date().toISOString().split('T')[0] === group.dateStr;
+                const isToday = todayStr === group.dateStr;
                 return (
                   <div key={group.dateStr} className="space-y-2.5">
                     {/* Date Header */}
