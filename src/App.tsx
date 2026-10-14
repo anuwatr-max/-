@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
 import { TaskListView } from './components/TaskListView';
@@ -59,6 +59,19 @@ import {
 } from './utils/browserEnv';
 
 const LOCAL_STORAGE_TASKS_KEY = 'nuls_tracking_tasks_2570';
+
+// Google Sheet กลางของคณะ (ต้องตรงกับ DEFAULT_SPREADSHEET_ID ใน sheetsService.ts) ใช้เตือนเมื่อเชื่อมต่อผิดไฟล์
+const CENTRAL_SHEET_ID = '1p0fOVgVV8YanwdGajiUn-Pkj1HfA7E2Lbjctl5kSkwM';
+
+// ตรวจว่า error เกิดจากการเชื่อมต่อ Google หมดอายุ (token เก่าเกิน ~1 ชั่วโมง) หรือไม่
+const isSessionError = (err: any): boolean => {
+  const msg = String(err?.message || err || '');
+  return (
+    msg.includes('หมดอายุ') ||
+    msg.includes('401') ||
+    /unauthenticated|invalid credentials|invalid_grant|token/i.test(msg)
+  );
+};
 
 // รหัสงานตัวอย่างปลอมจากเวอร์ชันก่อนหน้า (TSK-2570-001 ถึง 014) ใช้ล้างออกจากแคชในเครื่อง
 const LEGACY_SAMPLE_TASK_IDS = new Set(
@@ -129,6 +142,10 @@ export default function App() {
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
+  // true = การเชื่อมต่อ Google หมดอายุ ทำให้อ่าน/เขียน Sheet ไม่ได้ (แสดงแถบเตือนให้เข้าสู่ระบบใหม่)
+  const [sessionExpired, setSessionExpired] = useState<boolean>(false);
+  // true ระหว่างกำลังบันทึกลง Sheet เพื่อไม่ให้การดึงข้อมูลอัตโนมัติมาทับหน้าจอ
+  const isSavingRef = useRef<boolean>(false);
 
   // Helper ตรวจสอบว่าใช้อีเมลมหาวิทยาลัยนเรศวร (@nu.ac.th) หรือไม่
   const isNuEmail = (email?: string | null): boolean => {
@@ -185,6 +202,25 @@ export default function App() {
       setToastMessage(null);
     }, 4000);    
   }, []);
+
+  // ขอ Google access token สำหรับอ่าน/เขียน Sheet (null = ไม่มี token ที่ใช้ได้)
+  const getSheetToken = async (): Promise<string | null> => {
+    let token: string | null | undefined = null;
+    try {
+      token = (await getAccessToken()) as string | null | undefined;
+    } catch (e) {}
+    if (!token) token = userInfo?.accessToken;
+    if (!token) {
+      try {
+        const stored = localStorage.getItem('google_oauth_access_token_v1');
+        if (stored) {
+          token = stored;
+          setCachedToken(stored);
+        }
+      } catch (e) {}
+    }
+    return token || null;
+  };
   
   // ผู้ใช้ที่ไม่ใช่ Super Admin ต้องใช้ Sheet กลางเท่านั้น: ล้าง Sheet ID ที่เคยเชื่อมเองไว้ในเบราว์เซอร์
   const applyCentralSheetForUser = (email?: string | null) => {
@@ -253,6 +289,7 @@ export default function App() {
               }
             } catch (err: any) {
               console.warn('Auto fetch from sheet error:', err);
+              if (isSessionError(err)) setSessionExpired(true);
               setSyncState(prev => ({
                 ...prev,
                 isSyncing: false,
@@ -260,6 +297,9 @@ export default function App() {
               }));
             }
           }
+        } else {
+          // ล็อกอิน Firebase อยู่ แต่ไม่มี Google token (หมดอายุ) จึงอ่าน/เขียน Sheet ไม่ได้
+          setSessionExpired(true);
         }
         setIsAuthChecking(false);
       },
@@ -271,6 +311,45 @@ export default function App() {
 
     return () => unsubscribe();
   }, [showToast]);
+
+  // ดึงข้อมูลล่าสุดจาก Google Sheet แบบเงียบ ๆ (ไม่แสดง toast) เพื่อให้ทุกเครื่องเห็นข้อมูลตรงกัน
+  const silentRefreshFromSheet = useCallback(async () => {
+    if (!userInfo || !syncState.spreadsheetId || isSavingRef.current) return;
+    const token = await getSheetToken();
+    if (!token) {
+      setSessionExpired(true);
+      return;
+    }
+    try {
+      const sheetTasks = await fetchTasksFromSheet(syncState.spreadsheetId, token);
+      if (isSavingRef.current) return;
+      // ไม่ทับข้อมูลด้วยรายการว่าง เผื่ออ่าน Sheet ไม่สมบูรณ์
+      if (sheetTasks.length > 0) {
+        setTasks(sheetTasks);
+        setSyncState(prev => ({ ...prev, lastSyncedAt: new Date(), error: null }));
+      }
+      setSessionExpired(false);
+    } catch (err: any) {
+      if (isSessionError(err)) setSessionExpired(true);
+      console.warn('Silent refresh failed:', err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userInfo, syncState.spreadsheetId]);
+
+  // ดึงข้อมูลใหม่ทันทีเมื่อเข้าสู่ระบบ, เมื่อกลับมาที่แท็บ และทุก 3 นาที
+  useEffect(() => {
+    if (!userInfo || !syncState.spreadsheetId) return;
+    silentRefreshFromSheet();
+    const timer = setInterval(silentRefreshFromSheet, 3 * 60 * 1000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') silentRefreshFromSheet();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [userInfo, syncState.spreadsheetId, silentRefreshFromSheet]);
 
   // Google Sign In
   const handleSignInWithGoogle = async () => {
@@ -300,6 +379,7 @@ export default function App() {
           accessToken: result.accessToken,
         });
         setIsLoginModalOpen(false);
+        setSessionExpired(false);
         showToast(`ยินดีต้อนรับ: ${result.user.displayName || result.user.email}`, 'success');
          // ผู้ใช้ที่ไม่ใช่ Super Admin: ใช้ Sheet กลางเสมอ (ล้าง Sheet ID ที่เคยเชื่อมเองไว้)
         applyCentralSheetForUser(result.user.email);
@@ -524,6 +604,7 @@ export default function App() {
     try {
       const sheetTasks = await fetchTasksFromSheet(syncState.spreadsheetId, token);
       setTasks(sheetTasks);
+      setSessionExpired(false);
       setSyncState(prev => ({
         ...prev,
         isSyncing: false,
@@ -532,6 +613,7 @@ export default function App() {
       }));
       showToast('รีเฟรชข้อมูลล่าสุดจาก Google Sheet สำเร็จ', 'success');
     } catch (err: any) {
+      if (isSessionError(err)) setSessionExpired(true);
       setSyncState(prev => ({
         ...prev,
         isSyncing: false,
@@ -541,11 +623,46 @@ export default function App() {
     }
   };
 
-  // Add or Edit Task handler
+  // แจ้งเตือนเมื่อบันทึกลง Google Sheet ไม่สำเร็จ (ระบบไม่เก็บข้อมูลไว้เฉพาะในเครื่องอีกต่อไป)
+  const notifySaveFailed = (err?: any) => {
+    if (isSessionError(err)) {
+      setSessionExpired(true);
+      showToast(
+        'ยังไม่ได้บันทึก: การเชื่อมต่อ Google หมดอายุ กรุณากด "เข้าสู่ระบบ Google ใหม่" ที่แถบสีเหลืองด้านบน แล้วบันทึกอีกครั้ง',
+        'error'
+      );
+    } else {
+      showToast(
+        `ยังไม่ได้บันทึก: เขียนลง Google Sheet ไม่สำเร็จ (${err?.message || 'กรุณาลองใหม่อีกครั้ง'})`,
+        'error'
+      );
+    }
+  };
+
+  // เตรียม Sheet ID และ token ก่อนเขียนข้อมูล (ไม่มี = บันทึกไม่ได้)
+  const requireWriteAccess = async (): Promise<{ sheetId: string; token: string } | null> => {
+    const sheetId = syncState.spreadsheetId;
+    if (!sheetId) {
+      showToast('ยังไม่ได้เชื่อมต่อ Google Sheet จึงยังบันทึกไม่ได้ กรุณาเข้าสู่ระบบแล้วลองใหม่', 'error');
+      return null;
+    }
+    const token = await getSheetToken();
+    if (!token) {
+      setSessionExpired(true);
+      showToast(
+        'ยังไม่ได้บันทึก: การเชื่อมต่อ Google หมดอายุ กรุณากด "เข้าสู่ระบบ Google ใหม่" ที่แถบสีเหลืองด้านบน แล้วบันทึกอีกครั้ง',
+        'error'
+      );
+      return null;
+    }
+    return { sheetId, token };
+  };
+
+  // Add or Edit Task handler (เขียน Google Sheet ก่อน สำเร็จแล้วจึงอัปเดตหน้าจอ)
   const handleSaveTask = async (taskData: TaskItem) => {
     const isEdit = tasks.some(t => t.id === taskData.id);
 
-  // ตรวจสอบสิทธิ์ผู้ใช้งานตามบัญชี Google
+    // ตรวจสอบสิทธิ์ผู้ใช้งานตามบัญชี Google
     const perm = getUserPermission(userInfo?.email);
     if (isEdit) {
       const originalTask = tasks.find(t => t.id === taskData.id);
@@ -565,81 +682,39 @@ export default function App() {
         showToast(`คุณเพิ่มงานได้เฉพาะหน่วยของตนเอง (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
         return;
       }
-    } 
-
-    let updatedTasks: TaskItem[];
-
-    if (isEdit) {
-      updatedTasks = tasks.map(t => (t.id === taskData.id ? taskData : t));
-      setTasks(updatedTasks);
-    } else {
-      updatedTasks = [taskData, ...tasks];
-      setTasks(updatedTasks);
     }
 
+    const access = await requireWriteAccess();
+    if (!access) return;
+    const { sheetId, token } = access;
+
+    isSavingRef.current = true;
+    setSyncState(prev => ({ ...prev, isSyncing: true, error: null }));
     try {
-      localStorage.setItem(LOCAL_STORAGE_TASKS_KEY, JSON.stringify(updatedTasks));
-    } catch (e) {}
-
-    // Background sync to Google Sheet if connected
-    let token = (await getAccessToken()) || userInfo?.accessToken;
-    if (!token) {
-      try {
-        const stored = localStorage.getItem('google_oauth_access_token_v1');
-        if (stored) {
-          token = stored;
-          setCachedToken(stored);
-        }
-      } catch (e) {}
-    }
-
-    if (syncState.spreadsheetId) {
-      if (!token) {
-        showToast(
-          isEdit
-            ? 'บันทึกการแก้ไขในเครื่องสำเร็จ (เข้าสู่ระบบ Google เพื่อซิงค์ลง Sheet)'
-            : 'เพิ่มรายการงานและบันทึกข้อมูลเพิ่มเติมสำเร็จ (เข้าสู่ระบบ Google เพื่อซิงค์ลง Sheet)',
-          'success'
-        );
+      if (isEdit) {
+        await updateTaskInSheet(sheetId, token, taskData);
+        setTasks(prev => prev.map(t => (t.id === taskData.id ? taskData : t)));
       } else {
-        try {
-          setSyncState(prev => ({ ...prev, isSyncing: true, error: null }));
-          if (isEdit) {
-            await updateTaskInSheet(syncState.spreadsheetId, token, taskData);
-          } else {
-            const row = await appendTaskToSheet(syncState.spreadsheetId, token, taskData);
-            if (row > 0) {
-              setTasks(prev => {
-                const nextTasks = prev.map(t => (t.id === taskData.id ? { ...t, rowNumber: row } : t));
-                try {
-                  localStorage.setItem(LOCAL_STORAGE_TASKS_KEY, JSON.stringify(nextTasks));
-                } catch (e) {}
-                return nextTasks;
-              });
-            }
-          }
-          setSyncState(prev => ({ ...prev, isSyncing: false, lastSyncedAt: new Date(), error: null }));
-          showToast(
-            isEdit
-              ? 'บันทึกการแก้ไขและซิงค์ลง Google Sheet สำเร็จ'
-              : 'เพิ่มรายการงานใหม่พร้อมข้อมูลเพิ่มเติมและซิงค์ลง Google Sheet สำเร็จ',
-            'success'
-          );
-        } catch (sheetErr: any) {
-          console.warn('Background sync failed:', sheetErr);
-          setSyncState(prev => ({
-            ...prev,
-            isSyncing: false,
-            error: sheetErr?.message || 'ซิงค์ข้อมูลกับ Sheet ไม่สำเร็จ',
-          }));
-          showToast(
-            `บันทึกข้อมูลเรียบร้อยแล้ว แต่ซิงค์ขึ้น Google Sheet ไม่สำเร็จ (${sheetErr?.message || 'กรุณาลองใหม่อีกครั้ง'})`,
-            'error'
-          );
-        }
+        const row = await appendTaskToSheet(sheetId, token, taskData);
+        const newTask: TaskItem = row > 0 ? { ...taskData, rowNumber: row } : taskData;
+        setTasks(prev => [newTask, ...prev]);
       }
-    } else {
-      showToast(isEdit ? 'บันทึกการแก้ไขงานสำเร็จ' : 'เพิ่มรายการงานใหม่และบันทึกข้อมูลเพิ่มเติมสำเร็จ', 'success');
+      setSessionExpired(false);
+      setSyncState(prev => ({ ...prev, isSyncing: false, lastSyncedAt: new Date(), error: null }));
+      showToast(
+        isEdit ? 'บันทึกการแก้ไขลง Google Sheet สำเร็จ' : 'เพิ่มรายการงานใหม่ลง Google Sheet สำเร็จ',
+        'success'
+      );
+    } catch (err: any) {
+      console.warn('Save to sheet failed:', err);
+      setSyncState(prev => ({
+        ...prev,
+        isSyncing: false,
+        error: err?.message || 'บันทึกลง Google Sheet ไม่สำเร็จ',
+      }));
+      notifySaveFailed(err);
+    } finally {
+      isSavingRef.current = false;
     }
   };
 
@@ -668,36 +743,24 @@ export default function App() {
       updatedAt: new Date().toISOString(),
     };
 
-    setTasks(prev => prev.map(t => (t.id === task.id ? updatedTask : t)));
+    const access = await requireWriteAccess();
+    if (!access) return;
+    const { sheetId, token } = access;
 
-    // Background update Google Sheet if connected
-    let token = (await getAccessToken()) || userInfo?.accessToken;
-    if (!token) {
-      try {
-        const stored = localStorage.getItem('google_oauth_access_token_v1');
-        if (stored) {
-          token = stored;
-          setCachedToken(stored);
-        }
-      } catch (e) {}
-    }
-
-    if (token && syncState.spreadsheetId) {
-      try {
-        setSyncState(prev => ({ ...prev, isSyncing: true }));
-        await updateTaskInSheet(syncState.spreadsheetId, token, updatedTask);
-        setSyncState(prev => ({ ...prev, isSyncing: false, lastSyncedAt: new Date() }));
-        showToast(`เปลี่ยนสถานะเป็น "${newStatus}" และซิงค์ลง Google Sheet แล้ว`, 'success');
-      } catch (err: any) {
-        console.warn('Status update on sheet failed:', err);
-        setSyncState(prev => ({ ...prev, isSyncing: false }));
-        showToast(
-          'เปลี่ยนสถานะในเครื่องสำเร็จ แต่ยังไม่ได้อัปเดตลง Google Sheet กรุณาลองใหม่อีกครั้ง',
-          'error'
-        );
-      }
-    } else {
-      showToast(`เปลี่ยนสถานะเป็น "${newStatus}" เรียบร้อยแล้ว`, 'success');
+    isSavingRef.current = true;
+    setSyncState(prev => ({ ...prev, isSyncing: true }));
+    try {
+      await updateTaskInSheet(sheetId, token, updatedTask);
+      setTasks(prev => prev.map(t => (t.id === task.id ? updatedTask : t)));
+      setSessionExpired(false);
+      setSyncState(prev => ({ ...prev, isSyncing: false, lastSyncedAt: new Date() }));
+      showToast(`เปลี่ยนสถานะเป็น "${newStatus}" และบันทึกลง Google Sheet แล้ว`, 'success');
+    } catch (err: any) {
+      console.warn('Status update on sheet failed:', err);
+      setSyncState(prev => ({ ...prev, isSyncing: false }));
+      notifySaveFailed(err);
+    } finally {
+      isSavingRef.current = false;
     }
   };
 
@@ -717,34 +780,26 @@ export default function App() {
       confirmLabel: 'ลบรายการนี้',
       isDestructive: true,
       onConfirm: async () => {
-        const remainingTasks = tasks.filter(t => t.id !== task.id);
-        setTasks(remainingTasks);
         setConfirmModalState(prev => ({ ...prev, isOpen: false }));
-        showToast(`ลบงาน "${task.title}" เรียบร้อยแล้ว`, 'success');
 
-        // Update Google Sheet
-        let token = (await getAccessToken()) || userInfo?.accessToken;
-        if (!token) {
-          try {
-            const stored = localStorage.getItem('google_oauth_access_token_v1');
-            if (stored) {
-              token = stored;
-              setCachedToken(stored);
-            }
-          } catch (e) {}
-        }
-        if (token && syncState.spreadsheetId) {
-          try {
-            await deleteTaskFromSheet(syncState.spreadsheetId, token, task);
-            setSyncState(prev => ({ ...prev, lastSyncedAt: new Date() }));
-          } catch (sheetErr: any) {
-            // ไม่เขียนทับทั้ง Sheet เมื่อลบล้มเหลว เพื่อไม่ให้ข้อมูลของผู้ใช้อื่นหาย
-            console.warn('Delete on sheet failed:', sheetErr);
-            showToast(
-              `ลบในเครื่องสำเร็จ แต่ลบใน Google Sheet ไม่สำเร็จ งานอาจกลับมาแสดงเมื่อรีเฟรช (${sheetErr?.message || 'กรุณาลองใหม่อีกครั้ง'})`,
-              'error'
-            );
-          }
+        // ลบใน Google Sheet ก่อน สำเร็จแล้วจึงลบออกจากหน้าจอ
+        const access = await requireWriteAccess();
+        if (!access) return;
+        const { sheetId, token } = access;
+
+        isSavingRef.current = true;
+        try {
+          await deleteTaskFromSheet(sheetId, token, task);
+          setTasks(prev => prev.filter(t => t.id !== task.id));
+          setSessionExpired(false);
+          setSyncState(prev => ({ ...prev, lastSyncedAt: new Date() }));
+          showToast(`ลบงาน "${task.title}" เรียบร้อยแล้ว`, 'success');
+        } catch (sheetErr: any) {
+          // ไม่เขียนทับทั้ง Sheet เมื่อลบล้มเหลว เพื่อไม่ให้ข้อมูลของผู้ใช้อื่นหาย
+          console.warn('Delete on sheet failed:', sheetErr);
+          notifySaveFailed(sheetErr);
+        } finally {
+          isSavingRef.current = false;
         }
       },
     });
@@ -924,6 +979,65 @@ export default function App() {
                     <X className="h-4 w-4" />
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* แถบเตือนสีเหลือง: การเชื่อมต่อ Google หมดอายุ (อ่าน/เขียน Sheet ไม่ได้) */}
+            {userInfo && sessionExpired && (
+              <div className="mb-4 bg-amber-50 border border-amber-300 rounded-2xl p-3.5 sm:p-4 text-amber-950 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0 mt-0.5">
+                    <AlertTriangle className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-xs sm:text-sm font-bold text-amber-900">
+                      การเชื่อมต่อ Google หมดอายุ ข้อมูลที่แก้ไขจะยังไม่ถูกบันทึก
+                    </h3>
+                    <p className="text-[11px] sm:text-xs text-amber-800 mt-1 leading-relaxed">
+                      กรุณาเข้าสู่ระบบ Google ใหม่ (ใช้เวลาไม่กี่วินาที) แล้วจึงเพิ่มหรือแก้ไขงานต่อ
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSignInWithGoogle}
+                  disabled={isLoggingIn}
+                  className="shrink-0 flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <LogIn className="h-3.5 w-3.5" />
+                  <span>เข้าสู่ระบบ Google ใหม่</span>
+                </button>
+              </div>
+            )}
+
+            {/* แถบเตือนสีแดง: เชื่อมต่อ Google Sheet คนละไฟล์กับไฟล์กลางของคณะ */}
+            {userInfo && syncState.spreadsheetId && syncState.spreadsheetId !== CENTRAL_SHEET_ID && (
+              <div className="mb-4 bg-rose-50 border border-rose-300 rounded-2xl p-3.5 sm:p-4 text-rose-950 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="p-2 rounded-xl bg-rose-600 text-white shrink-0 mt-0.5">
+                    <AlertCircle className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-xs sm:text-sm font-bold text-rose-900">
+                      เครื่องนี้เชื่อมต่อ Google Sheet คนละไฟล์กับไฟล์กลางของคณะ
+                    </h3>
+                    <p className="text-[11px] sm:text-xs text-rose-800 mt-1 leading-relaxed">
+                      ข้อมูลที่เห็นอาจไม่ตรงกับเครื่องอื่น และงานที่บันทึกจะไม่ไปอยู่ในไฟล์กลาง
+                      {canManageSheet
+                        ? ' กรุณาเปิดหน้าตั้งค่า Google Sheet แล้วเชื่อมต่อไฟล์กลางอีกครั้ง'
+                        : ' กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่ หากยังพบข้อความนี้ให้แจ้งผู้ดูแลระบบ'}
+                    </p>
+                  </div>
+                </div>
+                {canManageSheet && (
+                  <button
+                    type="button"
+                    onClick={() => setIsSheetSettingsOpen(true)}
+                    className="shrink-0 flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    <span>เปิดหน้าตั้งค่า Google Sheet</span>
+                  </button>
+                )}
               </div>
             )}
 
