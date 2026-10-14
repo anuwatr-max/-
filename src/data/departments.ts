@@ -74,21 +74,45 @@ export const DEPARTMENTS: MainDepartment[] = [
   },
 ];
 
-// เดือนประจำปีงบประมาณ 2570 (เริ่ม ตุลาคม 2569 ถึง กันยายน 2570)
-export const FISCAL_MONTHS: FiscalMonth[] = [
-  { id: '2569-10', name: 'ตุลาคม 2569', quarter: 1, year: 2569 },
-  { id: '2569-11', name: 'พฤศจิกายน 2569', quarter: 1, year: 2569 },
-  { id: '2569-12', name: 'ธันวาคม 2569', quarter: 1, year: 2569 },
-  { id: '2570-01', name: 'มกราคม 2570', quarter: 2, year: 2570 },
-  { id: '2570-02', name: 'กุมภาพันธ์ 2570', quarter: 2, year: 2570 },
-  { id: '2570-03', name: 'มีนาคม 2570', quarter: 2, year: 2570 },
-  { id: '2570-04', name: 'เมษายน 2570', quarter: 3, year: 2570 },
-  { id: '2570-05', name: 'พฤษภาคม 2570', quarter: 3, year: 2570 },
-  { id: '2570-06', name: 'มิถุนายน 2570', quarter: 3, year: 2570 },
-  { id: '2570-07', name: 'กรกฎาคม 2570', quarter: 4, year: 2570 },
-  { id: '2570-08', name: 'สิงหาคม 2570', quarter: 4, year: 2570 },
-  { id: '2570-09', name: 'กันยายน 2570', quarter: 4, year: 2570 },
+// ===== ตั้งค่าปีงบประมาณ (แก้ที่เดียวเมื่อขึ้นปีงบประมาณใหม่) =====
+// ปีงบประมาณ พ.ศ. เช่น 2570 = ตุลาคม 2569 ถึง กันยายน 2570
+export const FISCAL_YEAR = 2570;
+
+const THAI_MONTH_NAMES = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
 ];
+
+// สร้างเดือนทั้ง 12 เดือนของปีงบประมาณจาก FISCAL_YEAR (ต.ค. ปีก่อนหน้า ถึง ก.ย. ปีนี้)
+const buildFiscalMonths = (fiscalYear: number): FiscalMonth[] => {
+  const result: FiscalMonth[] = [];
+  for (let i = 0; i < 12; i++) {
+    const monthIndex = (9 + i) % 12; // 9 = ตุลาคม
+    const year = monthIndex >= 9 ? fiscalYear - 1 : fiscalYear;
+    const quarter = Math.floor(i / 3) + 1;
+    const mm = String(monthIndex + 1).padStart(2, '0');
+    result.push({
+      id: `${year}-${mm}`,
+      name: `${THAI_MONTH_NAMES[monthIndex]} ${year}`,
+      quarter,
+      year,
+    });
+  }
+  return result;
+};
+
+export const FISCAL_MONTHS: FiscalMonth[] = buildFiscalMonths(FISCAL_YEAR);
+
+// เดือนปัจจุบัน (เวลาไทย) ในรูปแบบชื่อเดือนของปีงบประมาณ
+// ถ้าวันนี้อยู่นอกปีงบประมาณ จะคืนเดือนแรก (ก่อนเริ่มปี) หรือเดือนสุดท้าย (หลังจบปี)
+export const getCurrentFiscalMonthName = (): string => {
+  const ymd = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // YYYY-MM-DD
+  const [y, m] = ymd.split('-');
+  const id = `${Number(y) + 543}-${m}`;
+  const found = FISCAL_MONTHS.find(fm => fm.id === id);
+  if (found) return found.name;
+  return id < FISCAL_MONTHS[0].id ? FISCAL_MONTHS[0].name : FISCAL_MONTHS[FISCAL_MONTHS.length - 1].name;
+};
 
 export const getDeptDotClass = (deptId: string): string => {
   switch (deptId) {
