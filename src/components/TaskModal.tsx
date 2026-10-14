@@ -7,13 +7,25 @@ import { getAllowedDepartmentsForUser, canUserEditTask, canUserDeleteTask, getUs
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (task: TaskItem) => Promise<void>;
+  // คืนข้อความ error (string) เมื่อบันทึกไม่สำเร็จ เพื่อให้หน้าต่างค้างไว้และข้อมูลที่กรอกไม่หาย
+  onSave: (task: TaskItem) => Promise<string | void>;
   onDeleteTask?: (task: TaskItem) => void;
   taskToEdit?: TaskItem | null;
   defaultMonth?: string;
   defaultDueDate?: string;
   currentUserEmail?: string | null;
+  // true = การเชื่อมต่อ Google หมดอายุ (แสดงปุ่มเข้าสู่ระบบใหม่ในหน้าต่างนี้)
+  sessionExpired?: boolean;
+  onReLogin?: () => void;
 }
+
+// วันที่ปัจจุบันตามเวลาท้องถิ่น (YYYY-MM-DD) ไม่ใช้ UTC เพื่อไม่ให้ช่วงเที่ยงคืนถึง 07:00 น. ได้วันที่ของเมื่อวาน
+const getLocalDateString = (d: Date = new Date()): string => {
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${day}`;
+};
 
 export const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
@@ -24,6 +36,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   defaultMonth = 'มีนาคม 2570',
   defaultDueDate,
   currentUserEmail,
+  sessionExpired,
+  onReLogin,
 }) => {
   const allowedDepts = getAllowedDepartmentsForUser(currentUserEmail);
   const userPerm = getUserPermission(currentUserEmail);
@@ -66,7 +80,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setTitle('');
       setAssignee('');
       
-      const targetDate = defaultDueDate || new Date().toISOString().split('T')[0];
+      const targetDate = defaultDueDate || getLocalDateString();
       setStartDate(targetDate);
       setDueDate(targetDate);
 
@@ -195,7 +209,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         createdAt: taskToEdit?.createdAt || now,
       };
 
-      await onSave(taskData);
+      const result = await onSave(taskData);
+      if (typeof result === 'string') {
+        // บันทึกไม่สำเร็จ: คงหน้าต่างไว้ ข้อมูลที่กรอกไม่หาย
+        setErrors({ form: result });
+        return;
+      }
       onClose();
     } catch (err: any) {
       console.error('Save error:', err);
@@ -273,6 +292,22 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   ? userPerm.departmentTitle
                   : allowedDepts[0].name}
               </span>
+            </div>
+          )}
+
+          {/* การเชื่อมต่อ Google หมดอายุ: เข้าสู่ระบบใหม่ได้ทันทีโดยไม่ต้องปิดหน้าต่าง */}
+          {sessionExpired && onReLogin && (
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-semibold">
+                การเชื่อมต่อ Google หมดอายุ ต้องเข้าสู่ระบบใหม่ก่อนจึงจะบันทึกได้ (ข้อมูลที่กรอกจะยังอยู่)
+              </span>
+              <button
+                type="button"
+                onClick={onReLogin}
+                className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer"
+              >
+                เข้าสู่ระบบ Google ใหม่
+              </button>
             </div>
           )}
 
