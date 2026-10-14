@@ -624,43 +624,45 @@ export default function App() {
   };
 
   // แจ้งเตือนเมื่อบันทึกลง Google Sheet ไม่สำเร็จ (ระบบไม่เก็บข้อมูลไว้เฉพาะในเครื่องอีกต่อไป)
-  const notifySaveFailed = (err?: any) => {
+  const notifySaveFailed = (err?: any): string => {
+    let msg: string;
     if (isSessionError(err)) {
       setSessionExpired(true);
-      showToast(
-        'ยังไม่ได้บันทึก: การเชื่อมต่อ Google หมดอายุ กรุณากด "เข้าสู่ระบบ Google ใหม่" ที่แถบสีเหลืองด้านบน แล้วบันทึกอีกครั้ง',
-        'error'
-      );
+      msg = 'ยังไม่ได้บันทึก: การเชื่อมต่อ Google หมดอายุ กรุณากด "เข้าสู่ระบบ Google ใหม่" แล้วกดบันทึกอีกครั้ง';
     } else {
-      showToast(
-        `ยังไม่ได้บันทึก: เขียนลง Google Sheet ไม่สำเร็จ (${err?.message || 'กรุณาลองใหม่อีกครั้ง'})`,
-        'error'
-      );
+      msg = `ยังไม่ได้บันทึก: เขียนลง Google Sheet ไม่สำเร็จ (${err?.message || 'กรุณาลองใหม่อีกครั้ง'})`;
     }
+    showToast(msg, 'error');
+    return msg;
   };
 
-  // เตรียม Sheet ID และ token ก่อนเขียนข้อมูล (ไม่มี = บันทึกไม่ได้)
-  const requireWriteAccess = async (): Promise<{ sheetId: string; token: string } | null> => {
+  // เตรียม Sheet ID และ token ก่อนเขียนข้อมูล
+  // คืนค่า { sheetId, token } ถ้าพร้อมเขียน หรือคืนข้อความ error (string) ถ้าบันทึกไม่ได้ (แสดง toast แล้ว)
+  const requireWriteAccess = async (): Promise<{ sheetId: string; token: string } | string> => {
     const sheetId = syncState.spreadsheetId;
     if (!sheetId) {
-      showToast('ยังไม่ได้เชื่อมต่อ Google Sheet จึงยังบันทึกไม่ได้ กรุณาเข้าสู่ระบบแล้วลองใหม่', 'error');
-      return null;
+      const msg = 'ยังไม่ได้เชื่อมต่อ Google Sheet จึงยังบันทึกไม่ได้ กรุณาเข้าสู่ระบบแล้วลองใหม่';
+      showToast(msg, 'error');
+      return msg;
     }
     const token = await getSheetToken();
     if (!token) {
       setSessionExpired(true);
-      showToast(
-        'ยังไม่ได้บันทึก: การเชื่อมต่อ Google หมดอายุ กรุณากด "เข้าสู่ระบบ Google ใหม่" ที่แถบสีเหลืองด้านบน แล้วบันทึกอีกครั้ง',
-        'error'
-      );
-      return null;
+      const msg = 'ยังไม่ได้บันทึก: การเชื่อมต่อ Google หมดอายุ กรุณากด "เข้าสู่ระบบ Google ใหม่" แล้วกดบันทึกอีกครั้ง';
+      showToast(msg, 'error');
+      return msg;
     }
     return { sheetId, token };
   };
 
   // Add or Edit Task handler (เขียน Google Sheet ก่อน สำเร็จแล้วจึงอัปเดตหน้าจอ)
-  const handleSaveTask = async (taskData: TaskItem) => {
+  // คืนค่า undefined เมื่อสำเร็จ หรือข้อความ error (string) เมื่อไม่สำเร็จ เพื่อให้หน้าต่างแก้ไขไม่ปิดและข้อมูลที่กรอกไม่หาย
+  const handleSaveTask = async (taskData: TaskItem): Promise<string | void> => {
     const isEdit = tasks.some(t => t.id === taskData.id);
+    const deny = (msg: string): string => {
+      showToast(msg, 'error');
+      return msg;
+    };
 
     // ตรวจสอบสิทธิ์ผู้ใช้งานตามบัญชี Google
     const perm = getUserPermission(userInfo?.email);
@@ -670,22 +672,19 @@ export default function App() {
         !canUserEditTask(taskData, userInfo?.email) ||
         (originalTask && !canUserEditTask(originalTask, userInfo?.email))
       ) {
-        showToast(`คุณไม่มีสิทธิ์แก้ไขงานกลุ่มนี้ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
-        return;
+        return deny(`คุณไม่มีสิทธิ์แก้ไขงานกลุ่มนี้ (สิทธิ์ของคุณ: ${perm.departmentTitle})`);
       }
     } else {
       if (!canUserAddTask(userInfo?.email)) {
-        showToast(`คุณไม่มีสิทธิ์เพิ่มงานในระบบ (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
-        return;
+        return deny(`คุณไม่มีสิทธิ์เพิ่มงานในระบบ (สิทธิ์ของคุณ: ${perm.departmentTitle})`);
       }
       if (!canUserAddTaskInUnit(taskData, userInfo?.email)) {
-        showToast(`คุณเพิ่มงานได้เฉพาะหน่วยของตนเอง (สิทธิ์ของคุณ: ${perm.departmentTitle})`, 'error');
-        return;
+        return deny(`คุณเพิ่มงานได้เฉพาะหน่วยของตนเอง (สิทธิ์ของคุณ: ${perm.departmentTitle})`);
       }
     }
 
     const access = await requireWriteAccess();
-    if (!access) return;
+    if (typeof access === 'string') return access;
     const { sheetId, token } = access;
 
     isSavingRef.current = true;
@@ -712,7 +711,7 @@ export default function App() {
         isSyncing: false,
         error: err?.message || 'บันทึกลง Google Sheet ไม่สำเร็จ',
       }));
-      notifySaveFailed(err);
+      return notifySaveFailed(err);
     } finally {
       isSavingRef.current = false;
     }
@@ -744,7 +743,7 @@ export default function App() {
     };
 
     const access = await requireWriteAccess();
-    if (!access) return;
+    if (typeof access === 'string') return;
     const { sheetId, token } = access;
 
     isSavingRef.current = true;
@@ -784,7 +783,7 @@ export default function App() {
 
         // ลบใน Google Sheet ก่อน สำเร็จแล้วจึงลบออกจากหน้าจอ
         const access = await requireWriteAccess();
-        if (!access) return;
+        if (typeof access === 'string') return;
         const { sheetId, token } = access;
 
         isSavingRef.current = true;
@@ -1163,7 +1162,7 @@ export default function App() {
       {toastMessage && (
         <div
           id="toast-notification"
-          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold animate-in slide-in-from-bottom-5 duration-200 ${
+          className={`fixed bottom-5 right-5 z-[60] flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold animate-in slide-in-from-bottom-5 duration-200 ${
             toastMessage.type === 'success'
               ? 'bg-slate-900 text-white border border-slate-800'
               : 'bg-rose-600 text-white'
@@ -1195,6 +1194,8 @@ export default function App() {
         taskToEdit={taskToEdit}
         defaultDueDate={taskModalDefaultDate}
         currentUserEmail={userInfo?.email}
+        sessionExpired={sessionExpired}
+        onReLogin={handleSignInWithGoogle}
       />
 
       <ConfirmModal
