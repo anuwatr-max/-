@@ -14,10 +14,11 @@ import {
   Calendar,
   ShieldCheck,
 } from 'lucide-react';
-import { UserAuthInfo, SheetSyncState } from '../types';
+import { UserAuthInfo, SheetSyncState, TaskItem } from '../types';
 import { cleanSheetTitle } from '../services/sheetsService';
 import { getUserPermission } from '../data/userPermissions';
 import { DeviceDropdown, DeviceMode } from './DeviceDropdown';
+import { NotificationBell } from './NotificationBell';
 
 export type ActiveTab = 'dashboard' | 'tasks' | 'calendar' | 'monthly-report';
 
@@ -33,6 +34,8 @@ export interface NavbarProps {
   deviceMode: DeviceMode;
   onChangeDeviceMode: (mode: DeviceMode) => void;
   onOpenPermissionsModal?: () => void;
+  tasks?: TaskItem[];
+  onOpenTask?: (task: TaskItem) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -47,6 +50,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   deviceMode,
   onChangeDeviceMode,
   onOpenPermissionsModal,
+  tasks = [],
+  onOpenTask,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const userPerm = getUserPermission(userInfo?.email);
@@ -206,6 +211,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Google Sign In Button or User Avatar */}
               {userInfo ? (
                 <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+                  <NotificationBell
+                    tasks={tasks}
+                    currentUserEmail={userInfo.email}
+                    onOpenTask={onOpenTask}
+                  />
                   {userInfo.photoURL ? (
                     <img
                       src={userInfo.photoURL}
@@ -303,6 +313,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Mobile & Tablet Hamburger Toggle */}
             <div className={`flex ${deviceMode === 'mobile' ? '' : 'md:hidden'} items-center gap-2`}>
+              {userInfo && (
+                <NotificationBell
+                  tasks={tasks}
+                  currentUserEmail={userInfo.email}
+                  onOpenTask={onOpenTask}
+                />
+              )}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 rounded-xl text-slate-600 hover:text-slate-700 hover:bg-slate-100"
