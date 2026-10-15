@@ -923,6 +923,12 @@ export default function App() {
             deviceMode={deviceMode}
             onChangeDeviceMode={setDeviceMode}
             onOpenPermissionsModal={() => setIsPermissionsModalOpen(true)}
+            tasks={tasks}
+            onOpenTask={task => {
+              setTaskToEdit(task);
+              setTaskModalDefaultDate(undefined);
+              setIsTaskModalOpen(true);
+            }}
           />
 
           {/* Main Container */}
